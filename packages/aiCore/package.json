@@ -1,0 +1,87 @@
+{
+  "name": "@cherrystudio/ai-core",
+  "version": "1.0.11",
+  "description": "Cherry Studio AI Core - Unified AI Provider Interface Based on Vercel AI SDK",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "react-native": "dist/index.js",
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsc -w",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "ai",
+    "sdk",
+    "openai",
+    "anthropic",
+    "google",
+    "cherry-studio",
+    "vercel-ai-sdk"
+  ],
+  "author": "Cherry Studio",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CherryHQ/cherry-studio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/CherryHQ/cherry-studio/issues"
+  },
+  "homepage": "https://github.com/CherryHQ/cherry-studio#readme",
+  "peerDependencies": {
+    "@ai-sdk/google": "^3.0.33",
+    "@ai-sdk/openai": "^3.0.36",
+    "ai": "^6.0.103"
+  },
+  "dependencies": {
+    "@cherrystudio/ai-sdk-provider": "workspace:*",
+    "@ai-sdk/anthropic": "^3.0.48",
+    "@ai-sdk/azure": "^3.0.37",
+    "@ai-sdk/deepseek": "^2.0.20",
+    "@ai-sdk/openai-compatible": "^2.0.30",
+    "@ai-sdk/provider": "^3.0.8",
+    "@ai-sdk/provider-utils": "^4.0.15",
+    "@ai-sdk/xai": "^3.0.59",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "tsdown": "^0.20.3",
+    "typescript": "^5.0.0",
+    "vitest": "^3.2.4"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "react-native": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./built-in/plugins": {
+      "types": "./dist/built-in/plugins/index.d.ts",
+      "react-native": "./dist/built-in/plugins/index.js",
+      "import": "./dist/built-in/plugins/index.mjs",
+      "require": "./dist/built-in/plugins/index.js",
+      "default": "./dist/built-in/plugins/index.js"
+    },
+    "./provider": {
+      "types": "./dist/provider/index.d.ts",
+      "react-native": "./dist/provider/index.js",
+      "import": "./dist/provider/index.mjs",
+      "require": "./dist/provider/index.js",
+      "default": "./dist/provider/index.js"
+    }
+  }
+}

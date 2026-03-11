@@ -1,30 +1,37 @@
-# Mobile-OpenClaw
-Mobile-OpenClaw: Intelligent Mobile Device Management and Automation System
+# Mobile-OpenClaw - Intelligent Mobile Device Management System
 
-Mobile-OpenClaw is a comprehensive mobile device management platform that enables simultaneous control and automation of multiple Android devices. Built on the OpenClaw architecture, it provides intelligent device orchestration for various business scenarios.
+## Use Cases Summary
 
-Key Features:
+Mobile-OpenClaw is designed for efficient multi-device automation and management, with the following key application scenarios:
 
-Multi-device screen mirroring and remote control
-Automated task execution across device fleets
-Intelligent device grouping and management
-Real-time monitoring and status tracking
-Seamless integration with AI decision engines
-Perfect for These Scenarios:
+### Private Traffic Operations
+Automate social media interactions, content publishing, and user engagement across multiple accounts to build and maintain private traffic pools efficiently.
 
-Private Traffic Operations: Automate social media interactions, content posting, and user engagement across multiple accounts to build and maintain private traffic pools efficiently.
+### Intelligent Media Operations
+Streamline content creation, scheduling, and distribution workflows for influencers and content creators managing multiple platforms simultaneously.
 
-Cross-border E-commerce: Manage product listings, order processing, and customer communications across multiple marketplace accounts simultaneously, ideal for Amazon, eBay, and other international platforms.
+### Smart App Testing Automation
+Execute comprehensive testing scenarios across multiple devices, including functionality testing, compatibility verification, and performance monitoring.
 
-Xiaohongshu (Little Red Book) Operations: Streamline content creation, posting schedules, and community engagement for influencer marketing and brand promotion on China's leading lifestyle platform.
+### Intelligent Customer Service
+Deploy automated customer support solutions across multiple devices, enabling efficient handling of inquiries, order processing, and service requests.
 
-Gaming & Automation: Execute repetitive gaming tasks, resource farming, and account management across multiple devices, maximizing efficiency for mobile gaming operations.
+### Additional Scenarios
+- **E-commerce Management**: Multi-platform store operations, inventory management, and order processing
+- **Data Collection**: Automated data gathering and analysis from multiple sources
+- **Educational Applications**: Remote device management for training and educational purposes
+- **Enterprise Solutions**: Device fleet management for corporate environments
 
-Technical Advantages:
+## Documentation Navigation
 
-Scalable architecture supporting hundreds of devices
-Low-latency control through optimized ADB integration
-Secure device isolation and data protection
-Extensible plugin system for custom automation workflows
-Cross-platform compatibility with existing Cherry Studio ecosystem
-Mobile-OpenClaw transforms manual mobile device management into intelligent, scalable automation, enabling businesses to achieve unprecedented efficiency in their mobile operations.
+### English Documentation
+- [README](en/README.md) - Project overview and features
+- [Usage Guide](en/guides/usage-guide.md) - Comprehensive usage instructions
+- [API Reference](en/references/api.md) - API documentation
+- [FAQ](en/references/faq.md) - Frequently asked questions
+
+### 中文文档
+- [README](zh/README.md) - 项目概览和功能特性
+- [使用指南](zh/guides/usage-guide.md) - 完整使用说明
+- [API文档](zh/references/api.md) - API接口文档
+- [常见问题](zh/references/faq.md) - 常见问题解答

@@ -55,7 +55,7 @@ Mobile-OpenClaw 是一个基于 Cherry Studio 开发的智能移动设备群控�
 - Scrcpy 工具
 
 ### 安装步骤
-1. 下载并安装 Cherry Studio
+1. 下载并安装 Mobile OpenClaw
 2. 连接 Android 设备并开启 USB 调试
 3. 启动 Mobile-OpenClaw 群控系统
 4. 开始管理您的设备

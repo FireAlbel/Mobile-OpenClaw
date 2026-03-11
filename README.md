@@ -22,6 +22,28 @@ Deploy automated customer support solutions across multiple devices, enabling ef
 - **Educational Applications**: Remote device management for training and educational purposes
 - **Enterprise Solutions**: Device fleet management for corporate environments
 
+## 📸 Feature Screenshots
+
+### Main Chat Interface
+![Chat Interface](docs/assets/images/聊天主界面.png)
+*Main chat interface with device control capabilities*
+
+### Device Management
+![Device Management](docs/assets/images/设备管理.png)
+*Comprehensive device management panel for monitoring and controlling multiple devices*
+
+### Assistant Library
+![Assistant Library](docs/assets/images/助手库.png)
+*Extensive library of AI assistants for various automation tasks*
+
+### Knowledge Base
+![Knowledge Base](docs/assets/images/知识库.png)
+*Integrated knowledge base for storing and retrieving information*
+
+### Notes Interface
+![Notes Interface](docs/assets/images/笔记界面.png)
+*Built-in notes interface for documentation and task tracking*
+
 ## Documentation Navigation
 
 ### English Documentation
@@ -35,3 +57,9 @@ Deploy automated customer support solutions across multiple devices, enabling ef
 - [使用指南](zh/guides/usage-guide.md) - 完整使用说明
 - [API文档](zh/references/api.md) - API接口文档
 - [常见问题](zh/references/faq.md) - 常见问题解答
+
+## 📄 License
+
+GNU General Public License v3.0 (GPL-3.0)
+
+This is free software: you are free to use, copy, distribute, and modify this software, but modified versions must continue to be open source under the GPL-3.0 license.

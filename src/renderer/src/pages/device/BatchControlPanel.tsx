@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 import { deviceServiceProxy } from '@renderer/services/DeviceServiceProxy'
 
@@ -15,6 +16,7 @@ interface ControlTask {
 }
 
 const BatchControlPanel: React.FC<BatchControlPanelProps> = ({ onClose }) => {
+  const { t } = useTranslation()
   const [devices, setDevices] = useState<any[]>([])
   const [selectedDevices, setSelectedDevices] = useState<string[]>([])
   const [controlTasks, setControlTasks] = useState<ControlTask[]>([])
@@ -26,7 +28,6 @@ const BatchControlPanel: React.FC<BatchControlPanelProps> = ({ onClose }) => {
   const [swipeY2, setSwipeY2] = useState<string>('500')
   const [inputText, setInputText] = useState<string>('')
 
-
   useEffect(() => {
     fetchDevices()
   }, [])
@@ -35,48 +36,42 @@ const BatchControlPanel: React.FC<BatchControlPanelProps> = ({ onClose }) => {
     // 简化版本，使用扫描设备
     const devices = await deviceServiceProxy.scanDevices()
     setDevices(devices)
-    setSelectedDevices(devices.map(d => d.id))
+    setSelectedDevices(devices.map((d) => d.id))
   }
 
   const handleDeviceSelect = (serial: string) => {
-    setSelectedDevices(prev =>
-      prev.includes(serial)
-        ? prev.filter(s => s !== serial)
-        : [...prev, serial]
-    )
+    setSelectedDevices((prev) => (prev.includes(serial) ? prev.filter((s) => s !== serial) : [...prev, serial]))
   }
 
   const executeBatchAction = async (action: string, actionFunc: (serial: string) => Promise<boolean>) => {
     if (selectedDevices.length === 0) {
-      alert('请选择至少一个设备')
+      alert(t('device.batch_control.select_device'))
       return
     }
 
-    const tasks: ControlTask[] = selectedDevices.map(serial => ({
+    const tasks: ControlTask[] = selectedDevices.map((serial) => ({
       id: `${serial}_${action}_${Date.now()}`,
       serial,
       action,
       status: 'pending'
     }))
 
-    setControlTasks(prev => [...prev, ...tasks])
+    setControlTasks((prev) => [...prev, ...tasks])
 
     // 并行执行所有任务
     await Promise.all(
       tasks.map(async (task) => {
-        setControlTasks(prev => prev.map(t =>
-          t.id === task.id ? { ...t, status: 'executing' } : t
-        ))
+        setControlTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, status: 'executing' } : t)))
 
         try {
           const success = await actionFunc(task.serial)
-          setControlTasks(prev => prev.map(t =>
-            t.id === task.id ? { ...t, status: success ? 'success' : 'failed' } : t
-          ))
+          setControlTasks((prev) =>
+            prev.map((t) => (t.id === task.id ? { ...t, status: success ? 'success' : 'failed' } : t))
+          )
         } catch (error: any) {
-          setControlTasks(prev => prev.map(t =>
-            t.id === task.id ? { ...t, status: 'failed', error: error.message } : t
-          ))
+          setControlTasks((prev) =>
+            prev.map((t) => (t.id === task.id ? { ...t, status: 'failed', error: error.message } : t))
+          )
         }
       })
     )
@@ -87,11 +82,11 @@ const BatchControlPanel: React.FC<BatchControlPanelProps> = ({ onClose }) => {
     const y = parseInt(tapY)
 
     if (isNaN(x) || isNaN(y)) {
-      alert('坐标格式错误')
+      alert(t('device.batch_control.coordinate_error'))
       return
     }
 
-    await executeBatchAction('点击', async (serial) => {
+    await executeBatchAction(t('device.batch_control.tap'), async (serial) => {
       await deviceServiceProxy.sendTap(serial, x, y)
       return true
     })
@@ -104,11 +99,11 @@ const BatchControlPanel: React.FC<BatchControlPanelProps> = ({ onClose }) => {
     const y2 = parseInt(swipeY2)
 
     if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) {
-      alert('坐标格式错误')
+      alert(t('device.batch_control.coordinate_error'))
       return
     }
 
-    await executeBatchAction('滑动', async (serial) => {
+    await executeBatchAction(t('device.batch_control.swipe'), async (serial) => {
       await deviceServiceProxy.sendSwipe(serial, x1, y1, x2, y2)
       return true
     })
@@ -116,11 +111,11 @@ const BatchControlPanel: React.FC<BatchControlPanelProps> = ({ onClose }) => {
 
   const handleBatchInputText = async () => {
     if (!inputText.trim()) {
-      alert('请输入文本')
+      alert(t('device.batch_control.text_empty'))
       return
     }
 
-    await executeBatchAction('输入文本', async (serial) => {
+    await executeBatchAction(t('device.batch_control.input'), async (serial) => {
       await deviceServiceProxy.sendText(serial, inputText)
       return true
     })
@@ -135,14 +130,17 @@ const BatchControlPanel: React.FC<BatchControlPanelProps> = ({ onClose }) => {
     }
 
     await executeBatchAction(`按下${keyNames[key]}键`, async (serial) => {
-      await deviceServiceProxy.sendKeyEvent(serial, key === 'home' ? 3 : key === 'back' ? 4 : key === 'menu' ? 82 : key === 'power' ? 26 : 3)
+      await deviceServiceProxy.sendKeyEvent(
+        serial,
+        key === 'home' ? 3 : key === 'back' ? 4 : key === 'menu' ? 82 : key === 'power' ? 26 : 3
+      )
       return true
     })
   }
 
   const handleBatchReboot = async () => {
     // 暂时禁用重启功能
-    await executeBatchAction('重启', async (_serial) => {
+    await executeBatchAction(t('device.batch_control.reboot'), async (_serial) => {
       // 暂时禁用重启功能
       return false
     })
@@ -150,19 +148,27 @@ const BatchControlPanel: React.FC<BatchControlPanelProps> = ({ onClose }) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'success': return '#52c41a'
-      case 'failed': return '#ff4d4f'
-      case 'executing': return '#1890ff'
-      default: return '#d9d9d9'
+      case 'success':
+        return '#52c41a'
+      case 'failed':
+        return '#ff4d4f'
+      case 'executing':
+        return '#1890ff'
+      default:
+        return '#d9d9d9'
     }
   }
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'success': return '成功'
-      case 'failed': return '失败'
-      case 'executing': return '执行中'
-      default: return '等待'
+      case 'success':
+        return '成功'
+      case 'failed':
+        return '失败'
+      case 'executing':
+        return '执行中'
+      default:
+        return '等待'
     }
   }
 
@@ -173,15 +179,15 @@ const BatchControlPanel: React.FC<BatchControlPanelProps> = ({ onClose }) => {
   return (
     <Panel>
       <Header>
-        <Title>批量群控</Title>
+        <Title>{t('device.batch_control.title')}</Title>
         <CloseButton onClick={onClose}>×</CloseButton>
       </Header>
 
       <Content>
         <Section>
-          <SectionTitle>选择设备</SectionTitle>
+          <SectionTitle>{t('device.batch_control.select_devices')}</SectionTitle>
           <DeviceList>
-            {devices.map(device => (
+            {devices.map((device) => (
               <DeviceItem key={device.id}>
                 <label>
                   <input
@@ -203,19 +209,9 @@ const BatchControlPanel: React.FC<BatchControlPanelProps> = ({ onClose }) => {
             <SubSectionTitle>点击操作</SubSectionTitle>
             <InputGroup>
               <Label>X坐标:</Label>
-              <Input
-                type="number"
-                value={tapX}
-                onChange={(e) => setTapX(e.target.value)}
-                placeholder="X坐标"
-              />
+              <Input type="number" value={tapX} onChange={(e) => setTapX(e.target.value)} placeholder="X坐标" />
               <Label>Y坐标:</Label>
-              <Input
-                type="number"
-                value={tapY}
-                onChange={(e) => setTapY(e.target.value)}
-                placeholder="Y坐标"
-              />
+              <Input type="number" value={tapY} onChange={(e) => setTapY(e.target.value)} placeholder="Y坐标" />
               <Button onClick={handleBatchTap}>批量点击</Button>
             </InputGroup>
           </SubSection>
@@ -224,67 +220,50 @@ const BatchControlPanel: React.FC<BatchControlPanelProps> = ({ onClose }) => {
             <SubSectionTitle>滑动操作</SubSectionTitle>
             <InputGroup>
               <Label>起点X:</Label>
-              <Input
-                type="number"
-                value={swipeX1}
-                onChange={(e) => setSwipeX1(e.target.value)}
-                placeholder="起点X"
-              />
+              <Input type="number" value={swipeX1} onChange={(e) => setSwipeX1(e.target.value)} placeholder="起点X" />
               <Label>起点Y:</Label>
-              <Input
-                type="number"
-                value={swipeY1}
-                onChange={(e) => setSwipeY1(e.target.value)}
-                placeholder="起点Y"
-              />
+              <Input type="number" value={swipeY1} onChange={(e) => setSwipeY1(e.target.value)} placeholder="起点Y" />
             </InputGroup>
             <InputGroup>
               <Label>终点X:</Label>
-              <Input
-                type="number"
-                value={swipeX2}
-                onChange={(e) => setSwipeX2(e.target.value)}
-                placeholder="终点X"
-              />
+              <Input type="number" value={swipeX2} onChange={(e) => setSwipeX2(e.target.value)} placeholder="终点X" />
               <Label>终点Y:</Label>
-              <Input
-                type="number"
-                value={swipeY2}
-                onChange={(e) => setSwipeY2(e.target.value)}
-                placeholder="终点Y"
-              />
+              <Input type="number" value={swipeY2} onChange={(e) => setSwipeY2(e.target.value)} placeholder="终点Y" />
               <Button onClick={handleBatchSwipe}>批量滑动</Button>
             </InputGroup>
           </SubSection>
 
           <SubSection>
-            <SubSectionTitle>文本输入</SubSectionTitle>
+            <SubSectionTitle>{t('device.batch_control.input')}</SubSectionTitle>
             <InputGroup>
               <Input
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="输入文本"
+                placeholder={t('device.batch_control.input_text')}
                 style={{ flex: 1 }}
               />
-              <Button onClick={handleBatchInputText}>批量输入</Button>
+              <Button onClick={handleBatchInputText}>{t('device.batch_control.batch_input')}</Button>
             </InputGroup>
           </SubSection>
 
           <SubSection>
-            <SubSectionTitle>按键操作</SubSectionTitle>
+            <SubSectionTitle>
+              {t('device.control_panel.home')}, {t('device.control_panel.back')}, {t('device.control_panel.menu')},{' '}
+              {t('device.control_panel.power')} {t('device.batch_control')}
+            </SubSectionTitle>
             <ButtonGroup>
-              <Button onClick={() => handleBatchPressKey('home')}>批量主页</Button>
-              <Button onClick={() => handleBatchPressKey('back')}>批量返回</Button>
-              <Button onClick={() => handleBatchPressKey('menu')}>批量菜单</Button>
-              <Button onClick={() => handleBatchPressKey('power')}>批量电源</Button>
+              <Button onClick={() => handleBatchPressKey('home')}>{t('device.batch_control.batch_home')}</Button>
+              <Button onClick={() => handleBatchPressKey('back')}>{t('device.batch_control.batch_back')}</Button>
+              <Button onClick={() => handleBatchPressKey('menu')}>{t('device.batch_control.batch_menu')}</Button>
+              <Button onClick={() => handleBatchPressKey('power')}>{t('device.batch_control.batch_power')}</Button>
             </ButtonGroup>
           </SubSection>
 
           <SubSection>
-            <SubSectionTitle>系统操作</SubSectionTitle>
+            <SubSectionTitle>{t('device.control_panel.reboot')}</SubSectionTitle>
             <ButtonGroup>
-              <Button onClick={handleBatchReboot}>批量重启</Button>
+              <Button onClick={handleBatchReboot}>{t('device.batch_control.batch_reboot')}</Button>
             </ButtonGroup>
           </SubSection>
         </Section>
@@ -292,11 +271,11 @@ const BatchControlPanel: React.FC<BatchControlPanelProps> = ({ onClose }) => {
         {controlTasks.length > 0 && (
           <Section>
             <SectionTitle>
-              任务日志
-              <ClearButton onClick={clearTasks}>清空日志</ClearButton>
+              {t('device.batch_control.task_log')}
+              <ClearButton onClick={clearTasks}>{t('device.batch_control.clear_log')}</ClearButton>
             </SectionTitle>
             <TaskList>
-              {controlTasks.slice(-10).map(task => (
+              {controlTasks.slice(-10).map((task) => (
                 <TaskItem key={task.id}>
                   <TaskInfo>
                     <div>{task.action}</div>
@@ -494,7 +473,7 @@ const TaskInfo = styled.div`
 
 const TaskStatus = styled.div<{ status: string; color: string }>`
   padding: 4px 8px;
-  background: ${props => props.color};
+  background: ${(props) => props.color};
   color: white;
   border-radius: 4px;
   font-size: 12px;

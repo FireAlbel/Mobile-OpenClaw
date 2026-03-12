@@ -5,6 +5,7 @@ import { BuiltinMCPServerNames } from '@types'
 
 import BraveSearchServer from './brave-search'
 import BrowserServer from './browser'
+import DeviceControlServer from './device-control'
 import DiDiMcpServer from './didi-mcp'
 import DifyKnowledgeServer from './dify-knowledge'
 import FetchServer from './fetch'
@@ -52,6 +53,9 @@ export function createInMemoryMCPServer(
     }
     case BuiltinMCPServerNames.browser: {
       return new BrowserServer().server
+    }
+    case BuiltinMCPServerNames.deviceControl: {
+      return new DeviceControlServer().server
     }
     case BuiltinMCPServerNames.hub: {
       return new HubServer().server

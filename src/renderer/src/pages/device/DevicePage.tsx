@@ -3,6 +3,7 @@ import PromptPopup from '@renderer/components/Popups/PromptPopup'
 import { type DeviceInfo, deviceServiceProxy } from '@renderer/services/DeviceServiceProxy'
 import { Button, Card, Collapse, Dropdown, Input, type MenuProps, message, Space, Spin, Tag, Typography } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
 import BatchControlPanel from './BatchControlPanel'
@@ -28,16 +29,18 @@ const DevicePage: React.FC = () => {
   const [showBatchControlPanel, setShowBatchControlPanel] = useState<boolean>(false)
   const [searchKeyword, setSearchKeyword] = useState<string>('')
   const [groups, setGroups] = useState<DeviceGroup[]>([])
-  const [deviceInfo, setDeviceInfo] = useState<Record<string, { title: string; remark: string }>>({})
+  const [deviceInfo, setDeviceInfo] = useState<Record<string, { title: string; remark: string; groupId?: string }>>({})
+
+  const { t } = useTranslation()
 
   const renderStatusTag = (status: DeviceInfo['status']) => {
     switch (status) {
       case 'online':
-        return <Tag color="green">在线</Tag>
+        return <Tag color="green">{t('device.status.online')}</Tag>
       case 'offline':
-        return <Tag color="red">离线</Tag>
+        return <Tag color="red">{t('device.status.offline')}</Tag>
       default:
-        return <Tag color="orange">未授权</Tag>
+        return <Tag color="orange">{t('device.status.unauthorized')}</Tag>
     }
   }
 
@@ -66,7 +69,7 @@ const DevicePage: React.FC = () => {
       })
       setLastRefresh(new Date())
     } catch (err) {
-      setError('获取设备列表失败')
+      setError(t('device.error.fetch_failed') || '获取设备列表失败')
       console.error('Failed to fetch devices:', err)
     } finally {
       if (showLoading) {
@@ -150,7 +153,9 @@ const DevicePage: React.FC = () => {
     } catch (startError: any) {
       const errorMessage = startError.message || String(startError)
       if (errorMessage.includes('INJECT_EVENTS')) {
-        setScrcpyError('设备权限不足：请在设备开发者选项中启用"USB调试(安全设置)"，然后重启设备。如果仍有问题，请尝试重新插拔USB线')
+        setScrcpyError(
+          '设备权限不足：请在设备开发者选项中启用"USB调试(安全设置)"，然后重启设备。如果仍有问题，请尝试重新插拔USB线'
+        )
       } else if (errorMessage.includes('permission')) {
         setScrcpyError('设备权限问题：请检查USB调试权限，可能需要重新授权或更换USB端口')
       } else {
@@ -171,8 +176,8 @@ const DevicePage: React.FC = () => {
   }, [devices, searchKeyword])
 
   const batchMenuItems: MenuProps['items'] = [
-    { key: 'control', label: '批量群控' },
-    { key: 'install', label: '批量应用管理' }
+    { key: 'control', label: t('device.batch_control.title') },
+    { key: 'install', label: t('device.batch_install.title') }
   ]
 
   const handleBatchMenuClick: MenuProps['onClick'] = ({ key }) => {
@@ -185,7 +190,7 @@ const DevicePage: React.FC = () => {
 
   const handleCreateGroup = async () => {
     const groupName = await PromptPopup.show({
-      title: '新建分组',
+      title: t('device.group.create'),
       message: '',
       defaultValue: ''
     })
@@ -196,23 +201,23 @@ const DevicePage: React.FC = () => {
     }
 
     if (groups.some((group) => group.name === trimmedName)) {
-      message.warning('分组名称已存在')
+      message.warning(t('device.group.name_exists'))
       return
     }
 
     const nextGroups = [...groups, { id: `device-group-${Date.now()}`, name: trimmedName }]
     try {
       await saveGroups(nextGroups)
-      message.success('新建分组成功')
+      message.success(t('device.group.create_success'))
     } catch (saveError) {
       console.error('Failed to save groups:', saveError)
-      message.error('分组保存失败')
+      message.error(t('device.group.save_failed'))
     }
   }
 
   const handleEditGroup = async (group: DeviceGroup) => {
     const newName = await PromptPopup.show({
-      title: '编辑分组',
+      title: t('device.group.edit'),
       message: '',
       defaultValue: group.name
     })
@@ -223,24 +228,24 @@ const DevicePage: React.FC = () => {
     }
 
     if (groups.some((item) => item.id !== group.id && item.name === trimmedName)) {
-      message.warning('分组名称已存在')
+      message.warning(t('device.group.name_exists'))
       return
     }
 
     const nextGroups = groups.map((item) => (item.id === group.id ? { ...item, name: trimmedName } : item))
     try {
       await saveGroups(nextGroups)
-      message.success('分组已更新')
+      message.success(t('device.group.update_success'))
     } catch (saveError) {
       console.error('Failed to update groups:', saveError)
-      message.error('分组保存失败')
+      message.error(t('device.group.save_failed'))
     }
   }
 
   const handleDeleteGroup = async (group: DeviceGroup) => {
     const confirmed = await PromptPopup.show({
-      title: '删除分组',
-      message: `请输入"${group.name}"确认删除`,
+      title: t('device.group.delete'),
+      message: t('device.group.delete_confirm', { groupName: group.name }),
       defaultValue: ''
     })
 
@@ -251,10 +256,10 @@ const DevicePage: React.FC = () => {
     const nextGroups = groups.filter((item) => item.id !== group.id)
     try {
       await saveGroups(nextGroups)
-      message.success('分组已删除')
+      message.success(t('device.group.delete_success'))
     } catch (saveError) {
       console.error('Failed to delete groups:', saveError)
-      message.error('分组删除失败')
+      message.error(t('device.group.delete_failed'))
     }
   }
 
@@ -280,7 +285,7 @@ const DevicePage: React.FC = () => {
     }
 
     // 创建分组选择选项
-    const groupOptions = groups.map(group => ({
+    const groupOptions = groups.map((group) => ({
       label: group.name,
       value: group.id
     }))
@@ -312,17 +317,17 @@ const DevicePage: React.FC = () => {
     }
 
     // 显示分组选择弹窗
-    const groupNames = groupOptions.map(opt => opt.label)
+    const groupNames = groupOptions.map((opt) => opt.label)
     const currentGroupId = deviceInfo[device.id]?.groupId || 'none'
-    const currentGroupIndex = groupOptions.findIndex(opt => opt.value === currentGroupId)
+    const currentGroupIndex = groupOptions.findIndex((opt) => opt.value === currentGroupId)
 
     const selectedGroupIndex = await PromptPopup.show({
-      title: '选择设备分组',
-      message: '请选择设备所属分组',
+      title: t('device.device_info.select_group'),
+      message: t('device.device_info.select_group'),
       defaultValue: currentGroupIndex >= 0 ? groupNames[currentGroupIndex] : groupNames[0],
       inputProps: {
         rows: 1,
-        placeholder: '输入分组名称或选择'
+        placeholder: t('device.device_info.select_group')
       }
     })
 
@@ -332,7 +337,7 @@ const DevicePage: React.FC = () => {
 
     // 查找选择的分组
     const selectedGroupName = selectedGroupIndex.trim()
-    const selectedGroup = groupOptions.find(opt => opt.label === selectedGroupName)
+    const selectedGroup = groupOptions.find((opt) => opt.label === selectedGroupName)
     const groupId = selectedGroup && selectedGroup.value !== 'none' ? selectedGroup.value : undefined
 
     const updatedInfo = {
@@ -360,27 +365,25 @@ const DevicePage: React.FC = () => {
     return (
       <Card
         actions={[
-          <Button
-            key="connect"
-            type="link"
-            onClick={() => startScreenMirroring(device.id)}>
+          <Button key="connect" type="link" onClick={() => startScreenMirroring(device.id)}>
             连接
           </Button>,
-          <Button key="command" type="link"onClick={() => {
-            setSelectedDevice(device.id)
-            setShowControlPanel(true)
-          }}>
+          <Button
+            key="command"
+            type="link"
+            onClick={() => {
+              setSelectedDevice(device.id)
+              setShowControlPanel(true)
+            }}>
             指令
           </Button>,
-          <Button key="edit" type="link" onClick={() => handleEditDeviceInfo(device)}>编辑</Button>
+          <Button key="edit" type="link" onClick={() => handleEditDeviceInfo(device)}>
+            编辑
+          </Button>
         ]}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <Card.Meta
-            title={customTitle}
-          />
-          <div>
-            {renderStatusTag(device.status)}
-          </div>
+          <Card.Meta title={customTitle} />
+          <div>{renderStatusTag(device.status)}</div>
         </div>
         <Card.Meta
           description={
@@ -404,21 +407,21 @@ const DevicePage: React.FC = () => {
           allowClear
           value={searchKeyword}
           onChange={(event) => setSearchKeyword(event.target.value)}
-          placeholder="搜索框"
+          placeholder={t('device.search_placeholder')}
           prefix={<SearchOutlined />}
         />
         <Button type="primary" onClick={handleCreateGroup}>
-          新建分组
+          {t('device.create_group')}
         </Button>
         <Dropdown menu={{ items: batchMenuItems, onClick: handleBatchMenuClick }} trigger={['click']}>
-          <Button>批量操作</Button>
+          <Button>{t('device.batch_operations')}</Button>
         </Dropdown>
       </Toolbar>
 
       {error && (
         <ErrorState>
           <Typography.Text type="danger">{error}</Typography.Text>
-          <Button onClick={() => fetchDevices(true)}>重试</Button>
+          <Button onClick={() => fetchDevices(true)}>{t('device.refresh')}</Button>
         </ErrorState>
       )}
 
@@ -439,7 +442,7 @@ const DevicePage: React.FC = () => {
                             event.stopPropagation()
                             handleEditGroup(group)
                           }}>
-                          编辑
+                          {t('device.edit')}
                         </Button>
                         <Button
                           danger
@@ -448,11 +451,11 @@ const DevicePage: React.FC = () => {
                             event.stopPropagation()
                             handleDeleteGroup(group)
                           }}>
-                          删除
+                          {t('device.group.delete')}
                         </Button>
                       </Space>
                     }>
-                    <GroupEmptyHint>暂无分组设备</GroupEmptyHint>
+                    <GroupEmptyHint>{t('device.group.no_group_devices')}</GroupEmptyHint>
                   </Collapse.Panel>
                 ))}
               </GroupCollapse>
@@ -462,9 +465,9 @@ const DevicePage: React.FC = () => {
           {filteredDevices.length === 0 ? (
             groups.length === 0 ? (
               <EmptyState>
-                <Typography.Text type="secondary">暂无设备连接</Typography.Text>
+                <Typography.Text type="secondary">{t('device.no_devices')}</Typography.Text>
                 <Button type="primary" onClick={() => fetchDevices(true)}>
-                  刷新
+                  {t('device.refresh')}
                 </Button>
               </EmptyState>
             ) : null
@@ -474,7 +477,9 @@ const DevicePage: React.FC = () => {
         </Spin>
       </ContentArea>
 
-      <LastRefresh>最后刷新时间: {lastRefresh.toLocaleTimeString()}</LastRefresh>
+      <LastRefresh>
+        {t('device.last_refresh')}: {lastRefresh.toLocaleTimeString()}
+      </LastRefresh>
 
       {scrcpyError && <ScrcpyError>{scrcpyError}</ScrcpyError>}
 
@@ -582,7 +587,6 @@ const DeviceCardList = styled.div`
   flex-direction: column;
   gap: 14px;
 `
-
 
 const EmptyState = styled.div`
   height: 220px;

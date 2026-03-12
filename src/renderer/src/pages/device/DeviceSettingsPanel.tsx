@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
 interface DeviceSettingsPanelProps {
@@ -16,6 +17,7 @@ interface DeviceSettings {
 }
 
 const DeviceSettingsPanel: React.FC<DeviceSettingsPanelProps> = ({ onClose }) => {
+  const { t } = useTranslation()
   const [settings, setSettings] = useState<DeviceSettings>({
     adbPath: 'adb',
     scrcpyPath: 'scrcpy',
@@ -46,7 +48,7 @@ const DeviceSettingsPanel: React.FC<DeviceSettingsPanelProps> = ({ onClose }) =>
     localStorage.setItem('deviceSettings', JSON.stringify(settings))
     // 更新服务实例
     updateServiceInstances()
-    alert('设置已保存')
+    alert(t('device.settings.settings_saved'))
   }
 
   const updateServiceInstances = () => {
@@ -73,7 +75,6 @@ const DeviceSettingsPanel: React.FC<DeviceSettingsPanelProps> = ({ onClose }) =>
     setIsDetecting(false)
   }
 
-
   const resetToDefaults = () => {
     setSettings({
       adbPath: 'adb',
@@ -89,65 +90,69 @@ const DeviceSettingsPanel: React.FC<DeviceSettingsPanelProps> = ({ onClose }) =>
   return (
     <Panel>
       <Header>
-        <Title>设备设置</Title>
+        <Title>{t('device.settings.title')}</Title>
         <CloseButton onClick={onClose}>×</CloseButton>
       </Header>
 
       <Content>
         <Section>
-          <SectionTitle>路径设置</SectionTitle>
+          <SectionTitle>{t('device.settings.path_settings')}</SectionTitle>
 
           <SettingItem>
-            <Label>ADB路径:</Label>
+            <Label>{t('device.settings.adb_path')}:</Label>
             <InputGroup>
               <Input
                 type="text"
                 value={settings.adbPath}
-                onChange={(e) => setSettings(prev => ({ ...prev, adbPath: e.target.value }))}
-                placeholder="ADB可执行文件路径"
+                onChange={(e) => setSettings((prev) => ({ ...prev, adbPath: e.target.value }))}
+                placeholder={t('device.settings.adb_placeholder')}
               />
               {detectedAdbPath && detectedAdbPath !== settings.adbPath && (
-                <Button onClick={() => {
-                  setSettings(prev => ({ ...prev, adbPath: detectedAdbPath }))
-                }}>
-                  使用检测到的路径
+                <Button
+                  onClick={() => {
+                    setSettings((prev) => ({ ...prev, adbPath: detectedAdbPath }))
+                  }}>
+                  {t('device.settings.use_detected_path')}
                 </Button>
               )}
             </InputGroup>
-            {isDetecting && <InfoText>正在检测路径...</InfoText>}
-            {detectedAdbPath && <InfoText>检测到的ADB路径: {detectedAdbPath}</InfoText>}
+            {isDetecting && <InfoText>{t('device.settings.detecting_path')}</InfoText>}
+            {detectedAdbPath && <InfoText>{t('device.settings.adb_detected', { path: detectedAdbPath })}</InfoText>}
           </SettingItem>
 
           <SettingItem>
-            <Label>Scrcpy路径:</Label>
+            <Label>{t('device.settings.scrcpy_path')}:</Label>
             <InputGroup>
               <Input
                 type="text"
                 value={settings.scrcpyPath}
-                onChange={(e) => setSettings(prev => ({ ...prev, scrcpyPath: e.target.value }))}
-                placeholder="Scrcpy可执行文件路径"
+                onChange={(e) => setSettings((prev) => ({ ...prev, scrcpyPath: e.target.value }))}
+                placeholder={t('device.settings.scrcpy_placeholder')}
               />
               {detectedScrcpyPath && detectedScrcpyPath !== settings.scrcpyPath && (
-                <Button onClick={() => {
-                  setSettings(prev => ({ ...prev, scrcpyPath: detectedScrcpyPath }))
-                }}>
-                  使用检测到的路径
+                <Button
+                  onClick={() => {
+                    setSettings((prev) => ({ ...prev, scrcpyPath: detectedScrcpyPath }))
+                  }}>
+                  {t('device.settings.use_detected_path')}
                 </Button>
               )}
             </InputGroup>
-            {detectedScrcpyPath && <InfoText>检测到的Scrcpy路径: {detectedScrcpyPath}</InfoText>}
+            {detectedScrcpyPath && (
+              <InfoText>{t('device.settings.scrcpy_detected', { path: detectedScrcpyPath })}</InfoText>
+            )}
           </SettingItem>
         </Section>
 
         <Section>
-          <SectionTitle>设备刷新设置</SectionTitle>
+          <SectionTitle>{t('device.settings.refresh_settings')}</SectionTitle>
 
           <SettingItem>
-            <Label>刷新间隔 (秒):</Label>
+            <Label>{t('device.settings.refresh_interval')}:</Label>
             <Input
               type="number"
               value={settings.refreshInterval}
-              onChange={(e) => setSettings(prev => ({ ...prev, refreshInterval: parseInt(e.target.value) || 5 }))}
+              onChange={(e) => setSettings((prev) => ({ ...prev, refreshInterval: parseInt(e.target.value) || 5 }))}
               min="1"
               max="60"
             />
@@ -158,57 +163,57 @@ const DeviceSettingsPanel: React.FC<DeviceSettingsPanelProps> = ({ onClose }) =>
               <input
                 type="checkbox"
                 checked={settings.autoStartServer}
-                onChange={(e) => setSettings(prev => ({ ...prev, autoStartServer: e.target.checked }))}
+                onChange={(e) => setSettings((prev) => ({ ...prev, autoStartServer: e.target.checked }))}
               />
-              自动启动ADB服务器
+              {t('device.settings.auto_start_server')}
             </CheckboxLabel>
           </SettingItem>
         </Section>
 
         <Section>
-          <SectionTitle>投屏设置</SectionTitle>
+          <SectionTitle>{t('device.settings.screen_settings')}</SectionTitle>
 
           <SettingItem>
-            <Label>码率 (bps):</Label>
+            <Label>{t('device.settings.bitrate')}:</Label>
             <Input
               type="number"
               value={settings.scrcpyBitrate}
-              onChange={(e) => setSettings(prev => ({ ...prev, scrcpyBitrate: parseInt(e.target.value) || 8000000 }))}
+              onChange={(e) => setSettings((prev) => ({ ...prev, scrcpyBitrate: parseInt(e.target.value) || 8000000 }))}
               min="100000"
               max="50000000"
             />
-            <InfoText>推荐值: 8000000 (8Mbps)</InfoText>
+            <InfoText>{t('device.settings.bitrate_recommendation')}</InfoText>
           </SettingItem>
 
           <SettingItem>
-            <Label>最大尺寸 (像素):</Label>
+            <Label>{t('device.settings.max_size')}:</Label>
             <Input
               type="number"
               value={settings.scrcpyMaxSize}
-              onChange={(e) => setSettings(prev => ({ ...prev, scrcpyMaxSize: parseInt(e.target.value) || 1024 }))}
+              onChange={(e) => setSettings((prev) => ({ ...prev, scrcpyMaxSize: parseInt(e.target.value) || 1024 }))}
               min="480"
               max="3840"
             />
-            <InfoText>推荐值: 1024 (适合大多数屏幕)</InfoText>
+            <InfoText>{t('device.settings.size_recommendation')}</InfoText>
           </SettingItem>
 
           <SettingItem>
-            <Label>最大帧率 (fps):</Label>
+            <Label>{t('device.settings.max_fps')}:</Label>
             <Input
               type="number"
               value={settings.scrcpyMaxFps}
-              onChange={(e) => setSettings(prev => ({ ...prev, scrcpyMaxFps: parseInt(e.target.value) || 30 }))}
+              onChange={(e) => setSettings((prev) => ({ ...prev, scrcpyMaxFps: parseInt(e.target.value) || 30 }))}
               min="1"
               max="120"
             />
-            <InfoText>推荐值: 30 (平衡性能和质量)</InfoText>
+            <InfoText>{t('device.settings.fps_recommendation')}</InfoText>
           </SettingItem>
         </Section>
 
         <ButtonGroup>
-          <Button onClick={saveSettings}>保存设置</Button>
+          <Button onClick={saveSettings}>{t('device.settings.save_settings')}</Button>
           <Button onClick={resetToDefaults} style={{ background: '#666' }}>
-            恢复默认
+            {t('device.settings.reset_defaults')}
           </Button>
         </ButtonGroup>
       </Content>

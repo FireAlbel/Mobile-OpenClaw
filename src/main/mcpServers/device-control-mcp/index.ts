@@ -1,16 +1,11 @@
 #!/usr/bin/env node
 
+import { loggerService } from '@logger'
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  Tool,
-  ToolSchema
-} from '@modelcontextprotocol/sdk/types.js'
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
 import { exec, spawn } from 'child_process'
 import { promisify } from 'util'
-import { loggerService } from '@logger'
 
 const logger = loggerService.withContext('DeviceControlMCP')
 const execAsync = promisify(exec)
@@ -64,7 +59,7 @@ class DeviceControlMCPServer {
     )
 
     this.setupTools()
-    this.server.onerror = (error) => logger.error('MCP Server Error:', error)
+    this.server.onerror = (error) => logger.error('MCP Server Error:', error as Error)
     process.on('SIGINT', async () => {
       await this.cleanup()
       process.exit(0)
@@ -289,52 +284,63 @@ class DeviceControlMCPServer {
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params
 
+      if (!args) {
+        throw new Error('Tool arguments are required')
+      }
+
       try {
         switch (name) {
           case 'list_devices':
             return await this.listDevices()
 
           case 'get_device_info':
-            return await this.getDeviceInfo(args.deviceId)
+            return await this.getDeviceInfo(args.deviceId as string)
 
           case 'start_scrcpy':
-            return await this.startScrcpy(args.deviceId, args.options || {})
+            return await this.startScrcpy(args.deviceId as string, (args.options as any) || {})
 
           case 'stop_scrcpy':
-            return await this.stopScrcpy(args.deviceId)
+            return await this.stopScrcpy(args.deviceId as string)
 
           case 'send_tap':
-            return await this.sendTap(args.deviceId, args.x, args.y)
+            return await this.sendTap(args.deviceId as string, args.x as number, args.y as number)
 
           case 'send_swipe':
-            return await this.sendSwipe(args.deviceId, args.startX, args.startY, args.endX, args.endY, args.duration)
+            return await this.sendSwipe(
+              args.deviceId as string,
+              args.startX as number,
+              args.startY as number,
+              args.endX as number,
+              args.endY as number,
+              (args.duration as number) || 500
+            )
 
           case 'send_text':
-            return await this.sendText(args.deviceId, args.text)
+            return await this.sendText(args.deviceId as string, args.text as string)
 
           case 'send_key_event':
-            return await this.sendKeyEvent(args.deviceId, args.keyCode)
+            return await this.sendKeyEvent(args.deviceId as string, args.keyCode as number)
 
           case 'install_apk':
-            return await this.installApk(args.deviceId, args.apkPath)
+            return await this.installApk(args.deviceId as string, args.apkPath as string)
 
           case 'uninstall_package':
-            return await this.uninstallPackage(args.deviceId, args.packageName)
+            return await this.uninstallPackage(args.deviceId as string, args.packageName as string)
 
           case 'execute_adb_command':
-            return await this.executeAdbCommand(args.deviceId, args.command)
+            return await this.executeAdbCommand(args.deviceId as string, args.command as string)
 
           case 'get_screenshot':
-            return await this.getScreenshot(args.deviceId)
+            return await this.getScreenshot(args.deviceId as string)
 
           case 'get_device_property':
-            return await this.getDeviceProperty(args.deviceId, args.property)
+            return await this.getDeviceProperty(args.deviceId as string, args.property as string)
 
           default:
             throw new Error(`Unknown tool: ${name}`)
         }
       } catch (error) {
-        logger.error(`Error executing tool ${name}:`, error)
+        logger.error(`Error executing tool ${name}:`, error as Error)
         throw error
       }
     })
@@ -376,7 +382,7 @@ class DeviceControlMCPServer {
               deviceInfo.screenSize = screenSize || undefined
               deviceInfo.density = density || undefined
             } catch (error) {
-              logger.warn('Failed to get device details:', error)
+              logger.warn('Failed to get device details:', error as Error)
             }
 
             devices.push(deviceInfo)
@@ -429,12 +435,13 @@ class DeviceControlMCPServer {
             ;(deviceInfo as any)[key] = value
           }
         } catch (error) {
-          logger.debug(`Failed to get property ${prop}:`, error)
+          logger.debug(`Failed to get property ${prop}:`, error as Error)
         }
       }
 
       // Get screen size
-      deviceInfo.screenSize = await this.getScreenSize(deviceId)
+      const screenSize = await this.getScreenSize(deviceId)
+      deviceInfo.screenSize = screenSize || undefined
 
       // Get device status
       try {
@@ -488,7 +495,7 @@ class DeviceControlMCPServer {
       if (options.windowWidth !== undefined) scrcpyArgs.push('--window-width', String(options.windowWidth))
       if (options.windowHeight !== undefined) scrcpyArgs.push('--window-height', String(options.windowHeight))
 
-      logger.info('Starting Scrcpy with args:', { args: scrcpyArgs })
+      logger.info('Starting Scrcpy with args:', { args: scrcpyArgs } as any)
 
       const process = spawn(this.scrcpyPath, scrcpyArgs, {
         windowsHide: false,
@@ -502,7 +509,7 @@ class DeviceControlMCPServer {
         const text = String(chunk)
         stderrOutput += text
         if (text.trim()) {
-          logger.info('Scrcpy stderr:', text.trim())
+          logger.info('Scrcpy stderr:', text.trim() as any)
         }
       })
 
@@ -547,7 +554,7 @@ class DeviceControlMCPServer {
           ]
         }
       } catch (error) {
-        logger.error(`Failed to stop Scrcpy:`, error)
+        logger.error(`Failed to stop Scrcpy:`, error as Error)
         throw new Error(`Failed to stop Scrcpy: ${error}`)
       }
     }
@@ -580,7 +587,14 @@ class DeviceControlMCPServer {
     }
   }
 
-  private async sendSwipe(deviceId: string, startX: number, startY: number, endX: number, endY: number, duration: number = 500): Promise<any> {
+  private async sendSwipe(
+    deviceId: string,
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
+    duration: number = 500
+  ): Promise<any> {
     try {
       const command = `${this.adbPath} -s ${deviceId} shell input swipe ${startX} ${startY} ${endX} ${endY} ${duration}`
       await execAsync(command)
@@ -722,7 +736,7 @@ class DeviceControlMCPServer {
       const { stdout } = await execAsync(`${this.adbPath} -s ${deviceId} shell getprop ${property}`)
       return stdout.trim() || null
     } catch (error) {
-      logger.debug(`Failed to get device property ${property}:`, error)
+      logger.debug(`Failed to get device property ${property}:`, error as Error)
       return null
     }
   }
@@ -733,7 +747,7 @@ class DeviceControlMCPServer {
       const match = stdout.match(/Physical size: (\d+x\d+)/)
       return match ? match[1] : null
     } catch (error) {
-      logger.debug('Failed to get screen size:', error)
+      logger.debug('Failed to get screen size:', error as Error)
       return null
     }
   }
@@ -751,7 +765,7 @@ class DeviceControlMCPServer {
         return 'unauthorized'
       }
     } catch (error) {
-      logger.error('Failed to check device status:', error)
+      logger.error('Failed to check device status:', error as Error)
       return 'offline'
     }
   }
@@ -763,7 +777,7 @@ class DeviceControlMCPServer {
         process.kill()
         logger.info(`Cleaned up Scrcpy process for device: ${deviceId}`)
       } catch (error) {
-        logger.error(`Failed to cleanup Scrcpy process for device ${deviceId}:`, error)
+        logger.error(`Failed to cleanup Scrcpy process for device ${deviceId}:`, error as Error)
       }
     }
     this.scrcpyProcesses.clear()
@@ -782,6 +796,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  logger.error('Server error:', error)
+  logger.error('Server error:', error as Error)
   process.exit(1)
 })

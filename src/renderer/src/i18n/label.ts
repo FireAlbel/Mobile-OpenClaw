@@ -349,6 +349,7 @@ const builtInMcpDescriptionKeyMap: Record<BuiltinMCPServerName, string> = {
   [BuiltinMCPServerNames.didiMCP]: 'settings.mcp.builtinServersDescriptions.didi_mcp',
   [BuiltinMCPServerNames.browser]: 'settings.mcp.builtinServersDescriptions.browser',
   [BuiltinMCPServerNames.nowledgeMem]: 'settings.mcp.builtinServersDescriptions.nowledge_mem',
+  [BuiltinMCPServerNames.deviceControl]: 'settings.mcp.builtinServersDescriptions.device_control',
   [BuiltinMCPServerNames.hub]: 'settings.mcp.builtinServersDescriptions.hub'
 } as const
 

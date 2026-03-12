@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 import { deviceServiceProxy } from '@renderer/services/DeviceServiceProxy'
 
@@ -15,6 +16,7 @@ interface InstallTask {
 }
 
 const BatchInstallPanel: React.FC<BatchInstallPanelProps> = ({ onClose }) => {
+  const { t } = useTranslation()
   const [devices, setDevices] = useState<any[]>([])
   const [selectedDevices, setSelectedDevices] = useState<string[]>([])
   const [apkFiles, setApkFiles] = useState<File[]>([])
@@ -23,7 +25,6 @@ const BatchInstallPanel: React.FC<BatchInstallPanelProps> = ({ onClose }) => {
   const [uninstallTasks, setUninstallTasks] = useState<InstallTask[]>([])
   const [activeTab, setActiveTab] = useState<'install' | 'uninstall'>('install')
 
-
   useEffect(() => {
     fetchDevices()
   }, [])
@@ -31,7 +32,7 @@ const BatchInstallPanel: React.FC<BatchInstallPanelProps> = ({ onClose }) => {
   const fetchDevices = async () => {
     const devices = await deviceServiceProxy.getDevices()
     setDevices(devices)
-    setSelectedDevices(devices.map(d => d.id))
+    setSelectedDevices(devices.map((d) => d.id))
   }
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,16 +43,12 @@ const BatchInstallPanel: React.FC<BatchInstallPanelProps> = ({ onClose }) => {
   }
 
   const handleDeviceSelect = (serial: string) => {
-    setSelectedDevices(prev =>
-      prev.includes(serial)
-        ? prev.filter(s => s !== serial)
-        : [...prev, serial]
-    )
+    setSelectedDevices((prev) => (prev.includes(serial) ? prev.filter((s) => s !== serial) : [...prev, serial]))
   }
 
   const handleInstall = async () => {
     if (apkFiles.length === 0 || selectedDevices.length === 0) {
-      alert('请选择APK文件和至少一个设备')
+      alert(t('device.batch_install.select_apk_and_devices'))
       return
     }
 
@@ -72,33 +69,31 @@ const BatchInstallPanel: React.FC<BatchInstallPanelProps> = ({ onClose }) => {
 
     // 执行安装任务
     for (const task of tasks) {
-      setInstallTasks(prev => prev.map(t =>
-        t.id === task.id ? { ...t, status: 'installing' } : t
-      ))
+      setInstallTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, status: 'installing' } : t)))
 
       try {
         // 获取文件路径
-        const file = apkFiles.find(f => f.name === task.packageName)
+        const file = apkFiles.find((f) => f.name === task.packageName)
         const filePath = file ? (file as any).path || file.name : task.packageName
         const success = await deviceServiceProxy.installApk(task.serial, filePath)
-        setInstallTasks(prev => prev.map(t =>
-          t.id === task.id ? { ...t, status: success ? 'success' : 'failed' } : t
-        ))
+        setInstallTasks((prev) =>
+          prev.map((t) => (t.id === task.id ? { ...t, status: success ? 'success' : 'failed' } : t))
+        )
       } catch (error: any) {
-        setInstallTasks(prev => prev.map(t =>
-          t.id === task.id ? { ...t, status: 'failed', error: error.message } : t
-        ))
+        setInstallTasks((prev) =>
+          prev.map((t) => (t.id === task.id ? { ...t, status: 'failed', error: error.message } : t))
+        )
       }
     }
   }
 
   const handleUninstall = async () => {
     if (!uninstallPackageName.trim() || selectedDevices.length === 0) {
-      alert('请输入包名和至少选择一个设备')
+      alert(t('device.batch_install.input_package_and_devices'))
       return
     }
 
-    const tasks: InstallTask[] = selectedDevices.map(serial => ({
+    const tasks: InstallTask[] = selectedDevices.map((serial) => ({
       id: `${serial}_${uninstallPackageName}_${Date.now()}`,
       serial,
       packageName: uninstallPackageName,
@@ -109,59 +104,59 @@ const BatchInstallPanel: React.FC<BatchInstallPanelProps> = ({ onClose }) => {
 
     // 执行卸载任务
     for (const task of tasks) {
-      setUninstallTasks(prev => prev.map(t =>
-        t.id === task.id ? { ...t, status: 'installing' } : t
-      ))
+      setUninstallTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, status: 'installing' } : t)))
 
       try {
         const success = await deviceServiceProxy.uninstallPackage(task.serial, task.packageName)
-        setUninstallTasks(prev => prev.map(t =>
-          t.id === task.id ? { ...t, status: success ? 'success' : 'failed' } : t
-        ))
+        setUninstallTasks((prev) =>
+          prev.map((t) => (t.id === task.id ? { ...t, status: success ? 'success' : 'failed' } : t))
+        )
       } catch (error: any) {
-        setUninstallTasks(prev => prev.map(t =>
-          t.id === task.id ? { ...t, status: 'failed', error: error.message } : t
-        ))
+        setUninstallTasks((prev) =>
+          prev.map((t) => (t.id === task.id ? { ...t, status: 'failed', error: error.message } : t))
+        )
       }
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'success': return '#52c41a'
-      case 'failed': return '#ff4d4f'
-      case 'installing': return '#1890ff'
-      default: return '#d9d9d9'
+      case 'success':
+        return '#52c41a'
+      case 'failed':
+        return '#ff4d4f'
+      case 'installing':
+        return '#1890ff'
+      default:
+        return '#d9d9d9'
     }
   }
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'success': return '成功'
-      case 'failed': return '失败'
-      case 'installing': return '进行中'
-      default: return '等待'
+      case 'success':
+        return '成功'
+      case 'failed':
+        return '失败'
+      case 'installing':
+        return '进行中'
+      default:
+        return '等待'
     }
   }
 
   return (
     <Panel>
       <Header>
-        <Title>批量应用管理</Title>
+        <Title>{t('device.batch_install.title')}</Title>
         <CloseButton onClick={onClose}>×</CloseButton>
       </Header>
 
       <Tabs>
-        <Tab
-          active={activeTab === 'install'}
-          onClick={() => setActiveTab('install')}
-        >
+        <Tab active={activeTab === 'install'} onClick={() => setActiveTab('install')}>
           批量安装
         </Tab>
-        <Tab
-          active={activeTab === 'uninstall'}
-          onClick={() => setActiveTab('uninstall')}
-        >
+        <Tab active={activeTab === 'uninstall'} onClick={() => setActiveTab('uninstall')}>
           批量卸载
         </Tab>
       </Tabs>
@@ -170,12 +165,7 @@ const BatchInstallPanel: React.FC<BatchInstallPanelProps> = ({ onClose }) => {
         {activeTab === 'install' ? (
           <Section>
             <SectionTitle>选择APK文件</SectionTitle>
-            <FileInput
-              type="file"
-              accept=".apk"
-              multiple
-              onChange={handleFileSelect}
-            />
+            <FileInput type="file" accept=".apk" multiple onChange={handleFileSelect} />
 
             {apkFiles.length > 0 && (
               <FileList>
@@ -188,7 +178,7 @@ const BatchInstallPanel: React.FC<BatchInstallPanelProps> = ({ onClose }) => {
 
             <SectionTitle>选择设备</SectionTitle>
             <DeviceList>
-              {devices.map(device => (
+              {devices.map((device) => (
                 <DeviceItem key={device.id}>
                   <label>
                     <input
@@ -209,7 +199,7 @@ const BatchInstallPanel: React.FC<BatchInstallPanelProps> = ({ onClose }) => {
             {installTasks.length > 0 && (
               <TaskList>
                 <h4>安装任务:</h4>
-                {installTasks.map(task => (
+                {installTasks.map((task) => (
                   <TaskItem key={task.id}>
                     <TaskInfo>
                       <div>{task.packageName}</div>
@@ -225,17 +215,17 @@ const BatchInstallPanel: React.FC<BatchInstallPanelProps> = ({ onClose }) => {
           </Section>
         ) : (
           <Section>
-            <SectionTitle>输入要卸载的包名</SectionTitle>
+            <SectionTitle>{t('device.batch_install.package_name')}</SectionTitle>
             <Input
               type="text"
-              placeholder="例如: com.example.app"
+              placeholder={t('device.batch_install.package_name')}
               value={uninstallPackageName}
               onChange={(e) => setUninstallPackageName(e.target.value)}
             />
 
-            <SectionTitle>选择设备</SectionTitle>
+            <SectionTitle>{t('device.batch_install.select_devices')}</SectionTitle>
             <DeviceList>
-              {devices.map(device => (
+              {devices.map((device) => (
                 <DeviceItem key={device.id}>
                   <label>
                     <input
@@ -249,14 +239,16 @@ const BatchInstallPanel: React.FC<BatchInstallPanelProps> = ({ onClose }) => {
               ))}
             </DeviceList>
 
-            <ActionButton onClick={handleUninstall} disabled={!uninstallPackageName.trim() || selectedDevices.length === 0}>
+            <ActionButton
+              onClick={handleUninstall}
+              disabled={!uninstallPackageName.trim() || selectedDevices.length === 0}>
               开始卸载
             </ActionButton>
 
             {uninstallTasks.length > 0 && (
               <TaskList>
                 <h4>卸载任务:</h4>
-                {uninstallTasks.map(task => (
+                {uninstallTasks.map((task) => (
                   <TaskItem key={task.id}>
                     <TaskInfo>
                       <div>{task.packageName}</div>
@@ -326,12 +318,12 @@ const Tabs = styled.div`
 const Tab = styled.button<{ active: boolean }>`
   flex: 1;
   padding: 12px;
-  background: ${props => props.active ? 'var(--color-background-soft)' : 'transparent'};
+  background: ${(props) => (props.active ? 'var(--color-background-soft)' : 'transparent')};
   border: none;
   cursor: pointer;
   font-weight: 500;
-  color: ${props => props.active ? 'var(--color-primary)' : 'var(--color-text)'};
-  border-bottom: 2px solid ${props => props.active ? 'var(--color-primary)' : 'transparent'};
+  color: ${(props) => (props.active ? 'var(--color-primary)' : 'var(--color-text)')};
+  border-bottom: 2px solid ${(props) => (props.active ? 'var(--color-primary)' : 'transparent')};
 
   &:hover {
     background: var(--color-background-soft);
@@ -434,7 +426,7 @@ const TaskInfo = styled.div`
 
 const TaskStatus = styled.div<{ status: string; color: string }>`
   padding: 4px 8px;
-  background: ${props => props.color};
+  background: ${(props) => props.color};
   color: white;
   border-radius: 4px;
   font-size: 12px;

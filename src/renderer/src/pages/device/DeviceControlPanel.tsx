@@ -1,5 +1,6 @@
 import { deviceServiceProxy } from '@renderer/services/DeviceServiceProxy'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
 interface DeviceControlPanelProps {
@@ -8,6 +9,7 @@ interface DeviceControlPanelProps {
 }
 
 const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose }) => {
+  const { t } = useTranslation()
   const [log, setLog] = useState<string[]>([])
   const [inputText, setInputText] = useState<string>('')
   const [tapX, setTapX] = useState<string>('500')
@@ -17,10 +19,9 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
   const [swipeX2, setSwipeX2] = useState<string>('500')
   const [swipeY2, setSwipeY2] = useState<string>('500')
 
-
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString()
-    setLog(prev => [...prev, `[${timestamp}] ${message}`])
+    setLog((prev) => [...prev, `[${timestamp}] ${message}`])
   }
 
   const handleTap = async () => {
@@ -28,16 +29,16 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
     const y = parseInt(tapY)
 
     if (isNaN(x) || isNaN(y)) {
-      addLog('坐标格式错误')
+      addLog(t('device.control_panel.coordinate_error'))
       return
     }
 
-    addLog(`执行点击操作: (${x}, ${y})`)
+    addLog(`${t('device.control_panel.tap')} (${x}, ${y})`)
     try {
       await deviceServiceProxy.sendTap(serial, x, y)
-      addLog('点击操作成功')
+      addLog(t('device.control_panel.tap_success'))
     } catch (error) {
-      addLog('点击操作失败')
+      addLog(t('device.control_panel.tap_failed'))
     }
   }
 
@@ -48,31 +49,31 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
     const y2 = parseInt(swipeY2)
 
     if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) {
-      addLog('坐标格式错误')
+      addLog(t('device.control_panel.coordinate_error'))
       return
     }
 
-    addLog(`执行滑动操作: (${x1}, ${y1}) -> (${x2}, ${y2})`)
+    addLog(`${t('device.control_panel.swipe')}: (${x1}, ${y1}) -> (${x2}, ${y2})`)
     try {
       await deviceServiceProxy.sendSwipe(serial, x1, y1, x2, y2)
-      addLog('滑动操作成功')
+      addLog(t('device.control_panel.swipe_success'))
     } catch (error) {
-      addLog('滑动操作失败')
+      addLog(t('device.control_panel.swipe_failed'))
     }
   }
 
   const handleInputText = async () => {
     if (!inputText.trim()) {
-      addLog('请输入文本')
+      addLog(t('device.control_panel.text_empty'))
       return
     }
 
-    addLog(`输入文本: "${inputText}"`)
+    addLog(`${t('device.control_panel.input')}: "${inputText}"`)
     try {
       await deviceServiceProxy.sendText(serial, inputText)
-      addLog('文本输入成功')
+      addLog(t('device.control_panel.input_success'))
     } catch (error) {
-      addLog('文本输入失败')
+      addLog(t('device.control_panel.input_failed'))
     }
     setInputText('')
   }
@@ -87,7 +88,10 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
 
     addLog(`按下 ${keyNames[key]} 键`)
     try {
-      await deviceServiceProxy.sendKeyEvent(serial, key === 'home' ? 3 : key === 'back' ? 4 : key === 'menu' ? 82 : key === 'power' ? 26 : 3)
+      await deviceServiceProxy.sendKeyEvent(
+        serial,
+        key === 'home' ? 3 : key === 'back' ? 4 : key === 'menu' ? 82 : key === 'power' ? 26 : 3
+      )
       addLog(`${keyNames[key]} 键操作成功`)
     } catch (error) {
       addLog(`${keyNames[key]} 键操作失败`)
@@ -95,20 +99,20 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
   }
 
   const handleReboot = async () => {
-    addLog('正在重启设备...')
+    addLog(t('device.control_panel.reboot_sending'))
     // 暂时移除重启功能，因为主进程中没有实现
     const success = false
     addLog(success ? '重启命令已发送' : '重启命令发送失败')
   }
 
   const handleScreenshot = async () => {
-    addLog('截图功能暂未实现')
+    addLog(t('device.control_panel.screenshot_not_implemented'))
   }
 
   return (
     <ControlPanel>
       <Header>
-        <Title>设备控制 - {serial}</Title>
+        <Title>{t('device.control_panel.title', { serial })}</Title>
         <CloseButton onClick={onClose}>×</CloseButton>
       </Header>
 
@@ -117,19 +121,9 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
           <SectionTitle>点击操作</SectionTitle>
           <InputGroup>
             <Label>X坐标:</Label>
-            <Input
-              type="number"
-              value={tapX}
-              onChange={(e) => setTapX(e.target.value)}
-              placeholder="X坐标"
-            />
+            <Input type="number" value={tapX} onChange={(e) => setTapX(e.target.value)} placeholder="X坐标" />
             <Label>Y坐标:</Label>
-            <Input
-              type="number"
-              value={tapY}
-              onChange={(e) => setTapY(e.target.value)}
-              placeholder="Y坐标"
-            />
+            <Input type="number" value={tapY} onChange={(e) => setTapY(e.target.value)} placeholder="Y坐标" />
             <Button onClick={handleTap}>点击</Button>
           </InputGroup>
         </Section>
@@ -138,68 +132,51 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
           <SectionTitle>滑动操作</SectionTitle>
           <InputGroup>
             <Label>起点X:</Label>
-            <Input
-              type="number"
-              value={swipeX1}
-              onChange={(e) => setSwipeX1(e.target.value)}
-              placeholder="起点X"
-            />
+            <Input type="number" value={swipeX1} onChange={(e) => setSwipeX1(e.target.value)} placeholder="起点X" />
             <Label>起点Y:</Label>
-            <Input
-              type="number"
-              value={swipeY1}
-              onChange={(e) => setSwipeY1(e.target.value)}
-              placeholder="起点Y"
-            />
+            <Input type="number" value={swipeY1} onChange={(e) => setSwipeY1(e.target.value)} placeholder="起点Y" />
           </InputGroup>
           <InputGroup>
             <Label>终点X:</Label>
-            <Input
-              type="number"
-              value={swipeX2}
-              onChange={(e) => setSwipeX2(e.target.value)}
-              placeholder="终点X"
-            />
+            <Input type="number" value={swipeX2} onChange={(e) => setSwipeX2(e.target.value)} placeholder="终点X" />
             <Label>终点Y:</Label>
-            <Input
-              type="number"
-              value={swipeY2}
-              onChange={(e) => setSwipeY2(e.target.value)}
-              placeholder="终点Y"
-            />
+            <Input type="number" value={swipeY2} onChange={(e) => setSwipeY2(e.target.value)} placeholder="终点Y" />
             <Button onClick={handleSwipe}>滑动</Button>
           </InputGroup>
         </Section>
 
         <Section>
-          <SectionTitle>文本输入</SectionTitle>
+          <SectionTitle>{t('device.control_panel.input')}</SectionTitle>
           <InputGroup>
             <Input
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="输入文本"
+              placeholder={t('device.batch_control.input_text')}
               style={{ flex: 1 }}
             />
-            <Button onClick={handleInputText}>输入</Button>
+            <Button onClick={handleInputText}>{t('device.control_panel.input')}</Button>
           </InputGroup>
         </Section>
 
         <Section>
-          <SectionTitle>按键操作</SectionTitle>
+          <SectionTitle>
+            {t('device.control_panel.home')}, {t('device.control_panel.back')}, {t('device.control_panel.menu')},{' '}
+            {t('device.control_panel.power')}
+          </SectionTitle>
           <ButtonGroup>
-            <Button onClick={() => handlePressKey('home')}>主页</Button>
-            <Button onClick={() => handlePressKey('back')}>返回</Button>
-            <Button onClick={() => handlePressKey('menu')}>菜单</Button>
-            <Button onClick={() => handlePressKey('power')}>电源</Button>
+            <Button onClick={() => handlePressKey('home')}>{t('device.control_panel.home')}</Button>
+            <Button onClick={() => handlePressKey('back')}>{t('device.control_panel.back')}</Button>
+            <Button onClick={() => handlePressKey('menu')}>{t('device.control_panel.menu')}</Button>
+            <Button onClick={() => handlePressKey('power')}>{t('device.control_panel.power')}</Button>
           </ButtonGroup>
         </Section>
 
         <Section>
-          <SectionTitle>系统操作</SectionTitle>
+          <SectionTitle>{t('device.control_panel.system_operations')}</SectionTitle>
           <ButtonGroup>
-            <Button onClick={handleReboot}>重启</Button>
-            <Button onClick={handleScreenshot}>截图</Button>
+            <Button onClick={handleReboot}>{t('device.control_panel.reboot')}</Button>
+            <Button onClick={handleScreenshot}>{t('device.control_panel.screenshot')}</Button>
           </ButtonGroup>
         </Section>
 
@@ -209,9 +186,7 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
             {log.length === 0 ? (
               <LogMessage>暂无操作日志</LogMessage>
             ) : (
-              log.map((entry, index) => (
-                <LogMessage key={index}>{entry}</LogMessage>
-              ))
+              log.map((entry, index) => <LogMessage key={index}>{entry}</LogMessage>)
             )}
           </LogContainer>
         </Section>

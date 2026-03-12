@@ -3234,7 +3234,8 @@
     "xirang": "State Cloud Xirang",
     "yi": "Yi",
     "zhinao": "360AI",
-    "zhipu": "BigModel"
+    "zhipu": "BigModel",
+    "openclaw": "OpenClaw"
   },
   "restore": {
     "confirm": {
@@ -5107,6 +5108,7 @@
         "secret_access_key_help": "Your AWS Secret Access Key, please keep it secure",
         "title": "AWS Bedrock Configuration"
       },
+      "openclaw": "OpenClaw",
       "azure": {
         "apiversion": {
           "tip": "The API version of Azure OpenAI, if you want to use Response API, please enter the v1 version"

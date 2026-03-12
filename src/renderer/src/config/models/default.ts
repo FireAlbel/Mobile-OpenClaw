@@ -1960,5 +1960,13 @@ export const SYSTEM_MODELS: Record<SystemProviderId | 'defaultModel', Model[]> =
       provider: 'mimo',
       group: 'Mimo'
     }
+  ],
+  openclaw: [
+    {
+      id: 'openclaw',
+      name: 'openclaw',
+      provider: 'openclaw',
+      group: 'Openclaw'
+    }
   ]
 }

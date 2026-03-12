@@ -3255,6 +3255,17 @@ const migrateConfig = {
       logger.error('migrate 199 error', error as Error)
       return state
     }
+  },
+  '200': (state: RootState) => {
+    try {
+      // Add openclaw provider if not exists
+      addProvider(state, 'openclaw')
+      logger.info('migrate 200 success')
+      return state
+    } catch (error) {
+      logger.error('migrate 200 error', error as Error)
+      return state
+    }
   }
 }
 

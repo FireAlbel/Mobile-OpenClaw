@@ -16,7 +16,8 @@ export const ProviderTypeSchema = z.enum([
   'vertex-anthropic',
   'new-api',
   'gateway',
-  'ollama'
+  'ollama',
+  'openclaw'
 ])
 
 export type ProviderType = z.infer<typeof ProviderTypeSchema>
@@ -199,7 +200,8 @@ export const SystemProviderIdSchema = z.enum([
   'sophnet',
   'gateway',
   'cerebras',
-  'mimo'
+  'mimo',
+  'openclaw'
 ])
 
 export type SystemProviderId = z.infer<typeof SystemProviderIdSchema>
@@ -269,7 +271,8 @@ export const SystemProviderIds = {
   huggingface: 'huggingface',
   gateway: 'gateway',
   cerebras: 'cerebras',
-  mimo: 'mimo'
+  mimo: 'mimo',
+  openclaw: 'openclaw'
 } as const satisfies Record<SystemProviderId, SystemProviderId>
 
 type SystemProviderIdTypeMap = typeof SystemProviderIds

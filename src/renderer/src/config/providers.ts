@@ -42,6 +42,7 @@ import O3ProviderLogo from '@renderer/assets/images/providers/o3.png'
 import OcoolAiProviderLogo from '@renderer/assets/images/providers/ocoolai.png'
 import OllamaProviderLogo from '@renderer/assets/images/providers/ollama.png'
 import OpenAiProviderLogo from '@renderer/assets/images/providers/openai.png'
+import OpenClawLogo from '@renderer/assets/images/providers/openclaw.png'
 import OpenRouterProviderLogo from '@renderer/assets/images/providers/openrouter.png'
 import PerplexityProviderLogo from '@renderer/assets/images/providers/perplexity.png'
 import Ph8ProviderLogo from '@renderer/assets/images/providers/ph8.png'
@@ -708,6 +709,16 @@ export const SYSTEM_PROVIDERS_CONFIG: Record<SystemProviderId, SystemProvider> =
     models: SYSTEM_MODELS.mimo,
     isSystem: true,
     enabled: false
+  },
+  openclaw: {
+    id: 'openclaw',
+    name: 'openClaw',
+    type: 'openclaw',
+    apiKey: '',
+    apiHost: 'https://127.0.0.1:18790',
+    models: SYSTEM_MODELS.openclaw,
+    isSystem: true,
+    enabled: false
   }
 } as const
 
@@ -777,7 +788,8 @@ export const PROVIDER_LOGO_MAP: AtLeast<SystemProviderId, string> = {
   sophnet: SophnetProviderLogo,
   gateway: AIGatewayProviderLogo,
   cerebras: CerebrasProviderLogo,
-  mimo: MiMoProviderLogo
+  mimo: MiMoProviderLogo,
+  openclaw: OpenClawLogo
 } as const
 
 export function getProviderLogo(providerId: string) {
@@ -1458,6 +1470,17 @@ export const PROVIDER_URLS: Record<SystemProviderId, ProviderUrls> = {
       apiKey: 'https://platform.xiaomimimo.com/#/console/usage',
       docs: 'https://platform.xiaomimimo.com/#/docs/welcome',
       models: 'https://platform.xiaomimimo.com/'
+    }
+  },
+  openclaw: {
+    api: {
+      url: 'http://127.0.0.1:18790'
+    },
+    websites: {
+      official: 'https://github.com/CherryHQ/openclaw',
+      apiKey: 'https://github.com/CherryHQ/openclaw',
+      docs: 'https://github.com/CherryHQ/openclaw',
+      models: 'https://github.com/CherryHQ/openclaw'
     }
   }
 }

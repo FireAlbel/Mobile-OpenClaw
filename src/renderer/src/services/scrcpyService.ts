@@ -1,4 +1,5 @@
 import { loggerService } from '@logger'
+
 import { deviceServiceProxy } from './DeviceServiceProxy'
 
 const logger = loggerService.withContext('ScrcpyService')

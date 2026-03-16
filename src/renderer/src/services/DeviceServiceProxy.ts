@@ -32,12 +32,15 @@ export class DeviceServiceProxy {
     }
   }
 
-  async startScrcpy(deviceId: string, options?: {
-    port?: number
-    maxSize?: number
-    bitRate?: number
-    maxFps?: number
-  }): Promise<{ port: number }> {
+  async startScrcpy(
+    deviceId: string,
+    options?: {
+      port?: number
+      maxSize?: number
+      bitRate?: number
+      maxFps?: number
+    }
+  ): Promise<{ port: number }> {
     try {
       const result = await window.electron.ipcRenderer.invoke('device:startScrcpy', deviceId, options)
       return result
@@ -73,7 +76,14 @@ export class DeviceServiceProxy {
     }
   }
 
-  async sendSwipe(deviceId: string, x1: number, y1: number, x2: number, y2: number, duration: number = 500): Promise<void> {
+  async sendSwipe(
+    deviceId: string,
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    duration: number = 500
+  ): Promise<void> {
     try {
       await window.electron.ipcRenderer.invoke('device:sendSwipe', deviceId, x1, y1, x2, y2, duration)
     } catch (error) {

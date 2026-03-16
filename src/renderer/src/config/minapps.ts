@@ -583,7 +583,7 @@ const loadAllMinApps = async (): Promise<MinAppType[]> => {
 }
 
 // 初始化时加载自定义小应用
-loadAllMinApps().catch(error => {
+loadAllMinApps().catch((error) => {
   console.error('Failed to load all mini apps:', error)
 })
 
@@ -591,4 +591,4 @@ function updateAllMinApps(apps: MinAppType[]) {
   allMinApps = apps
 }
 
-export { allMinApps, loadAllMinApps,loadCustomMiniApp, ORIGIN_DEFAULT_MIN_APPS, updateAllMinApps }
+export { allMinApps, loadAllMinApps, loadCustomMiniApp, ORIGIN_DEFAULT_MIN_APPS, updateAllMinApps }

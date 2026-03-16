@@ -1403,7 +1403,6 @@
     "you": "You"
   },
   "device": {
-    "batch_control": "Batch Control",
     "batch_control": {
       "back": "Back",
       "batch_back": "Batch Back",
@@ -1442,7 +1441,6 @@
       "x_coordinate": "X Coordinate",
       "y_coordinate": "Y Coordinate"
     },
-    "batch_install": "Batch Install",
     "batch_install": {
       "input_package_and_devices": "Please enter package name and select at least one device",
       "install_tab": "Batch Install",
@@ -3215,6 +3213,7 @@
     "ocoolai": "ocoolAI",
     "ollama": "Ollama",
     "openai": "OpenAI",
+    "openclaw": "OpenClaw",
     "openrouter": "OpenRouter",
     "ovms": "Intel OVMS",
     "perplexity": "Perplexity",
@@ -3234,8 +3233,7 @@
     "xirang": "State Cloud Xirang",
     "yi": "Yi",
     "zhinao": "360AI",
-    "zhipu": "BigModel",
-    "openclaw": "OpenClaw"
+    "zhipu": "BigModel"
   },
   "restore": {
     "confirm": {
@@ -5108,7 +5106,6 @@
         "secret_access_key_help": "Your AWS Secret Access Key, please keep it secure",
         "title": "AWS Bedrock Configuration"
       },
-      "openclaw": "OpenClaw",
       "azure": {
         "apiversion": {
           "tip": "The API version of Azure OpenAI, if you want to use Response API, please enter the v1 version"
@@ -5217,6 +5214,7 @@
       "openai": {
         "alert": "OpenAI Provider no longer support the old calling methods. If using a third-party API, please create a new service provider."
       },
+      "openclaw": "OpenClaw",
       "remove_duplicate_keys": "Remove Duplicate Keys",
       "remove_invalid_keys": "Remove Invalid Keys",
       "search": "Search Providers...",

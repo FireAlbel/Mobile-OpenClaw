@@ -355,6 +355,10 @@ const builtInMcpDescriptionKeyMap: Record<BuiltinMCPServerName, string> = {
 } as const
 
 export const getBuiltInMcpServerDescriptionLabel = (key: string): string => {
+  // Skip device_control key to avoid error
+  if (key === 'device_control') {
+    return t('settings.mcp.builtinServersDescriptions.no')
+  }
   return getLabel(builtInMcpDescriptionKeyMap, key, t('settings.mcp.builtinServersDescriptions.no'))
 }
 

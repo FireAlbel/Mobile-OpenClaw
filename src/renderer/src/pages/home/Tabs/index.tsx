@@ -13,9 +13,9 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
+import DevicePage from '../../device/DevicePage'
 import Assistants from './AssistantsTab'
 import Topics from './TopicsTab'
-import DevicePage from '../../device/DevicePage'
 
 interface Props {
   activeAssistant: Assistant

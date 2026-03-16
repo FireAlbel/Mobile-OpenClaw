@@ -174,8 +174,21 @@ class DeviceService {
 
   async executeAdbCommand(deviceId: string, command: string): Promise<string> {
     try {
-      const fullCommand = `${this.adbPath} -s ${deviceId} ${command}`
-      logger.info('Executing ADB command:', { command: fullCommand })
+      // 验证 deviceId
+      if (!deviceId || deviceId === 'undefined') {
+        throw new Error('Invalid deviceId: deviceId is required and cannot be undefined')
+      }
+
+      // 检查 command 是否包含了 adb 命令前缀，如果是则提取实际的命令部分
+      let actualCommand = command
+      const adbPrefixMatch = command.match(/^adb\s+-s\s+\S+\s+(.+)$/)
+      if (adbPrefixMatch) {
+        logger.warn('Command contains adb prefix, extracting actual command:', { command })
+        actualCommand = adbPrefixMatch[1]
+      }
+
+      const fullCommand = `${this.adbPath} -s ${deviceId} ${actualCommand}`
+      logger.info('Executing ADB command:', { deviceId, command: actualCommand, fullCommand })
       const { stdout, stderr } = await execAsync(fullCommand)
 
       if (stderr) {
@@ -184,7 +197,7 @@ class DeviceService {
 
       return stdout.trim()
     } catch (error) {
-      logger.error('ADB command failed:', { error })
+      logger.error('ADB command failed:', { error, deviceId, command })
       throw error
     }
   }
@@ -220,8 +233,8 @@ class DeviceService {
         '--video-bit-rate',
         String(bitRate),
         '--max-fps',
-        String(maxFps)
-        // 移除可能导致问题的参数，使用最简配置
+        String(maxFps),
+        '--no-audio' // 禁用音频，避免音频设备初始化错误
       ]
 
       const fullCommand = `${this.scrcpyPath} ${scrcpyArgs.join(' ')}`
@@ -229,8 +242,8 @@ class DeviceService {
 
       // 使用直接执行方式，避免shell转义问题
       const process = spawn(this.scrcpyPath, scrcpyArgs, {
-        windowsHide: false,  // 不隐藏窗口
-        shell: false  // 不使用shell执行
+        windowsHide: false, // 不隐藏窗口
+        shell: false // 不使用shell执行
       })
 
       let stderrOutput = ''

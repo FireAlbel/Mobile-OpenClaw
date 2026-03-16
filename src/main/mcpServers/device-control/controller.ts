@@ -256,7 +256,21 @@ export class DeviceController {
     command: string
   ): Promise<{ success: boolean; output: string; error?: string }> {
     try {
-      const fullCommand = `${this.adbPath} -s ${deviceId} ${command}`
+      // 验证 deviceId
+      if (!deviceId || deviceId === 'undefined') {
+        throw new Error('Invalid deviceId: deviceId is required and cannot be undefined')
+      }
+
+      // 检查 command 是否包含了 adb 命令前缀，如果是则提取实际的命令部分
+      let actualCommand = command
+      const adbPrefixMatch = command.match(/^adb\s+-s\s+\S+\s+(.+)$/)
+      if (adbPrefixMatch) {
+        logger.warn('Command contains adb prefix, extracting actual command:', { command })
+        actualCommand = adbPrefixMatch[1]
+      }
+
+      const fullCommand = `${this.adbPath} -s ${deviceId} ${actualCommand}`
+      logger.info('Executing ADB command:', { deviceId, command: actualCommand, fullCommand })
       const { stdout, stderr } = await execAsync(fullCommand)
 
       return {

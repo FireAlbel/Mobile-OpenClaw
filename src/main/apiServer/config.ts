@@ -31,7 +31,7 @@ class ConfigManager {
             throw error
           }
           // 等待一段时间后重试
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempts))
+          await new Promise((resolve) => setTimeout(resolve, 1000 * attempts))
         }
       }
 

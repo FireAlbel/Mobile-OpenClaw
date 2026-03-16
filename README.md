@@ -24,6 +24,10 @@ Deploy automated customer support solutions across multiple devices, enabling ef
 
 ## 📸 Feature Screenshots
 
+### Phone Screen Mirroring
+![Phone Screen Mirroring](docs/assets/images/手机投屏展示.jpg)
+*Real-time phone screen mirroring and display functionality*
+
 ### Main Chat Interface
 ![Chat Interface](docs/assets/images/聊天主界面.png)
 *Main chat interface with device control capabilities*

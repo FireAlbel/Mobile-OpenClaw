@@ -1,4 +1,4 @@
-import { DeviceController } from './controller'
+import type { DeviceController } from './controller'
 
 export const toolDefinitions = [
   {
@@ -341,7 +341,12 @@ export const toolHandlers: Record<string, (controller: DeviceController, args: a
   },
 
   execute_adb_command: async (controller: DeviceController, args: any) => {
-    const result = await controller.executeAdbCommand(args.deviceId, args.command)
+    // Support both deviceId (single) and deviceIds (array) parameters
+    const deviceId = args.deviceId || (args.deviceIds && args.deviceIds[0])
+    if (!deviceId) {
+      throw new Error('deviceId or deviceIds is required')
+    }
+    const result = await controller.executeAdbCommand(deviceId, args.command)
     return {
       content: [
         {

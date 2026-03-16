@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { deviceServiceProxy } from '@renderer/services/DeviceServiceProxy'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
-import { deviceServiceProxy } from '@renderer/services/DeviceServiceProxy'
 
 interface BatchControlPanelProps {
   onClose: () => void

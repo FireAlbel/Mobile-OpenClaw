@@ -1403,7 +1403,6 @@
     "you": "用户"
   },
   "device": {
-    "batch_control": "批量群控",
     "batch_control": {
       "back": "返回",
       "batch_back": "批量返回",
@@ -1442,7 +1441,6 @@
       "x_coordinate": "X坐标",
       "y_coordinate": "Y坐标"
     },
-    "batch_install": "批量应用管理",
     "batch_install": {
       "input_package_and_devices": "请输入包名和至少选择一个设备",
       "install_tab": "批量安装",
@@ -1475,9 +1473,7 @@
       "input": "输入",
       "input_failed": "文本输入失败",
       "input_success": "文本输入成功",
-      "key": "键",
       "key_failed": "{{key}} 键操作失败",
-      "key_operations": "按键操作",
       "key_success": "{{key}} 键操作成功",
       "log_title": "日志",
       "menu": "菜单",
@@ -1490,7 +1486,6 @@
       "swipe": "滑动",
       "swipe_failed": "滑动操作失败",
       "swipe_success": "滑动操作成功",
-      "system_operations": "系统操作",
       "tap": "点击",
       "tap_failed": "点击操作失败",
       "tap_success": "点击操作成功",
@@ -1509,9 +1504,6 @@
       "update_success": "设备信息已更新"
     },
     "edit": "编辑",
-    "error": {
-      "fetch_failed": "获取设备列表失败"
-    },
     "group": {
       "create": "新建分组",
       "create_success": "新建分组成功",
@@ -3221,6 +3213,7 @@
     "ocoolai": "ocoolAI",
     "ollama": "Ollama",
     "openai": "OpenAI",
+    "openclaw": "OpenClaw(龙虾)",
     "openrouter": "OpenRouter",
     "ovms": "Intel OVMS",
     "perplexity": "Perplexity",
@@ -3240,8 +3233,7 @@
     "xirang": "天翼云息壤",
     "yi": "零一万物",
     "zhinao": "360 智脑",
-    "zhipu": "智谱开放平台",
-    "openclaw": "OpenClaw(龙虾)"
+    "zhipu": "智谱开放平台"
   },
   "restore": {
     "confirm": {
@@ -5222,6 +5214,7 @@
       "openai": {
         "alert": "OpenAI 服务商不再支持旧的调用方式，如果使用第三方 API 请新建服务商"
       },
+      "openclaw": "[to be translated]:OpenClaw",
       "remove_duplicate_keys": "移除重复密钥",
       "remove_invalid_keys": "删除无效密钥",
       "search": "搜索模型平台...",

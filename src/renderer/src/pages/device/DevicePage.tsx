@@ -30,6 +30,7 @@ const DevicePage: React.FC = () => {
   const [searchKeyword, setSearchKeyword] = useState<string>('')
   const [groups, setGroups] = useState<DeviceGroup[]>([])
   const [deviceInfo, setDeviceInfo] = useState<Record<string, { title: string; remark: string; groupId?: string }>>({})
+  const [connectingDevice, setConnectingDevice] = useState<string | null>(null)
 
   const { t } = useTranslation()
 
@@ -146,22 +147,28 @@ const DevicePage: React.FC = () => {
   const startScreenMirroring = async (serial: string) => {
     try {
       setScrcpyError(null)
+      setConnectingDevice(serial)
       const result = await deviceServiceProxy.startScrcpy(serial)
       if (!result.port) {
         setScrcpyError('启动投屏失败')
       }
     } catch (startError: any) {
       const errorMessage = startError.message || String(startError)
+      let userMessage = ''
       if (errorMessage.includes('INJECT_EVENTS')) {
-        setScrcpyError(
+        userMessage =
           '设备权限不足：请在设备开发者选项中启用"USB调试(安全设置)"，然后重启设备。如果仍有问题，请尝试重新插拔USB线'
-        )
       } else if (errorMessage.includes('permission')) {
-        setScrcpyError('设备权限问题：请检查USB调试权限，可能需要重新授权或更换USB端口')
+        userMessage = '设备权限问题：请检查USB调试权限，可能需要重新授权或更换USB端口'
+      } else if (errorMessage.includes('exited')) {
+        userMessage = '进程异常退出：scrcpy 启动后立即退出，可能是设备兼容性问题或权限不足'
       } else {
-        setScrcpyError('启动投屏时发生错误：' + errorMessage + '。请尝试在命令行中直接运行scrcpy命令进行对比测试。')
+        userMessage = '启动投屏时发生错误：' + errorMessage + '。请尝试在命令行中直接运行scrcpy命令进行对比测试。'
       }
       console.error('Failed to start screen mirroring:', startError)
+      setScrcpyError(userMessage)
+    } finally {
+      setConnectingDevice(null)
     }
   }
 
@@ -360,13 +367,14 @@ const DevicePage: React.FC = () => {
 
   const renderDeviceCard = (device: DeviceInfo) => {
     const customTitle = deviceInfo[device.id]?.title || device.name || '未命名设备'
-    const customRemark = deviceInfo[device.id]?.remark || getDeviceRemark(device)
+    const customRemark = deviceInfo[device.id]?.remark || ''
+    const isConnecting = connectingDevice === device.id
 
     return (
       <Card
         actions={[
           <Button key="connect" type="link" onClick={() => startScreenMirroring(device.id)}>
-            连接
+            {isConnecting ? '连接中...' : '连接'}
           </Button>,
           <Button
             key="command"

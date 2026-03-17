@@ -1,7 +1,20 @@
 import { SearchOutlined } from '@ant-design/icons'
 import PromptPopup from '@renderer/components/Popups/PromptPopup'
 import { type DeviceInfo, deviceServiceProxy } from '@renderer/services/DeviceServiceProxy'
-import { Button, Card, Collapse, Dropdown, Input, type MenuProps, message, Space, Spin, Tag, Typography } from 'antd'
+import {
+  Button,
+  Card,
+  Collapse,
+  Dropdown,
+  Input,
+  type MenuProps,
+  message,
+  Modal,
+  Space,
+  Spin,
+  Tag,
+  Typography
+} from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -31,6 +44,7 @@ const DevicePage: React.FC = () => {
   const [groups, setGroups] = useState<DeviceGroup[]>([])
   const [deviceInfo, setDeviceInfo] = useState<Record<string, { title: string; remark: string; groupId?: string }>>({})
   const [connectingDevice, setConnectingDevice] = useState<string | null>(null)
+  const [showScrcpyErrorModal, setShowScrcpyErrorModal] = useState<boolean>(false)
 
   const { t } = useTranslation()
 
@@ -150,23 +164,29 @@ const DevicePage: React.FC = () => {
       setConnectingDevice(serial)
       const result = await deviceServiceProxy.startScrcpy(serial)
       if (!result.port) {
-        setScrcpyError('启动投屏失败')
+        setScrcpyError(t('device.error.start_failed') || '启动投屏失败')
+        setShowScrcpyErrorModal(true)
       }
     } catch (startError: any) {
       const errorMessage = startError.message || String(startError)
       let userMessage = ''
       if (errorMessage.includes('INJECT_EVENTS')) {
         userMessage =
+          t('device.error.inject_events') ||
           '设备权限不足：请在设备开发者选项中启用"USB调试(安全设置)"，然后重启设备。如果仍有问题，请尝试重新插拔USB线'
       } else if (errorMessage.includes('permission')) {
-        userMessage = '设备权限问题：请检查USB调试权限，可能需要重新授权或更换USB端口'
+        userMessage = t('device.error.permission') || '设备权限问题：请检查USB调试权限，可能需要重新授权或更换USB端口'
       } else if (errorMessage.includes('exited')) {
-        userMessage = '进程异常退出：scrcpy 启动后立即退出，可能是设备兼容性问题或权限不足'
+        userMessage = t('device.error.exited') || '进程异常退出：scrcpy 启动后立即退出，可能是设备兼容性问题或权限不足'
       } else {
-        userMessage = '启动投屏时发生错误：' + errorMessage + '。请尝试在命令行中直接运行scrcpy命令进行对比测试。'
+        userMessage =
+          (t('device.error.generic') || '启动投屏时发生错误：') +
+          errorMessage +
+          (t('device.error.try_command') || '。请尝试在命令行中直接运行scrcpy命令进行对比测试。')
       }
       console.error('Failed to start screen mirroring:', startError)
       setScrcpyError(userMessage)
+      setShowScrcpyErrorModal(true)
     } finally {
       setConnectingDevice(null)
     }
@@ -489,7 +509,19 @@ const DevicePage: React.FC = () => {
         {t('device.last_refresh')}: {lastRefresh.toLocaleTimeString()}
       </LastRefresh>
 
-      {scrcpyError && <ScrcpyError>{scrcpyError}</ScrcpyError>}
+      <Modal
+        title={t('device.connection_error_title') || '连接错误'}
+        open={showScrcpyErrorModal}
+        onCancel={() => setShowScrcpyErrorModal(false)}
+        footer={[
+          <Button key="close" onClick={() => setShowScrcpyErrorModal(false)}>
+            {t('common.close') || '关闭'}
+          </Button>
+        ]}
+        centered
+        width={500}>
+        <Typography.Text type="danger">{scrcpyError}</Typography.Text>
+      </Modal>
 
       {showBatchControlPanel && <BatchControlPanel onClose={() => setShowBatchControlPanel(false)} />}
 
@@ -620,14 +652,6 @@ const LastRefresh = styled.div`
   margin-top: 10px;
   color: var(--color-text-tertiary);
   font-size: 12px;
-`
-
-const ScrcpyError = styled.div`
-  margin-top: 8px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  color: var(--color-error);
-  background: var(--color-error-soft);
 `
 
 export default DevicePage

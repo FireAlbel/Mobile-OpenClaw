@@ -1523,6 +1523,15 @@
     "port": "[to be translated]:Port",
     "refresh": "[to be translated]:Refresh",
     "remark": "[to be translated]:Remark",
+    "error": {
+      "start_failed": "[to be translated]:Failed to start screen mirroring",
+      "inject_events": "[to be translated]:Insufficient device permissions: Please enable \"USB debugging (security settings)\" in developer options on your device, then restart the device. If issues persist, try reconnecting the USB cable",
+      "permission": "[to be translated]:Device permission issue: Please check USB debugging permissions, you may need to re-authorize or change USB ports",
+      "exited": "[to be translated]:Process exited abnormally: scrcpy exited immediately after startup, possibly due to device compatibility issues or insufficient permissions",
+      "generic": "[to be translated]:Error starting screen mirroring: ",
+      "try_command": "[to be translated]:. Please try running the scrcpy command directly in the terminal for comparison testing."
+    },
+    "connection_error_title": "[to be translated]:Connection Error",
     "scrcpy": {
       "permission_error": "[to be translated]:Insufficient device permissions: Please enable \"USB debugging (security settings)\" in developer options on your device, then restart the device. If issues persist, try reconnecting the USB cable",
       "permission_issue": "[to be translated]:Device permission issue: Please check USB debugging permissions, you may need to re-authorize or change USB ports",

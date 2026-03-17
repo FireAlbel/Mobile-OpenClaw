@@ -1523,6 +1523,15 @@
     "port": "端口",
     "refresh": "刷新",
     "remark": "备注",
+    "error": {
+      "start_failed": "启动投屏失败",
+      "inject_events": "设备权限不足：请在设备开发者选项中启用\"USB调试(安全设置)\"，然后重启设备。如果仍有问题，请尝试重新插拔USB线",
+      "permission": "设备权限问题：请检查USB调试权限，可能需要重新授权或更换USB端口",
+      "exited": "进程异常退出：scrcpy 启动后立即退出，可能是设备兼容性问题或权限不足",
+      "generic": "启动投屏时发生错误：",
+      "try_command": "。请尝试在命令行中直接运行scrcpy命令进行对比测试。"
+    },
+    "connection_error_title": "连接错误",
     "scrcpy": {
       "permission_error": "设备权限不足：请在设备开发者选项中启用\"USB调试(安全设置)\"，然后重启设备。如果仍有问题，请尝试重新插拔USB线",
       "permission_issue": "设备权限问题：请检查USB调试权限，可能需要重新授权或更换USB端口",

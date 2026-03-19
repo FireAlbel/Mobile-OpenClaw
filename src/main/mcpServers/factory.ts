@@ -14,6 +14,7 @@ import HubServer from './hub'
 import MemoryServer from './memory'
 import PythonServer from './python'
 import ThinkingServer from './sequentialthinking'
+import UiAutomator2Server from './uiautomator2'
 
 const logger = loggerService.withContext('MCPFactory')
 
@@ -59,6 +60,9 @@ export function createInMemoryMCPServer(
     }
     case BuiltinMCPServerNames.hub: {
       return new HubServer().server
+    }
+    case BuiltinMCPServerNames.uiautomator2: {
+      return new UiAutomator2Server().server
     }
     default:
       throw new Error(`Unknown in-memory MCP server: ${name}`)

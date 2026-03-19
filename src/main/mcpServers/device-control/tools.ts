@@ -71,56 +71,7 @@ export const toolDefinitions = [
       required: ['deviceId']
     }
   },
-  {
-    name: 'send_tap',
-    description: 'Send tap event to device',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        deviceId: {
-          type: 'string',
-          description: 'The device serial number'
-        },
-        x: { type: 'number', description: 'X coordinate' },
-        y: { type: 'number', description: 'Y coordinate' }
-      },
-      required: ['deviceId', 'x', 'y']
-    }
-  },
-  {
-    name: 'send_swipe',
-    description: 'Send swipe event to device',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        deviceId: {
-          type: 'string',
-          description: 'The device serial number'
-        },
-        startX: { type: 'number', description: 'Start X coordinate' },
-        startY: { type: 'number', description: 'Start Y coordinate' },
-        endX: { type: 'number', description: 'End X coordinate' },
-        endY: { type: 'number', description: 'End Y coordinate' },
-        duration: { type: 'number', description: 'Swipe duration in milliseconds (default: 500)' }
-      },
-      required: ['deviceId', 'startX', 'startY', 'endX', 'endY']
-    }
-  },
-  {
-    name: 'send_text',
-    description: 'Send text input to device',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        deviceId: {
-          type: 'string',
-          description: 'The device serial number'
-        },
-        text: { type: 'string', description: 'Text to input' }
-      },
-      required: ['deviceId', 'text']
-    }
-  },
+
   {
     name: 'send_key_event',
     description: 'Send key event to device',
@@ -251,49 +202,6 @@ export const toolHandlers: Record<string, (controller: DeviceController, args: a
 
   stop_scrcpy: async (controller: DeviceController, args: any) => {
     const result = await controller.stopScrcpy(args.deviceId)
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(result, null, 2)
-        }
-      ]
-    }
-  },
-
-  send_tap: async (controller: DeviceController, args: any) => {
-    const result = await controller.sendTap(args.deviceId, args.x, args.y)
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(result, null, 2)
-        }
-      ]
-    }
-  },
-
-  send_swipe: async (controller: DeviceController, args: any) => {
-    const result = await controller.sendSwipe(
-      args.deviceId,
-      args.startX,
-      args.startY,
-      args.endX,
-      args.endY,
-      args.duration
-    )
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(result, null, 2)
-        }
-      ]
-    }
-  },
-
-  send_text: async (controller: DeviceController, args: any) => {
-    const result = await controller.sendText(args.deviceId, args.text)
     return {
       content: [
         {

@@ -10,7 +10,7 @@ export class DeviceIpcHandler {
     // 扫描设备
     ipcMain.handle('device:scanDevices', async (): Promise<DeviceInfo[]> => {
       try {
-        logger.info('Scanning devices via IPC', {})
+        // logger.info('Scanning devices via IPC', {})
         const devices = await deviceService.scanDevices()
         return devices
       } catch (error) {

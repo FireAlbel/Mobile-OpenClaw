@@ -2,6 +2,8 @@ import { loggerService } from '@logger'
 import { exec, spawn } from 'child_process'
 import { promisify } from 'util'
 
+import { toolPathManager } from '../../utils/tool-paths'
+
 const logger = loggerService.withContext('DeviceControlController')
 const execAsync = promisify(exec)
 
@@ -35,13 +37,12 @@ export interface ScrcpyOptions {
 }
 
 export class DeviceController {
-  private adbPath: string = 'adb'
-  private scrcpyPath: string = 'scrcpy'
   private scrcpyProcesses: Map<string, any> = new Map()
 
   async listDevices(): Promise<DeviceInfo[]> {
     try {
-      const { stdout } = await execAsync(`${this.adbPath} devices -l`)
+      const adbPath = toolPathManager.getToolPaths().adbPath
+      const { stdout } = await execAsync(`${adbPath} devices -l`)
       const lines = stdout.trim().split('\n').slice(1) // Skip header
 
       const devices: DeviceInfo[] = []
@@ -77,12 +78,13 @@ export class DeviceController {
 
   async getDeviceInfo(deviceId: string): Promise<Record<string, any>> {
     try {
+      const adbPath = toolPathManager.getToolPaths().adbPath
       const commands = [
-        `${this.adbPath} -s ${deviceId} shell getprop ro.product.model`,
-        `${this.adbPath} -s ${deviceId} shell getprop ro.product.brand`,
-        `${this.adbPath} -s ${deviceId} shell getprop ro.build.version.release`,
-        `${this.adbPath} -s ${deviceId} shell wm size`,
-        `${this.adbPath} -s ${deviceId} shell wm density`
+        `${adbPath} -s ${deviceId} shell getprop ro.product.model`,
+        `${adbPath} -s ${deviceId} shell getprop ro.product.brand`,
+        `${adbPath} -s ${deviceId} shell getprop ro.build.version.release`,
+        `${adbPath} -s ${deviceId} shell wm size`,
+        `${adbPath} -s ${deviceId} shell wm density`
       ]
 
       const results = await Promise.allSettled(
@@ -128,8 +130,9 @@ export class DeviceController {
       if (options.windowWidth) args.push(`--window-width=${options.windowWidth}`)
       if (options.windowHeight) args.push(`--window-height=${options.windowHeight}`)
 
+      const scrcpyPath = toolPathManager.getToolPaths().scrcpyPath
       // Start scrcpy process
-      const scrcpyProcess = spawn(this.scrcpyPath, args, {
+      const scrcpyProcess = spawn(scrcpyPath, args, {
         stdio: ['ignore', 'pipe', 'pipe']
       })
 
@@ -168,49 +171,10 @@ export class DeviceController {
     }
   }
 
-  async sendTap(deviceId: string, x: number, y: number): Promise<{ success: boolean; message: string }> {
-    try {
-      const command = `${this.adbPath} -s ${deviceId} shell input tap ${x} ${y}`
-      await execAsync(command)
-      return { success: true, message: 'Tap event sent successfully' }
-    } catch (error) {
-      logger.error('Failed to send tap', error as Error)
-      throw new Error('Failed to send tap: ' + (error as Error).message)
-    }
-  }
-
-  async sendSwipe(
-    deviceId: string,
-    startX: number,
-    startY: number,
-    endX: number,
-    endY: number,
-    duration: number = 500
-  ): Promise<{ success: boolean; message: string }> {
-    try {
-      const command = `${this.adbPath} -s ${deviceId} shell input swipe ${startX} ${startY} ${endX} ${endY} ${duration}`
-      await execAsync(command)
-      return { success: true, message: 'Swipe event sent successfully' }
-    } catch (error) {
-      logger.error('Failed to send swipe', error as Error)
-      throw new Error('Failed to send swipe: ' + (error as Error).message)
-    }
-  }
-
-  async sendText(deviceId: string, text: string): Promise<{ success: boolean; message: string }> {
-    try {
-      const command = `${this.adbPath} -s ${deviceId} shell input text "${text.replace(/"/g, '\\"')}"`
-      await execAsync(command)
-      return { success: true, message: 'Text sent successfully' }
-    } catch (error) {
-      logger.error('Failed to send text', error as Error)
-      throw new Error('Failed to send text: ' + (error as Error).message)
-    }
-  }
-
   async sendKeyEvent(deviceId: string, keyCode: number): Promise<{ success: boolean; message: string }> {
     try {
-      const command = `${this.adbPath} -s ${deviceId} shell input keyevent ${keyCode}`
+      const adbPath = toolPathManager.getToolPaths().adbPath
+      const command = `${adbPath} -s ${deviceId} shell input keyevent ${keyCode}`
       await execAsync(command)
       return { success: true, message: 'Key event sent successfully' }
     } catch (error) {
@@ -221,7 +185,8 @@ export class DeviceController {
 
   async installApk(deviceId: string, apkPath: string): Promise<{ success: boolean; message: string }> {
     try {
-      const command = `${this.adbPath} -s ${deviceId} install "${apkPath}"`
+      const adbPath = toolPathManager.getToolPaths().adbPath
+      const command = `${adbPath} -s ${deviceId} install "${apkPath}"`
       const { stderr } = await execAsync(command)
 
       if (stderr && !stderr.includes('Success')) {
@@ -237,7 +202,8 @@ export class DeviceController {
 
   async uninstallPackage(deviceId: string, packageName: string): Promise<{ success: boolean; message: string }> {
     try {
-      const command = `${this.adbPath} -s ${deviceId} uninstall ${packageName}`
+      const adbPath = toolPathManager.getToolPaths().adbPath
+      const command = `${adbPath} -s ${deviceId} uninstall ${packageName}`
       const { stderr } = await execAsync(command)
 
       if (stderr && !stderr.includes('Success')) {
@@ -269,7 +235,8 @@ export class DeviceController {
         actualCommand = adbPrefixMatch[1]
       }
 
-      const fullCommand = `${this.adbPath} -s ${deviceId} ${actualCommand}`
+      const adbPath = toolPathManager.getToolPaths().adbPath
+      const fullCommand = `${adbPath} -s ${deviceId} ${actualCommand}`
       logger.info('Executing ADB command:', { deviceId, command: actualCommand, fullCommand })
       const { stdout, stderr } = await execAsync(fullCommand)
 
@@ -286,13 +253,14 @@ export class DeviceController {
 
   async getScreenshot(deviceId: string): Promise<{ success: boolean; base64Image?: string; message?: string }> {
     try {
+      const adbPath = toolPathManager.getToolPaths().adbPath
       // Take screenshot and save to device
       const screenshotPath = '/sdcard/screenshot.png'
-      await execAsync(`${this.adbPath} -s ${deviceId} shell screencap -p ${screenshotPath}`)
+      await execAsync(`${adbPath} -s ${deviceId} shell screencap -p ${screenshotPath}`)
 
       // Pull screenshot from device
       const localPath = `/tmp/screenshot_${deviceId}_${Date.now()}.png`
-      await execAsync(`${this.adbPath} -s ${deviceId} pull ${screenshotPath} ${localPath}`)
+      await execAsync(`${adbPath} -s ${deviceId} pull ${screenshotPath} ${localPath}`)
 
       // Read file and convert to base64
       const fs = require('fs')
@@ -301,7 +269,7 @@ export class DeviceController {
 
       // Clean up
       fs.unlinkSync(localPath)
-      await execAsync(`${this.adbPath} -s ${deviceId} shell rm ${screenshotPath}`)
+      await execAsync(`${adbPath} -s ${deviceId} shell rm ${screenshotPath}`)
 
       return {
         success: true,
@@ -315,7 +283,8 @@ export class DeviceController {
 
   async getDeviceProperty(deviceId: string, property: string): Promise<{ success: boolean; value: string }> {
     try {
-      const command = `${this.adbPath} -s ${deviceId} shell getprop ${property}`
+      const adbPath = toolPathManager.getToolPaths().adbPath
+      const command = `${adbPath} -s ${deviceId} shell getprop ${property}`
       const { stdout } = await execAsync(command)
 
       return {

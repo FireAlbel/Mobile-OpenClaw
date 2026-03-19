@@ -1466,6 +1466,7 @@
     "brand": "[to be translated]:Brand",
     "command": "[to be translated]:Command",
     "connect": "[to be translated]:Connect",
+    "connection_error_title": "[to be translated]:Connection Error",
     "control_panel": {
       "back": "[to be translated]:Back",
       "coordinate_error": "[to be translated]:Invalid coordinate format",
@@ -1504,6 +1505,14 @@
       "update_success": "[to be translated]:Device information updated successfully"
     },
     "edit": "[to be translated]:Edit",
+    "error": {
+      "exited": "[to be translated]:Process exited abnormally: scrcpy exited immediately after startup, possibly due to device compatibility issues or insufficient permissions",
+      "generic": "[to be translated]:Error starting screen mirroring: ",
+      "inject_events": "[to be translated]:Insufficient device permissions: Please enable \"USB debugging (security settings)\" in developer options on your device, then restart the device. If issues persist, try reconnecting the USB cable",
+      "permission": "[to be translated]:Device permission issue: Please check USB debugging permissions, you may need to re-authorize or change USB ports",
+      "start_failed": "[to be translated]:Failed to start screen mirroring",
+      "try_command": "[to be translated]:. Please try running the scrcpy command directly in the terminal for comparison testing."
+    },
     "group": {
       "create": "[to be translated]:Create Group",
       "create_success": "[to be translated]:Group created successfully",
@@ -4534,7 +4543,8 @@
         "no": "Χωρίς περιγραφή",
         "nowledge_mem": "Απαιτεί την εφαρμογή Nowledge Mem να εκτελείται τοπικά. Διατηρεί συνομιλίες με AI, εργαλεία, σημειώσεις, πράκτορες και αρχεία σε ιδιωτική μνήμη στον υπολογιστή σας. Κάντε λήψη από https://mem.nowledge.co/",
         "python": "Εκτελέστε κώδικα Python σε ένα ασφαλές περιβάλλον sandbox. Χρησιμοποιήστε το Pyodide για να εκτελέσετε Python, υποστηρίζοντας την πλειονότητα των βιβλιοθηκών της τυπικής βιβλιοθήκης και των πακέτων επιστημονικού υπολογισμού",
-        "sequentialthinking": "ένας εξυπηρετητής MCP που υλοποιείται, παρέχοντας εργαλεία για δυναμική και αναστοχαστική επίλυση προβλημάτων μέσω δομημένων διαδικασιών σκέψης"
+        "sequentialthinking": "ένας εξυπηρετητής MCP που υλοποιείται, παρέχοντας εργαλεία για δυναμική και αναστοχαστική επίλυση προβλημάτων μέσω δομημένων διαδικασιών σκέψης",
+        "uiautomator2": "[to be translated]:Android device automation using UiAutomator2 framework. Provides advanced UI interaction capabilities with human-like randomness to avoid bot detection, and proper Chinese text input support."
       },
       "command": "Εντολή",
       "config_description": "Ρυθμίζει το πλαίσιο συντονισμού πρωτοκόλλων διακομιστή",

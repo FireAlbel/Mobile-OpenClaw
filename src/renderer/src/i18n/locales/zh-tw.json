@@ -1466,6 +1466,7 @@
     "brand": "[to be translated]:Brand",
     "command": "[to be translated]:Command",
     "connect": "[to be translated]:Connect",
+    "connection_error_title": "[to be translated]:Connection Error",
     "control_panel": {
       "back": "[to be translated]:Back",
       "coordinate_error": "[to be translated]:Invalid coordinate format",
@@ -1504,6 +1505,14 @@
       "update_success": "[to be translated]:Device information updated successfully"
     },
     "edit": "[to be translated]:Edit",
+    "error": {
+      "exited": "[to be translated]:Process exited abnormally: scrcpy exited immediately after startup, possibly due to device compatibility issues or insufficient permissions",
+      "generic": "[to be translated]:Error starting screen mirroring: ",
+      "inject_events": "[to be translated]:Insufficient device permissions: Please enable \"USB debugging (security settings)\" in developer options on your device, then restart the device. If issues persist, try reconnecting the USB cable",
+      "permission": "[to be translated]:Device permission issue: Please check USB debugging permissions, you may need to re-authorize or change USB ports",
+      "start_failed": "[to be translated]:Failed to start screen mirroring",
+      "try_command": "[to be translated]:. Please try running the scrcpy command directly in the terminal for comparison testing."
+    },
     "group": {
       "create": "[to be translated]:Create Group",
       "create_success": "[to be translated]:Group created successfully",
@@ -1523,15 +1532,6 @@
     "port": "[to be translated]:Port",
     "refresh": "[to be translated]:Refresh",
     "remark": "[to be translated]:Remark",
-    "error": {
-      "start_failed": "[to be translated]:Failed to start screen mirroring",
-      "inject_events": "[to be translated]:Insufficient device permissions: Please enable \"USB debugging (security settings)\" in developer options on your device, then restart the device. If issues persist, try reconnecting the USB cable",
-      "permission": "[to be translated]:Device permission issue: Please check USB debugging permissions, you may need to re-authorize or change USB ports",
-      "exited": "[to be translated]:Process exited abnormally: scrcpy exited immediately after startup, possibly due to device compatibility issues or insufficient permissions",
-      "generic": "[to be translated]:Error starting screen mirroring: ",
-      "try_command": "[to be translated]:. Please try running the scrcpy command directly in the terminal for comparison testing."
-    },
-    "connection_error_title": "[to be translated]:Connection Error",
     "scrcpy": {
       "permission_error": "[to be translated]:Insufficient device permissions: Please enable \"USB debugging (security settings)\" in developer options on your device, then restart the device. If issues persist, try reconnecting the USB cable",
       "permission_issue": "[to be translated]:Device permission issue: Please check USB debugging permissions, you may need to re-authorize or change USB ports",
@@ -4543,7 +4543,8 @@
         "no": "無描述",
         "nowledge_mem": "需要本機執行 Nowledge Mem 應用程式。將 AI 對話、工具、筆記、代理和檔案保存在電腦上的私人記憶體中。請從 https://mem.nowledge.co/ 下載",
         "python": "在安全的沙盒環境中執行 Python 程式碼。使用 Pyodide 執行 Python，支援大多數標準函式庫和科學計算套件",
-        "sequentialthinking": "一個 MCP 伺服器實做，提供了透過結構化思維過程進行動態和反思性問題解決的工具"
+        "sequentialthinking": "一個 MCP 伺服器實做，提供了透過結構化思維過程進行動態和反思性問題解決的工具",
+        "uiautomator2": "[to be translated]:Android device automation using UiAutomator2 framework. Provides advanced UI interaction capabilities with human-like randomness to avoid bot detection, and proper Chinese text input support."
       },
       "command": "指令",
       "config_description": "設定模型上下文協議伺服器",

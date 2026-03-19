@@ -835,7 +835,8 @@ export const BuiltinMCPServerNames = {
   browser: '@cherry/browser',
   nowledgeMem: '@cherry/nowledge-mem',
   hub: '@cherry/hub',
-  deviceControl: '@cherry/device-control'
+  deviceControl: '@cherry/device-control',
+  uiautomator2: '@cherry/uiautomator2'
 } as const
 
 export type BuiltinMCPServerName = (typeof BuiltinMCPServerNames)[keyof typeof BuiltinMCPServerNames]

@@ -1466,6 +1466,7 @@
     "brand": "品牌",
     "command": "指令",
     "connect": "连接",
+    "connection_error_title": "连接错误",
     "control_panel": {
       "back": "返回",
       "coordinate_error": "坐标格式错误",
@@ -1504,6 +1505,14 @@
       "update_success": "设备信息已更新"
     },
     "edit": "编辑",
+    "error": {
+      "exited": "进程异常退出：scrcpy 启动后立即退出，可能是设备兼容性问题或权限不足",
+      "generic": "启动投屏时发生错误：",
+      "inject_events": "设备权限不足：请在设备开发者选项中启用\"USB调试(安全设置)\"，然后重启设备。如果仍有问题，请尝试重新插拔USB线",
+      "permission": "设备权限问题：请检查USB调试权限，可能需要重新授权或更换USB端口",
+      "start_failed": "启动投屏失败",
+      "try_command": "。请尝试在命令行中直接运行scrcpy命令进行对比测试。"
+    },
     "group": {
       "create": "新建分组",
       "create_success": "新建分组成功",
@@ -1523,15 +1532,6 @@
     "port": "端口",
     "refresh": "刷新",
     "remark": "备注",
-    "error": {
-      "start_failed": "启动投屏失败",
-      "inject_events": "设备权限不足：请在设备开发者选项中启用\"USB调试(安全设置)\"，然后重启设备。如果仍有问题，请尝试重新插拔USB线",
-      "permission": "设备权限问题：请检查USB调试权限，可能需要重新授权或更换USB端口",
-      "exited": "进程异常退出：scrcpy 启动后立即退出，可能是设备兼容性问题或权限不足",
-      "generic": "启动投屏时发生错误：",
-      "try_command": "。请尝试在命令行中直接运行scrcpy命令进行对比测试。"
-    },
-    "connection_error_title": "连接错误",
     "scrcpy": {
       "permission_error": "设备权限不足：请在设备开发者选项中启用\"USB调试(安全设置)\"，然后重启设备。如果仍有问题，请尝试重新插拔USB线",
       "permission_issue": "设备权限问题：请检查USB调试权限，可能需要重新授权或更换USB端口",
@@ -4543,7 +4543,8 @@
         "no": "无描述",
         "nowledge_mem": "需要本地运行 Nowledge Mem 应用。将 AI 对话、工具、笔记、智能体和文件保存在本地计算机的私有记忆中。请从 https://mem.nowledge.co/ 下载",
         "python": "在安全的沙盒环境中执行 Python 代码。使用 Pyodide 运行 Python，支持大多数标准库和科学计算包",
-        "sequentialthinking": "一个 MCP 服务器实现，提供了通过结构化思维过程进行动态和反思性问题解决的工具"
+        "sequentialthinking": "一个 MCP 服务器实现，提供了通过结构化思维过程进行动态和反思性问题解决的工具",
+        "uiautomator2": "[to be translated]:Android device automation using UiAutomator2 framework. Provides advanced UI interaction capabilities with human-like randomness to avoid bot detection, and proper Chinese text input support."
       },
       "command": "命令",
       "config_description": "配置模型上下文协议服务器",

@@ -29,7 +29,6 @@ import type {
   OpenAIServiceTier,
   PaintingProvider,
   S3Config,
-  SidebarIcon,
   TranslateLanguageCode
 } from '@renderer/types'
 import { ThemeMode } from '@renderer/types'
@@ -38,6 +37,9 @@ import type {
   OpenAIReasoningSummary,
   OpenAIVerbosity
 } from '@renderer/types/aiCoreTypes'
+import type {
+  SidebarIcon
+} from '@renderer/types/sidebar'
 import { uuid } from '@renderer/utils'
 import { API_SERVER_DEFAULTS, UpgradeChannel } from '@shared/config/constant'
 

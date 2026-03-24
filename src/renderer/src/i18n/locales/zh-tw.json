@@ -5556,6 +5556,100 @@
       "title": "縮放"
     }
   },
+  "taskflow": {
+    "description": "安卓微信訊息監聽與自動回覆任務流",
+    "editor": {
+      "back": "返回列表",
+      "create": "建立任務",
+      "createSuccess": "任務建立成功",
+      "edit": "編輯任務",
+      "editSuccess": "任務更新成功",
+      "nodePalette": "節點面板",
+      "nodeTypes": "節點類型",
+      "run": "執行任務",
+      "runError": "任務執行失敗",
+      "runSuccess": "任務執行成功",
+      "save": "儲存任務",
+      "saveFirst": "請先儲存任務",
+      "startingTask": "正在啟動任務...",
+      "taskDescription": "任務描述",
+      "taskDescriptionPlaceholder": "請輸入任務描述",
+      "taskInfo": "任務資訊",
+      "taskName": "任務名稱",
+      "taskNamePlaceholder": "請輸入任務名稱",
+      "taskNameRequired": "請輸入任務名稱",
+      "title": "任務編輯器",
+      "updateSuccess": "任務更新成功"
+    },
+    "executionType": {
+      "manual": "手動",
+      "scheduled": "定時"
+    },
+    "list": {
+      "actions": "操作",
+      "create": "建立任務",
+      "createdAt": "建立時間",
+      "delete": "刪除任務",
+      "edit": "編輯任務",
+      "executionType": "執行方式",
+      "lastRunAt": "最後執行",
+      "name": "任務名稱",
+      "run": "執行任務",
+      "search": "搜尋任務",
+      "status": "狀態",
+      "title": "任務列表",
+      "viewLogs": "查看日誌"
+    },
+    "logs": {
+      "back": "返回任務列表",
+      "error": "錯誤",
+      "info": "資訊",
+      "level": "級別",
+      "message": "訊息",
+      "refresh": "重新整理",
+      "time": "時間",
+      "title": "任務日誌",
+      "warn": "警告"
+    },
+    "nodeConfig": {
+      "contactName": "聯絡人名稱",
+      "field": "欄位",
+      "groupName": "群組名稱",
+      "keywords": "關鍵字",
+      "message": "訊息內容",
+      "model": "模型",
+      "operator": "操作符",
+      "prompt": "提示詞",
+      "script": "腳本內容",
+      "temperature": "溫度",
+      "timeout": "超時時間",
+      "useTemplate": "使用模板",
+      "value": "值"
+    },
+    "nodes": {
+      "condition": "條件判斷",
+      "end": "結束",
+      "execute": "執行操作",
+      "listenMessage": "監聽訊息",
+      "llm": "LLM處理",
+      "sendMessage": "發送訊息",
+      "start": "開始"
+    },
+    "operators": {
+      "contains": "包含",
+      "equals": "等於",
+      "greater": "大於",
+      "less": "小於"
+    },
+    "status": {
+      "completed": "已完成",
+      "created": "已建立",
+      "error": "執行失敗",
+      "running": "執行中",
+      "stopped": "已停止"
+    },
+    "title": "任務流"
+  },
   "title": {
     "apps": "小程式",
     "code": "程式碼",

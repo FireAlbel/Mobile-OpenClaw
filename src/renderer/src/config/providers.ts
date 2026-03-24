@@ -42,7 +42,6 @@ import O3ProviderLogo from '@renderer/assets/images/providers/o3.png'
 import OcoolAiProviderLogo from '@renderer/assets/images/providers/ocoolai.png'
 import OllamaProviderLogo from '@renderer/assets/images/providers/ollama.png'
 import OpenAiProviderLogo from '@renderer/assets/images/providers/openai.png'
-import OpenClawLogo from '@renderer/assets/images/providers/openclaw.png'
 import OpenRouterProviderLogo from '@renderer/assets/images/providers/openrouter.png'
 import PerplexityProviderLogo from '@renderer/assets/images/providers/perplexity.png'
 import Ph8ProviderLogo from '@renderer/assets/images/providers/ph8.png'
@@ -712,11 +711,11 @@ export const SYSTEM_PROVIDERS_CONFIG: Record<SystemProviderId, SystemProvider> =
   },
   openclaw: {
     id: 'openclaw',
-    name: 'openClaw',
+    name: 'OpenClaw',
     type: 'openclaw',
     apiKey: '',
-    apiHost: 'https://127.0.0.1:18790',
-    models: SYSTEM_MODELS.openclaw,
+    apiHost: 'https://api.openclaw.com',
+    models: [],
     isSystem: true,
     enabled: false
   }
@@ -789,7 +788,7 @@ export const PROVIDER_LOGO_MAP: AtLeast<SystemProviderId, string> = {
   gateway: AIGatewayProviderLogo,
   cerebras: CerebrasProviderLogo,
   mimo: MiMoProviderLogo,
-  openclaw: OpenClawLogo
+  openclaw: OpenAiProviderLogo
 } as const
 
 export function getProviderLogo(providerId: string) {
@@ -1474,13 +1473,13 @@ export const PROVIDER_URLS: Record<SystemProviderId, ProviderUrls> = {
   },
   openclaw: {
     api: {
-      url: 'http://127.0.0.1:18790'
+      url: 'https://api.openclaw.com'
     },
     websites: {
-      official: 'https://github.com/CherryHQ/openclaw',
-      apiKey: 'https://github.com/CherryHQ/openclaw',
-      docs: 'https://github.com/CherryHQ/openclaw',
-      models: 'https://github.com/CherryHQ/openclaw'
+      official: 'https://openclaw.com',
+      apiKey: 'https://openclaw.com/api-keys',
+      docs: 'https://docs.openclaw.com',
+      models: 'https://openclaw.com/models'
     }
   }
 }

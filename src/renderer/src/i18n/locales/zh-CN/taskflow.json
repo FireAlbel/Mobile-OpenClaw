@@ -1,0 +1,80 @@
+{
+  "title": "任务流",
+  "description": "安卓微信消息监听与自动回复任务流",
+  "list": {
+    "title": "任务列表",
+    "create": "创建任务",
+    "edit": "编辑任务",
+    "delete": "删除任务",
+    "run": "运行任务",
+    "search": "搜索任务",
+    "name": "任务名称",
+    "status": "状态",
+    "executionType": "执行方式",
+    "createdAt": "创建时间",
+    "lastRunAt": "最后执行",
+    "actions": "操作"
+  },
+  "editor": {
+    "title": "任务编辑器",
+    "save": "保存任务",
+    "run": "运行任务",
+    "back": "返回列表",
+    "taskInfo": "任务信息",
+    "taskName": "任务名称",
+    "taskDescription": "任务描述",
+    "nodePalette": "节点面板"
+  },
+  "logs": {
+    "title": "任务日志",
+    "back": "返回任务列表",
+    "refresh": "刷新",
+    "time": "时间",
+    "level": "级别",
+    "message": "消息",
+    "info": "信息",
+    "warn": "警告",
+    "error": "错误"
+  },
+  "status": {
+    "created": "已创建",
+    "running": "运行中",
+    "stopped": "已停止",
+    "error": "执行失败",
+    "completed": "已完成"
+  },
+  "executionType": {
+    "manual": "手动",
+    "scheduled": "定时"
+  },
+  "nodes": {
+    "start": "开始",
+    "listenMessage": "监听消息",
+    "llm": "LLM处理",
+    "execute": "执行操作",
+    "condition": "条件判断",
+    "sendMessage": "发送消息",
+    "end": "结束"
+  },
+  "nodeConfig": {
+    "prompt": "提示词",
+    "model": "模型",
+    "temperature": "温度",
+    "contactName": "联系人名称",
+    "groupName": "群组名称",
+    "keywords": "关键词",
+    "timeout": "超时时间",
+    "message": "消息内容",
+    "useTemplate": "使用模板",
+    "field": "字段",
+    "operator": "操作符",
+    "value": "值",
+    "script": "脚本内容"
+  },
+  "operators": {
+    "equals": "等于",
+    "contains": "包含",
+    "greater": "大于",
+    "less": "小于"
+  }
+}

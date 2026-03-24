@@ -22,6 +22,8 @@ import PaintingsRoutePage from './pages/paintings/PaintingsRoutePage'
 import SettingsPage from './pages/settings/SettingsPage'
 import AssistantPresetsPage from './pages/store/assistants/presets/AssistantPresetsPage'
 import TranslatePage from './pages/translate/TranslatePage'
+import TaskFlowPage from './pages/taskflow/TaskFlowPage'
+import TaskFlowEditorPage from './plugins/taskflow/components/TaskFlowEditor'
 
 const Router: FC = () => {
   const { navbarPosition } = useNavbarPosition()
@@ -41,6 +43,9 @@ const Router: FC = () => {
           <Route path="/apps" element={<MinAppsPage />} />
           <Route path="/code" element={<CodeToolsPage />} />
           <Route path="/openclaw" element={<OpenClawPage />} />
+          <Route path="/taskflow/*" element={<TaskFlowPage />} />
+          <Route path="/taskflow/create" element={<TaskFlowEditorPage />} />
+          <Route path="/taskflow/edit/:id" element={<TaskFlowEditorPage />} />
           <Route path="/settings/*" element={<SettingsPage />} />
           <Route path="/launchpad" element={<LaunchpadPage />} />
         </Routes>

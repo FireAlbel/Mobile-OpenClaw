@@ -5556,6 +5556,186 @@
       "title": "Page Zoom"
     }
   },
+  "taskflow": {
+    "description": "Android WeChat message monitoring and auto-reply task flow",
+    "editor": {
+      "back": "Back to List",
+      "create": "Create Task",
+      "createSuccess": "Task created successfully",
+      "edit": "Edit Task",
+      "editSuccess": "Task updated successfully",
+      "nodePalette": "Node Palette",
+      "nodeTypes": "Node Types",
+      "run": "Run Task",
+      "runError": "Task execution failed",
+      "runSuccess": "Task executed successfully",
+      "save": "Save Task",
+      "saveFirst": "Please save the task first",
+      "startingTask": "Starting task...",
+      "taskDescription": "Task Description",
+      "taskDescriptionPlaceholder": "Enter task description",
+      "taskInfo": "Task Information",
+      "taskName": "Task Name",
+      "taskNamePlaceholder": "Enter task name",
+      "taskNameRequired": "Please enter task name",
+      "title": "Task Editor",
+      "updateSuccess": "Task updated successfully"
+    },
+    "executionType": {
+      "manual": "Manual",
+      "scheduled": "Scheduled"
+    },
+    "list": {
+      "actions": "Actions",
+      "create": "Create Task",
+      "createdAt": "Created At",
+      "delete": "Delete Task",
+      "edit": "Edit Task",
+      "executionType": "Execution Type",
+      "lastRunAt": "Last Run",
+      "name": "Task Name",
+      "run": "Run Task",
+      "search": "Search Tasks",
+      "status": "Status",
+      "title": "Task List"
+    },
+    "logs": {
+      "back": "Back to Task List",
+      "error": "Error",
+      "info": "Info",
+      "level": "Level",
+      "message": "Message",
+      "refresh": "Refresh",
+      "time": "Time",
+      "title": "Task Logs",
+      "warn": "Warning"
+    },
+    "nodeConfig": {
+      "contactName": "Contact Name",
+      "field": "Field",
+      "groupName": "Group Name",
+      "keywords": "Keywords",
+      "message": "Message Content",
+      "model": "Model",
+      "operator": "Operator",
+      "prompt": "Prompt",
+      "script": "Script Content",
+      "temperature": "Temperature",
+      "timeout": "Timeout",
+      "useTemplate": "Use Template",
+      "value": "Value"
+    },
+    "nodes": {
+      "condition": "Condition",
+      "end": "End",
+      "execute": "Execute Action",
+      "listenMessage": "Listen Message",
+      "llm": "LLM Processing",
+      "sendMessage": "Send Message",
+      "start": "Start"
+    },
+    "operators": {
+      "contains": "Contains",
+      "equals": "Equals",
+      "greater": "Greater Than",
+      "less": "Less Than"
+    },
+    "status": {
+      "completed": "Completed",
+      "created": "Created",
+      "error": "Failed",
+      "running": "Running",
+      "stopped": "Stopped"
+    },
+    "title": "Task Flow"
+  },
+  "taskflow": {
+    "description": "Android WeChat message monitoring and auto-reply task flow",
+    "editor": {
+      "back": "Back to List",
+      "nodePalette": "Node Palette",
+      "nodeTypes": "Node Types",
+      "run": "Run Task",
+      "save": "Save Task",
+      "taskDescription": "Task Description",
+      "taskDescriptionPlaceholder": "Enter task description",
+      "taskInfo": "Task Information",
+      "taskName": "Task Name",
+      "taskNamePlaceholder": "Enter task name",
+      "title": "Task Editor"
+    },
+    "executionType": {
+      "manual": "Manual",
+      "scheduled": "Scheduled"
+    },
+    "list": {
+      "actions": "Actions",
+      "create": "Create Task",
+      "createdAt": "Created At",
+      "delete": "Delete Task",
+      "edit": "Edit Task",
+      "executionType": "Execution Type",
+      "lastRunAt": "Last Run",
+      "name": "Task Name",
+      "run": "Run Task",
+      "search": "Search Tasks",
+      "status": "Status",
+      "title": "Task List",
+      "viewLogs": "View Logs"
+    },
+    "logs": {
+      "back": "Back to Task List",
+      "endTime": "End Time",
+      "error": "Error",
+      "info": "Info",
+      "level": "Level",
+      "message": "Message",
+      "refresh": "Refresh",
+      "search": "Search Logs",
+      "startTime": "Start Time",
+      "time": "Time",
+      "title": "Task Logs",
+      "warn": "Warning"
+    },
+    "nodeConfig": {
+      "contactName": "Contact Name",
+      "field": "Field",
+      "groupName": "Group Name",
+      "keywords": "Keywords",
+      "message": "Message Content",
+      "model": "Model",
+      "operator": "Operator",
+      "prompt": "Prompt",
+      "script": "Script Content",
+      "temperature": "Temperature",
+      "timeout": "Timeout",
+      "useTemplate": "Use Template",
+      "value": "Value"
+    },
+    "nodes": {
+      "condition": "Condition",
+      "end": "End",
+      "execute": "Execute Action",
+      "listenMessage": "Listen Message",
+      "llm": "LLM Processing",
+      "sendMessage": "Send Message",
+      "start": "Start"
+    },
+    "operators": {
+      "contains": "Contains",
+      "equals": "Equals",
+      "greater": "Greater Than",
+      "less": "Less Than"
+    },
+    "status": {
+      "completed": "Completed",
+      "created": "Created",
+      "error": "Failed",
+      "running": "Running",
+      "stopped": "Stopped"
+    },
+    "title": "Task Flow"
+  },
   "title": {
     "apps": "Apps",
     "code": "Code",
@@ -5570,6 +5750,7 @@
     "paintings": "Paintings",
     "settings": "Settings",
     "store": "Assistant Library",
+    "taskflow": "Task Flow",
     "translate": "Translate"
   },
   "trace": {

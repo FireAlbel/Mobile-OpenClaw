@@ -1,0 +1,12 @@
+export type SidebarIcon =
+  | 'assistants'
+  | 'store'
+  | 'paintings'
+  | 'translate'
+  | 'minapp'
+  | 'knowledge'
+  | 'files'
+  | 'code_tools'
+  | 'notes'
+  | 'openclaw'
+  | 'taskflow'

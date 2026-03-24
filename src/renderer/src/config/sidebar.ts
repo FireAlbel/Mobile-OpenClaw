@@ -1,4 +1,4 @@
-import type { SidebarIcon } from '@renderer/types'
+import type { SidebarIcon } from '@renderer/types/sidebar'
 
 /**
  * 默认显示的侧边栏图标
@@ -14,7 +14,8 @@ export const DEFAULT_SIDEBAR_ICONS: SidebarIcon[] = [
   'files',
   'code_tools',
   'notes',
-  'openclaw'
+  'openclaw',
+  'taskflow'
 ]
 
 /**

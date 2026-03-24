@@ -5556,6 +5556,103 @@
       "title": "缩放"
     }
   },
+  "taskflow": {
+    "description": "安卓微信消息监听与自动回复任务流",
+    "editor": {
+      "back": "返回列表",
+      "create": "创建任务",
+      "createSuccess": "任务创建成功",
+      "edit": "编辑任务",
+      "editSuccess": "任务更新成功",
+      "nodePalette": "节点面板",
+      "nodeTypes": "节点类型",
+      "run": "运行任务",
+      "runError": "任务运行失败",
+      "runSuccess": "任务运行成功",
+      "save": "保存任务",
+      "saveFirst": "请先保存任务",
+      "startingTask": "正在启动任务...",
+      "taskDescription": "任务描述",
+      "taskDescriptionPlaceholder": "请输入任务描述",
+      "taskInfo": "任务信息",
+      "taskName": "任务名称",
+      "taskNamePlaceholder": "请输入任务名称",
+      "taskNameRequired": "请输入任务名称",
+      "title": "任务编辑器",
+      "updateSuccess": "任务更新成功"
+    },
+    "executionType": {
+      "manual": "手动",
+      "scheduled": "定时"
+    },
+    "list": {
+      "actions": "操作",
+      "create": "创建任务",
+      "createdAt": "创建时间",
+      "delete": "删除任务",
+      "edit": "编辑任务",
+      "executionType": "执行方式",
+      "lastRunAt": "最后执行",
+      "name": "任务名称",
+      "run": "运行任务",
+      "search": "搜索任务",
+      "status": "状态",
+      "title": "任务列表",
+      "viewLogs": "查看日志"
+    },
+    "logs": {
+      "back": "返回任务列表",
+      "endTime": "结束时间",
+      "error": "错误",
+      "info": "信息",
+      "level": "级别",
+      "message": "消息",
+      "refresh": "刷新",
+      "search": "搜索日志",
+      "startTime": "开始时间",
+      "time": "时间",
+      "title": "任务日志",
+      "warn": "警告"
+    },
+    "nodeConfig": {
+      "contactName": "联系人名称",
+      "field": "字段",
+      "groupName": "群组名称",
+      "keywords": "关键词",
+      "message": "消息内容",
+      "model": "模型",
+      "operator": "操作符",
+      "prompt": "提示词",
+      "script": "脚本内容",
+      "temperature": "温度",
+      "timeout": "超时时间",
+      "useTemplate": "使用模板",
+      "value": "值"
+    },
+    "nodes": {
+      "condition": "条件判断",
+      "end": "结束",
+      "execute": "执行操作",
+      "listenMessage": "监听消息",
+      "llm": "LLM处理",
+      "sendMessage": "发送消息",
+      "start": "开始"
+    },
+    "operators": {
+      "contains": "包含",
+      "equals": "等于",
+      "greater": "大于",
+      "less": "小于"
+    },
+    "status": {
+      "completed": "已完成",
+      "created": "已创建",
+      "error": "执行失败",
+      "running": "运行中",
+      "stopped": "已停止"
+    },
+    "title": "任务流"
+  },
   "title": {
     "apps": "小程序",
     "code": "Code",

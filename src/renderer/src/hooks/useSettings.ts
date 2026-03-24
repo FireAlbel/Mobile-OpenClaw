@@ -37,7 +37,8 @@ import {
   setUseSystemTitleBar as _setUseSystemTitleBar,
   setWindowStyle
 } from '@renderer/store/settings'
-import type { SidebarIcon, ThemeMode, TranslateLanguageCode } from '@renderer/types'
+import type { SidebarIcon } from '@renderer/types/sidebar'
+import type { ThemeMode, TranslateLanguageCode } from '@renderer/types'
 import type { UpgradeChannel } from '@shared/config/constant'
 
 export function useSettings() {

@@ -188,7 +188,8 @@ const sidebarIconKeyMap = {
   files: 'files.title',
   code_tools: 'code.title',
   notes: 'notes.title',
-  openclaw: 'openclaw.title'
+  openclaw: 'openclaw.title',
+  taskflow: 'taskflow.title'
 } as const
 
 export const getSidebarIconLabel = (key: string): string => {

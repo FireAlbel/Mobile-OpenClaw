@@ -4,7 +4,7 @@ import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd'
 import { getSidebarIconLabel } from '@renderer/i18n/label'
 import { useAppDispatch } from '@renderer/store'
 import { setSidebarIcons } from '@renderer/store/settings'
-import type { SidebarIcon } from '@renderer/types'
+import type { SidebarIcon } from '@renderer/types/sidebar'
 import { message } from 'antd'
 import {
   Bot,
@@ -16,7 +16,8 @@ import {
   MessageSquareQuote,
   NotepadText,
   Palette,
-  Sparkle
+  Sparkle,
+  Workflow
 } from 'lucide-react'
 import type { FC, ReactNode } from 'react'
 import { useCallback, useMemo } from 'react'
@@ -125,7 +126,8 @@ const SidebarIconsManager: FC<SidebarIconsManagerProps> = ({
         files: <Folder size={16} />,
         notes: <NotepadText size={16} />,
         code_tools: <Code size={16} />,
-        openclaw: <Bot size={16} />
+        openclaw: <Bot size={16} />,
+        taskflow: <Workflow size={16} />
       }) satisfies Record<SidebarIcon, ReactNode>,
     []
   )

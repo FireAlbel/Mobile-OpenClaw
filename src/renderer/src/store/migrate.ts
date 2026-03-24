@@ -3266,6 +3266,22 @@ const migrateConfig = {
       logger.error('migrate 200 error', error as Error)
       return state
     }
+  },
+  '201': (state: RootState) => {
+    try {
+      // Add taskflow to sidebar icons if not exists
+      if (state.settings && state.settings.sidebarIcons) {
+        // Check if 'taskflow' is not already in visible icons
+        if (!state.settings.sidebarIcons.visible.includes('taskflow' as any)) {
+          state.settings.sidebarIcons.visible = [...state.settings.sidebarIcons.visible, 'taskflow' as any]
+        }
+      }
+      logger.info('migrate 201 success')
+      return state
+    } catch (error) {
+      logger.error('migrate 201 error', error as Error)
+      return state
+    }
   }
 }
 

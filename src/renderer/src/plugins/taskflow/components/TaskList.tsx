@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react'
-import { Table, Button, message, Popconfirm, Tag, Space, Input } from 'antd'
-import { PlayCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import { DeleteOutlined, EditOutlined, PlayCircleOutlined } from '@ant-design/icons'
+import { Button, Input, message, Popconfirm, Space, Table, Tag } from 'antd'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
+
 import taskStore from '../store/taskStore'
 import type { Task } from '../types/task'
-import { TaskStatus, TaskExecutionType } from '../types/task'
+import { TaskExecutionType, TaskStatus } from '../types/task'
 
 const { Search } = Input
 
@@ -129,7 +130,9 @@ const TaskList: React.FC = () => {
       key: 'executionType',
       render: (type: TaskExecutionType) => (
         <Tag color={type === TaskExecutionType.SCHEDULED ? 'blue' : 'green'}>
-          {type === TaskExecutionType.SCHEDULED ? t('taskflow.executionType.scheduled') : t('taskflow.executionType.manual')}
+          {type === TaskExecutionType.SCHEDULED
+            ? t('taskflow.executionType.scheduled')
+            : t('taskflow.executionType.manual')}
         </Tag>
       )
     },
@@ -186,7 +189,6 @@ const TaskList: React.FC = () => {
             style={{ marginRight: 8 }}>
             {t('taskflow.list.create')}
           </Button>
-          <Button onClick={() => navigate('/taskflow/logs')}>{t('taskflow.list.viewLogs')}</Button>
         </div>
         <Search
           placeholder={t('taskflow.list.search')}

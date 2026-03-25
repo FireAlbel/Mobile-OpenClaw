@@ -1402,6 +1402,12 @@
     "warning": "Warning",
     "you": "You"
   },
+  "common": {
+    "cancel": "Cancel",
+    "ok": "OK",
+    "records": "records",
+    "total": "Total"
+  },
   "device": {
     "batch_control": {
       "back": "Back",
@@ -5590,11 +5596,14 @@
       "create": "Create Task",
       "createdAt": "Created At",
       "delete": "Delete Task",
+      "deleteConfirm": "Are you sure you want to delete this task? This action cannot be undone.",
       "edit": "Edit Task",
       "executionType": "Execution Type",
       "lastRunAt": "Last Run",
       "name": "Task Name",
+      "neverRun": "Never Run",
       "run": "Run Task",
+      "runSuccess": "Task executed successfully",
       "search": "Search Tasks",
       "status": "Status",
       "title": "Task List"

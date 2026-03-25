@@ -142,8 +142,17 @@ const TaskFlowEditor: React.FC = () => {
       return
     }
 
+    // 清理节点数据中的函数引用，避免序列化问题
+    const cleanNodes = nodes.map((node) => {
+      const { onDelete, ...cleanData } = node.data || {}
+      return {
+        ...node,
+        data: cleanData
+      }
+    })
+
     const flowData = {
-      nodes,
+      nodes: cleanNodes,
       edges
     }
 
@@ -158,13 +167,18 @@ const TaskFlowEditor: React.FC = () => {
       updatedAt: Date.now()
     }
 
-    if (id) {
-      taskStore.updateTask(task)
-      message.success(t('taskflow.editor.updateSuccess'))
-    } else {
-      taskStore.createTask(task)
-      message.success(t('taskflow.editor.createSuccess'))
-      navigate(`/taskflow/edit/${task.id}`)
+    try {
+      if (id) {
+        taskStore.updateTask(task)
+        message.success(t('taskflow.editor.updateSuccess'))
+      } else {
+        taskStore.createTask(task)
+        message.success(t('taskflow.editor.createSuccess'))
+        navigate(`/taskflow/edit/${task.id}`)
+      }
+    } catch (error) {
+      console.error('保存任务失败:', error)
+      message.error(`保存失败: ${error}`)
     }
   }
 

@@ -1402,6 +1402,12 @@
     "warning": "警告",
     "you": "您"
   },
+  "common": {
+    "cancel": "取消",
+    "ok": "確定",
+    "records": "條記錄",
+    "total": "共"
+  },
   "device": {
     "batch_control": {
       "back": "[to be translated]:Back",
@@ -5590,11 +5596,14 @@
       "create": "建立任務",
       "createdAt": "建立時間",
       "delete": "刪除任務",
+      "deleteConfirm": "確定要刪除此任務嗎？此操作不可撤銷。",
       "edit": "編輯任務",
       "executionType": "執行方式",
       "lastRunAt": "最後執行",
       "name": "任務名稱",
+      "neverRun": "從未執行",
       "run": "執行任務",
+      "runSuccess": "任務執行成功",
       "search": "搜尋任務",
       "status": "狀態",
       "title": "任務列表",

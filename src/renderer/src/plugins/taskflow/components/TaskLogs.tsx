@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
-import { Table, Button, Tag, Space, Input, DatePicker } from 'antd'
-import { ReloadOutlined, ArrowLeftOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import { ReloadOutlined } from '@ant-design/icons'
+import { Button, DatePicker, Input, Space, Table, Tag } from 'antd'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
+
 import taskStore from '../store/taskStore'
 import type { TaskLog } from '../types/task'
 
@@ -109,9 +110,6 @@ const TaskLogs: React.FC = () => {
   return (
     <div style={{ padding: 20 }}>
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/taskflow')}>
-          {t('taskflow.logs.back')}
-        </Button>
         <Space>
           <Button type="primary" icon={<ReloadOutlined />} onClick={loadLogs} loading={loading}>
             {t('taskflow.logs.refresh')}

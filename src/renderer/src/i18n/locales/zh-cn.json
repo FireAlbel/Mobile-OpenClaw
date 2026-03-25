@@ -1402,6 +1402,12 @@
     "warning": "警告",
     "you": "用户"
   },
+  "common": {
+    "cancel": "取消",
+    "ok": "确定",
+    "records": "条记录",
+    "total": "共"
+  },
   "device": {
     "batch_control": {
       "back": "返回",
@@ -5590,11 +5596,14 @@
       "create": "创建任务",
       "createdAt": "创建时间",
       "delete": "删除任务",
+      "deleteConfirm": "确定要删除此任务吗？此操作不可撤销。",
       "edit": "编辑任务",
       "executionType": "执行方式",
       "lastRunAt": "最后执行",
       "name": "任务名称",
+      "neverRun": "从未执行",
       "run": "运行任务",
+      "runSuccess": "任务运行成功",
       "search": "搜索任务",
       "status": "状态",
       "title": "任务列表",

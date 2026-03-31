@@ -836,6 +836,7 @@ export const BuiltinMCPServerNames = {
   browser: '@cherry/browser',
   nowledgeMem: '@cherry/nowledge-mem',
   hub: '@cherry/hub',
+  chatMonitor: '@cherry/chat-monitor',
   deviceControl: '@cherry/device-control',
   uiautomator2: '@cherry/uiautomator2'
 } as const

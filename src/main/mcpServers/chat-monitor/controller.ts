@@ -190,6 +190,70 @@ export class ChatMonitorController {
     }
   }
 
+  private getVoiceListenerScriptPath(): string | null {
+    const candidates = [
+      // 开发态
+      join(process.cwd(), 'src', 'main', 'mcpServers', 'chat-monitor', 'wechat_voice_listener.py'),
+      // 运行时 appPath
+      join(app.getAppPath(), 'src', 'main', 'mcpServers', 'chat-monitor', 'wechat_voice_listener.py'),
+      // 打包后常见解包目录
+      join(
+        process.resourcesPath,
+        'app.asar.unpacked',
+        'src',
+        'main',
+        'mcpServers',
+        'chat-monitor',
+        'wechat_voice_listener.py'
+      )
+    ]
+
+    const found = candidates.find((filePath) => existsSync(filePath))
+    return found ?? null
+  }
+
+  private async runVoiceListenerScript(deviceId?: string, timeout = 15) {
+    const scriptPath = this.getVoiceListenerScriptPath()
+    if (!scriptPath) {
+      throw new Error('未找到 wechat_voice_listener.py 脚本，请确认项目文件完整')
+    }
+
+    const python = this.resolvePythonCommand()
+    if (!python) {
+      throw new Error('未找到 Python 运行环境，请先人工确认后安装 Python 3')
+    }
+
+    const result = await this.executeCommand(
+      python.command,
+      [...python.prefixArgs, scriptPath, deviceId ?? 'null', String(timeout)],
+      (timeout + 10) * 1000,
+      {
+        cwd: process.cwd(),
+        env: {
+          ...process.env
+        }
+      }
+    )
+
+    const trimmedStdout = result.stdout.trim()
+    if (!trimmedStdout) {
+      return {
+        success: result.code === 0,
+        raw: result
+      }
+    }
+
+    try {
+      return JSON.parse(trimmedStdout)
+    } catch {
+      return {
+        success: result.code === 0,
+        message: trimmedStdout,
+        raw: result
+      }
+    }
+  }
+
   private async resolveDeviceId(deviceId?: string): Promise<string> {
     if (deviceId) return deviceId
 
@@ -246,7 +310,7 @@ export class ChatMonitorController {
       installHints.push('请人工确认后安装 Python 3.x（建议 3.9+）')
     } else {
       available.push(`python(${python.command})`)
-      const pythonPkgs = ['uiautomator2', 'faster_whisper', 'webrtcvad']
+      const pythonPkgs = ['uiautomator2', 'faster_whisper', 'webrtcvad', 'pyaudio', 'numpy']
       for (const pkg of pythonPkgs) {
         try {
           const check = await this.executeCommand(
@@ -276,6 +340,14 @@ export class ChatMonitorController {
       installHints.push('缺少 wechat_automation.py，请确认仓库文件或打包资源路径')
     }
 
+    const voiceScriptPath = this.getVoiceListenerScriptPath()
+    if (voiceScriptPath) {
+      available.push('wechat_voice_listener.py')
+    } else {
+      missing.push('wechat_voice_listener.py')
+      installHints.push('缺少 wechat_voice_listener.py，请确认仓库文件或打包资源路径')
+    }
+
     return {
       ready: missing.length === 0,
       missing,
@@ -285,7 +357,8 @@ export class ChatMonitorController {
       details: {
         adbPath: toolPaths.adbPath,
         scrcpyPath: toolPaths.scrcpyPath,
-        scriptPath
+        scriptPath,
+        voiceScriptPath
       }
     }
   }
@@ -334,6 +407,14 @@ export class ChatMonitorController {
       [args.contactName ?? '', args.groupName ?? '', (args.keywords ?? []).join(','), String(timeout)],
       (timeout + 10) * 1000
     )
+  }
+
+  async listenVoiceMessages(args: {
+    deviceId?: string
+    timeout?: number
+  }) {
+    const timeout = args.timeout ?? 15
+    return this.runVoiceListenerScript(args.deviceId, timeout)
   }
 
   async sendTextMessage(args: { contactName: string; message: string; groupName?: string }) {

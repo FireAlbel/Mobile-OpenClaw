@@ -145,6 +145,23 @@ export const toolDefinitions = [
     }
   },
   {
+    name: 'wechat_listen_voice_messages',
+    description: '监听微信语音消息：播放并转写为文字（Phase 1 MVP）',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        deviceId: {
+          type: 'string',
+          description: '设备序列号（可选，不传则自动选择第一个在线设备）'
+        },
+        timeout: {
+          type: 'number',
+          description: '监听超时秒数（默认15秒）'
+        }
+      }
+    }
+  },
+  {
     name: 'wechat_send_text_via_input',
     description: '通过 uiautomator2 向微信输入框输入文本（支持中文），可选点击发送按钮',
     inputSchema: {
@@ -371,6 +388,21 @@ export const toolHandlers: Record<string, (controller: ChatMonitorController, ar
     const result = await controller.markAsRead({
       contactName: args?.contactName,
       groupName: args?.groupName
+    })
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    }
+  },
+
+  wechat_listen_voice_messages: async (controller: ChatMonitorController, args: any) => {
+    const result = await controller.listenVoiceMessages({
+      deviceId: args?.deviceId,
+      timeout: args?.timeout
     })
     return {
       content: [

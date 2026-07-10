@@ -21,8 +21,8 @@ import OpenClawPage from './pages/openclaw/OpenClawPage'
 import PaintingsRoutePage from './pages/paintings/PaintingsRoutePage'
 import SettingsPage from './pages/settings/SettingsPage'
 import AssistantPresetsPage from './pages/store/assistants/presets/AssistantPresetsPage'
-import TranslatePage from './pages/translate/TranslatePage'
 import TaskFlowPage from './pages/taskflow/TaskFlowPage'
+import TranslatePage from './pages/translate/TranslatePage'
 import TaskFlowEditorPage from './plugins/taskflow/components/TaskFlowEditor'
 
 const Router: FC = () => {

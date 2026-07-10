@@ -10,8 +10,8 @@ import { setActiveAgentId, setActiveTopicOrSessionAction } from '@renderer/store
 import type { Assistant, Topic } from '@renderer/types'
 import { MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH, SECOND_MIN_WINDOW_WIDTH } from '@shared/config/constant'
 import { AnimatePresence, motion } from 'motion/react'
-import type { FC } from 'react'
-import { startTransition, useCallback, useEffect, useState } from 'react'
+import type { CSSProperties, FC, PointerEvent as ReactPointerEvent } from 'react'
+import { startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
@@ -22,10 +22,32 @@ import HomeTabs from './Tabs'
 
 let _activeAssistant: Assistant
 
+const ASSISTANTS_WIDTH_STORAGE_KEY = 'home.assistants.width'
+const DEFAULT_ASSISTANTS_WIDTH = 275
+const MIN_ASSISTANTS_WIDTH = 260
+const MAX_ASSISTANTS_WIDTH = 560
+const MIN_CHAT_WIDTH = 520
+
+const clampAssistantsWidth = (width: number) => {
+  if (typeof window === 'undefined') {
+    return Math.min(Math.max(width, MIN_ASSISTANTS_WIDTH), MAX_ASSISTANTS_WIDTH)
+  }
+
+  const maxByViewport = Math.max(MIN_ASSISTANTS_WIDTH, window.innerWidth - MIN_CHAT_WIDTH)
+  return Math.min(Math.max(width, MIN_ASSISTANTS_WIDTH), Math.min(MAX_ASSISTANTS_WIDTH, maxByViewport))
+}
+
+const getStoredAssistantsWidth = () => {
+  const storedWidth = Number(localStorage.getItem(ASSISTANTS_WIDTH_STORAGE_KEY))
+  return Number.isFinite(storedWidth) ? clampAssistantsWidth(storedWidth) : DEFAULT_ASSISTANTS_WIDTH
+}
+
 const HomePage: FC = () => {
   const { assistants } = useAssistants()
   const navigate = useNavigate()
   const { isLeftNavbar } = useNavbarPosition()
+  const [assistantsWidth, setAssistantsWidth] = useState(getStoredAssistantsWidth)
+  const [isResizingAssistants, setIsResizingAssistants] = useState(false)
 
   // Initialize agent session hook
   useAgentSessionInitializer()
@@ -41,6 +63,10 @@ const HomePage: FC = () => {
   const dispatch = useDispatch()
   const { chat } = useRuntime()
   const { activeTopicOrSession } = chat
+  const assistantPanelStyle = useMemo(
+    () => ({ '--assistants-width': `${assistantsWidth}px` }) as CSSProperties,
+    [assistantsWidth]
+  )
 
   _activeAssistant = activeAssistant
 
@@ -91,8 +117,47 @@ const HomePage: FC = () => {
     }
   }, [showAssistants, showTopics, topicPosition])
 
+  useEffect(() => {
+    document.documentElement.style.setProperty('--assistants-width', `${assistantsWidth}px`)
+    localStorage.setItem(ASSISTANTS_WIDTH_STORAGE_KEY, String(assistantsWidth))
+  }, [assistantsWidth])
+
+  useEffect(() => {
+    const handleWindowResize = () => setAssistantsWidth((width) => clampAssistantsWidth(width))
+    window.addEventListener('resize', handleWindowResize)
+    return () => window.removeEventListener('resize', handleWindowResize)
+  }, [])
+
+  const startResizeAssistants = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (!showAssistants) return
+
+      event.preventDefault()
+      const startX = event.clientX
+      const startWidth = assistantsWidth
+      setIsResizingAssistants(true)
+
+      const handlePointerMove = (moveEvent: PointerEvent) => {
+        const nextWidth = clampAssistantsWidth(startWidth + moveEvent.clientX - startX)
+        setAssistantsWidth(nextWidth)
+      }
+
+      const stopResize = () => {
+        setIsResizingAssistants(false)
+        window.removeEventListener('pointermove', handlePointerMove)
+        window.removeEventListener('pointerup', stopResize)
+        window.removeEventListener('pointercancel', stopResize)
+      }
+
+      window.addEventListener('pointermove', handlePointerMove)
+      window.addEventListener('pointerup', stopResize)
+      window.addEventListener('pointercancel', stopResize)
+    },
+    [assistantsWidth, showAssistants]
+  )
+
   return (
-    <Container id="home-page">
+    <Container id="home-page" style={assistantPanelStyle} $isResizingAssistants={isResizingAssistants}>
       {isLeftNavbar && (
         <Navbar
           activeAssistant={activeAssistant}
@@ -109,9 +174,9 @@ const HomePage: FC = () => {
             <ErrorBoundary>
               <motion.div
                 initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 'var(--assistants-width)', opacity: 1 }}
+                animate={{ width: assistantsWidth, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                transition={{ duration: isResizingAssistants ? 0 : 0.3, ease: 'easeInOut' }}
                 style={{ overflow: 'hidden' }}>
                 <HomeTabs
                   activeAssistant={activeAssistant}
@@ -121,6 +186,7 @@ const HomePage: FC = () => {
                   position="left"
                 />
               </motion.div>
+              <ResizeHandle onPointerDown={startResizeAssistants} aria-label="Resize sidebar" role="separator" />
             </ErrorBoundary>
           )}
         </AnimatePresence>
@@ -137,15 +203,43 @@ const HomePage: FC = () => {
   )
 }
 
-const Container = styled.div`
+const Container = styled.div<{ $isResizingAssistants: boolean }>`
   display: flex;
   flex: 1;
   flex-direction: column;
+  cursor: ${({ $isResizingAssistants }) => ($isResizingAssistants ? 'col-resize' : 'default')};
+  user-select: ${({ $isResizingAssistants }) => ($isResizingAssistants ? 'none' : 'auto')};
+
   [navbar-position='left'] & {
     max-width: calc(100vw - var(--sidebar-width));
   }
   [navbar-position='top'] & {
     max-width: 100vw;
+  }
+`
+
+const ResizeHandle = styled.div`
+  width: 6px;
+  flex: 0 0 6px;
+  cursor: col-resize;
+  position: relative;
+  z-index: 2;
+  -webkit-app-region: no-drag;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 2px;
+    width: 1px;
+    background: transparent;
+    transition: background 0.15s ease;
+  }
+
+  &:hover::before,
+  &:active::before {
+    background: var(--color-primary);
   }
 `
 

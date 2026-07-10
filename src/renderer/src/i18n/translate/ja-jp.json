@@ -1349,6 +1349,7 @@
     "no_results": "検索結果なし",
     "none": "無",
     "off": "オフ",
+    "ok": "[to be translated]:OK",
     "on": "オン",
     "open": "開く",
     "paste": "貼り付け",
@@ -1363,6 +1364,7 @@
     "prompt": "プロンプト",
     "provider": "プロバイダー",
     "reasoning_content": "深く考察済み",
+    "records": "[to be translated]:records",
     "refresh": "更新",
     "regenerate": "再生成",
     "remove_image": "画像を削除",
@@ -1391,6 +1393,7 @@
     "success": "成功",
     "swap": "交換",
     "topics": "トピック",
+    "total": "[to be translated]:Total",
     "translate_text": "翻訳",
     "unknown": "Unknown",
     "unnamed": "無題",
@@ -1399,10 +1402,18 @@
     "upload_files": "ファイルをアップロードする",
     "upload_image": "画像ファイルをアップロード",
     "uploaded_image": "アップロードされた画像",
+    "vision_action": {
+      "device": "[to be translated]:Device",
+      "execute": "[to be translated]:Execute",
+      "placeholder": "[to be translated]:Example: tap the search button or swipe up",
+      "success": "[to be translated]:Vision action executed",
+      "title": "[to be translated]:Vision Action"
+    },
     "warning": "警告",
     "you": "あなた"
   },
   "device": {
+    "android_version": "[to be translated]:Android Version",
     "batch_control": {
       "back": "[to be translated]:Back",
       "batch_back": "[to be translated]:Batch Back",
@@ -1466,6 +1477,8 @@
     "brand": "[to be translated]:Brand",
     "command": "[to be translated]:Command",
     "connect": "[to be translated]:Connect",
+    "connected": "[to be translated]:Connected",
+    "connecting": "[to be translated]:Connecting...",
     "connection_error_title": "[to be translated]:Connection Error",
     "control_panel": {
       "back": "[to be translated]:Back",
@@ -1475,6 +1488,7 @@
       "input_failed": "[to be translated]:Text input failed",
       "input_success": "[to be translated]:Text input successful",
       "key_failed": "[to be translated]:{{key}} key operation failed",
+      "key_sending": "[to be translated]:Pressing {{key}} key",
       "key_success": "[to be translated]:{{key}} key operation successful",
       "log_title": "[to be translated]:Log",
       "menu": "[to be translated]:Menu",
@@ -1483,10 +1497,16 @@
       "reboot": "[to be translated]:Reboot",
       "reboot_sending": "[to be translated]:Rebooting device...",
       "screenshot": "[to be translated]:Screenshot",
+      "screenshot_adb_success": "[to be translated]:ADB screenshot captured",
+      "screenshot_failed": "[to be translated]:Screenshot failed",
       "screenshot_not_implemented": "[to be translated]:Screenshot feature not yet implemented",
+      "screenshot_saved": "[to be translated]:Screenshot saved",
+      "screenshot_scrcpy_success": "[to be translated]:Scrcpy window screenshot captured",
+      "screenshot_sending": "[to be translated]:Capturing screenshot...",
       "swipe": "[to be translated]:Swipe",
       "swipe_failed": "[to be translated]:Swipe operation failed",
       "swipe_success": "[to be translated]:Swipe operation successful",
+      "system_operations": "[to be translated]:System Operations",
       "tap": "[to be translated]:Tap",
       "tap_failed": "[to be translated]:Tap operation failed",
       "tap_success": "[to be translated]:Tap operation successful",
@@ -1507,6 +1527,7 @@
     "edit": "[to be translated]:Edit",
     "error": {
       "exited": "[to be translated]:Process exited abnormally: scrcpy exited immediately after startup, possibly due to device compatibility issues or insufficient permissions",
+      "fetch_failed": "[to be translated]:Failed to scan devices. Please check whether ADB is available and USB debugging is enabled.",
       "generic": "[to be translated]:Error starting screen mirroring: ",
       "inject_events": "[to be translated]:Insufficient device permissions: Please enable \"USB debugging (security settings)\" in developer options on your device, then restart the device. If issues persist, try reconnecting the USB cable",
       "permission": "[to be translated]:Device permission issue: Please check USB debugging permissions, you may need to re-authorize or change USB ports",
@@ -1524,6 +1545,7 @@
       "name_exists": "[to be translated]:Group name already exists",
       "no_group_devices": "[to be translated]:No devices in this group",
       "save_failed": "[to be translated]:Failed to save group",
+      "ungrouped": "[to be translated]:Ungrouped Devices",
       "update_success": "[to be translated]:Group updated successfully"
     },
     "last_refresh": "[to be translated]:Last refresh time",
@@ -1570,6 +1592,7 @@
       "unauthorized": "[to be translated]:Unauthorized"
     },
     "title": "[to be translated]:Devices",
+    "unauthorized_hint": "[to be translated]:Authorize USB debugging on the device, then refresh.",
     "unknown": "[to be translated]:Unknown",
     "unnamed_device": "[to be translated]:Unnamed Device"
   },
@@ -4533,6 +4556,7 @@
       "builtinServersDescriptions": {
         "brave_search": "Brave検索APIを統合したMCPサーバーの実装で、ウェブ検索とローカル検索の両機能を提供します。BRAVE_API_KEY環境変数の設定が必要です",
         "browser": "Chrome DevTools Protocolを介してheadless Electronウィンドウを制御します。ツール：URLを開く、単一行JSを実行、セッションをリセット。",
+        "chat_monitor": "[to be translated]:MCP service for WeChat chat monitoring and replying scenarios. Integrates ADB, scrcpy, uiautomator2, and TTS to support text listening, text sending, direct input-box sending, hold-to-talk voice reply, and call-assist scaffolding. Missing dependencies are returned as 'manual confirmation required' install hints.",
         "device_control": "[to be translated]:Control Android devices through ADB and scrcpy. Provides tools for device listing, screen mirroring, touch events, APK management, and ADB command execution.",
         "didi_mcp": "DiDi MCPサーバーは、地図検索、料金見積もり、注文管理、ドライバー追跡を含むライドシェアサービスを提供します。中国本土でのみ利用可能です。DIDI_API_KEY環境変数の設定が必要です",
         "dify_knowledge": "DifyのMCPサーバー実装は、Difyと対話するためのシンプルなAPIを提供します。Dify Keyの設定が必要です。",
@@ -5555,6 +5579,135 @@
       "reset": "リセット",
       "title": "ページズーム"
     }
+  },
+  "taskflow": {
+    "description": "[to be translated]:Android WeChat message monitoring and auto-reply task flow",
+    "deviceQueue": {
+      "actions": {
+        "cancel": "[to be translated]:Cancel",
+        "pause": "[to be translated]:Pause",
+        "resume": "[to be translated]:Resume"
+      },
+      "columns": {
+        "actions": "[to be translated]:Actions",
+        "device": "[to be translated]:Device",
+        "goal": "[to be translated]:Goal",
+        "progress": "[to be translated]:Progress",
+        "status": "[to be translated]:Status",
+        "updated": "[to be translated]:Updated"
+      },
+      "enqueue": "[to be translated]:Enqueue",
+      "enqueueSuccess": "[to be translated]:Device task enqueued",
+      "goalPlaceholder": "[to be translated]:Example: open the target app and tap the visible reward button",
+      "localVlm": "[to be translated]:Local VLM",
+      "onlineDevice": "[to be translated]:Online device",
+      "refresh": "[to be translated]:Refresh",
+      "selectTaskLogs": "[to be translated]:Select a task to view logs.",
+      "selectedLogs": "[to be translated]:Selected task logs",
+      "title": "[to be translated]:Device task queue",
+      "tryDeerFlow": "[to be translated]:Try DeerFlow",
+      "validation": {
+        "device": "[to be translated]:Select a device",
+        "goal": "[to be translated]:Input task goal"
+      }
+    },
+    "editor": {
+      "back": "[to be translated]:Back to List",
+      "create": "[to be translated]:Create Task",
+      "createSuccess": "[to be translated]:Task created successfully",
+      "edit": "[to be translated]:Edit Task",
+      "editSuccess": "[to be translated]:Task updated successfully",
+      "nodePalette": "[to be translated]:Node Palette",
+      "nodeTypes": "[to be translated]:Node Types",
+      "run": "[to be translated]:Run Task",
+      "runError": "[to be translated]:Task run failed",
+      "runSuccess": "[to be translated]:Task run successfully",
+      "save": "[to be translated]:Save Task",
+      "saveFirst": "[to be translated]:Please save the task first",
+      "startingTask": "[to be translated]:Starting task...",
+      "taskDescription": "[to be translated]:Task Description",
+      "taskDescriptionPlaceholder": "[to be translated]:Enter task description",
+      "taskInfo": "[to be translated]:Task Information",
+      "taskName": "[to be translated]:Task Name",
+      "taskNamePlaceholder": "[to be translated]:Enter task name",
+      "taskNameRequired": "[to be translated]:Please enter task name",
+      "title": "[to be translated]:Task Editor",
+      "updateSuccess": "[to be translated]:Task updated successfully"
+    },
+    "executionType": {
+      "manual": "[to be translated]:Manual",
+      "scheduled": "[to be translated]:Scheduled"
+    },
+    "list": {
+      "actions": "[to be translated]:Actions",
+      "create": "[to be translated]:Create Task",
+      "createdAt": "[to be translated]:Created At",
+      "delete": "[to be translated]:Delete Task",
+      "deleteConfirm": "[to be translated]:Are you sure you want to delete this task? This action cannot be undone.",
+      "edit": "[to be translated]:Edit Task",
+      "executionType": "[to be translated]:Execution Type",
+      "lastRunAt": "[to be translated]:Last Run",
+      "name": "[to be translated]:Task Name",
+      "neverRun": "[to be translated]:Never run",
+      "run": "[to be translated]:Run Task",
+      "runSuccess": "[to be translated]:Task run successfully",
+      "search": "[to be translated]:Search Tasks",
+      "status": "[to be translated]:Status",
+      "title": "[to be translated]:Task List",
+      "viewLogs": "[to be translated]:View Logs"
+    },
+    "logs": {
+      "back": "[to be translated]:Back to Task List",
+      "endTime": "[to be translated]:End Time",
+      "error": "[to be translated]:Error",
+      "info": "[to be translated]:Info",
+      "level": "[to be translated]:Level",
+      "message": "[to be translated]:Message",
+      "refresh": "[to be translated]:Refresh",
+      "search": "[to be translated]:Search Logs",
+      "startTime": "[to be translated]:Start Time",
+      "time": "[to be translated]:Time",
+      "title": "[to be translated]:Task Logs",
+      "warn": "[to be translated]:Warning"
+    },
+    "nodeConfig": {
+      "contactName": "[to be translated]:Contact Name",
+      "field": "[to be translated]:Field",
+      "groupName": "[to be translated]:Group Name",
+      "keywords": "[to be translated]:Keywords",
+      "message": "[to be translated]:Message Content",
+      "model": "[to be translated]:Model",
+      "operator": "[to be translated]:Operator",
+      "prompt": "[to be translated]:Prompt",
+      "script": "[to be translated]:Script Content",
+      "temperature": "[to be translated]:Temperature",
+      "timeout": "[to be translated]:Timeout",
+      "useTemplate": "[to be translated]:Use Template",
+      "value": "[to be translated]:Value"
+    },
+    "nodes": {
+      "condition": "[to be translated]:Condition",
+      "end": "[to be translated]:End",
+      "execute": "[to be translated]:Execute Action",
+      "listenMessage": "[to be translated]:Listen Message",
+      "llm": "[to be translated]:LLM Processing",
+      "sendMessage": "[to be translated]:Send Message",
+      "start": "[to be translated]:Start"
+    },
+    "operators": {
+      "contains": "[to be translated]:Contains",
+      "equals": "[to be translated]:Equals",
+      "greater": "[to be translated]:Greater Than",
+      "less": "[to be translated]:Less Than"
+    },
+    "status": {
+      "completed": "[to be translated]:Completed",
+      "created": "[to be translated]:Created",
+      "error": "[to be translated]:Failed",
+      "running": "[to be translated]:Running",
+      "stopped": "[to be translated]:Stopped"
+    },
+    "title": "[to be translated]:Task Flow"
   },
   "title": {
     "apps": "アプリ",

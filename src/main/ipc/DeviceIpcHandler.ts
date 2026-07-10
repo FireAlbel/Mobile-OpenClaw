@@ -1,37 +1,43 @@
 import { loggerService } from '@logger'
-import { ipcMain } from 'electron'
+import { BrowserWindow, ipcMain } from 'electron'
 
 import { type DeviceInfo, deviceService } from '../services/DeviceService'
+import { scrcpyWindowService } from '../services/ScrcpyWindowService'
 
 const logger = loggerService.withContext('DeviceIpcHandler')
 
 export class DeviceIpcHandler {
+  private static isScrcpyStoppedForwarderRegistered = false
+
   static registerHandlers(): void {
-    // 扫描设备
+    if (!DeviceIpcHandler.isScrcpyStoppedForwarderRegistered) {
+      deviceService.onScrcpyStopped((payload) => {
+        for (const window of BrowserWindow.getAllWindows()) {
+          window.webContents.send('device:scrcpyStopped', payload)
+        }
+      })
+      DeviceIpcHandler.isScrcpyStoppedForwarderRegistered = true
+    }
+
     ipcMain.handle('device:scanDevices', async (): Promise<DeviceInfo[]> => {
       try {
-        // logger.info('Scanning devices via IPC', {})
-        const devices = await deviceService.scanDevices()
-        return devices
+        return await deviceService.scanDevices()
       } catch (error) {
         logger.error('Failed to scan devices via IPC:', { error })
         throw error
       }
     })
 
-    // 执行ADB命令
     ipcMain.handle('device:executeAdbCommand', async (_event, deviceId: string, command: string): Promise<string> => {
       try {
         logger.info('Executing ADB command via IPC:', { deviceId, command })
-        const result = await deviceService.executeAdbCommand(deviceId, command)
-        return result
+        return await deviceService.executeAdbCommand(deviceId, command)
       } catch (error) {
         logger.error('Failed to execute ADB command via IPC:', { error })
         throw error
       }
     })
 
-    // 启动Scrcpy
     ipcMain.handle(
       'device:startScrcpy',
       async (
@@ -55,7 +61,6 @@ export class DeviceIpcHandler {
       }
     )
 
-    // 停止Scrcpy
     ipcMain.handle('device:stopScrcpy', async (_event, deviceId: string): Promise<void> => {
       try {
         logger.info('Stopping Scrcpy via IPC:', { deviceId })
@@ -66,7 +71,6 @@ export class DeviceIpcHandler {
       }
     })
 
-    // 停止所有Scrcpy
     ipcMain.handle('device:stopAllScrcpy', async (): Promise<void> => {
       try {
         logger.info('Stopping all Scrcpy via IPC', {})
@@ -77,7 +81,51 @@ export class DeviceIpcHandler {
       }
     })
 
-    // 发送点击
+    ipcMain.handle('device:getScrcpyWindow', async (_event, deviceId: string) => {
+      try {
+        logger.info('Getting Scrcpy window via IPC:', { deviceId })
+        return await scrcpyWindowService.getWindowInfo(deviceId)
+      } catch (error) {
+        logger.error('Failed to get Scrcpy window via IPC:', { error, deviceId })
+        throw error
+      }
+    })
+
+    ipcMain.handle('device:captureScrcpyWindow', async (_event, deviceId: string) => {
+      try {
+        logger.info('Capturing Scrcpy window via IPC:', { deviceId })
+        return await scrcpyWindowService.captureWindow(deviceId)
+      } catch (error) {
+        logger.error('Failed to capture Scrcpy window via IPC:', { error, deviceId })
+        throw error
+      }
+    })
+
+    ipcMain.handle('device:getScreenshot', async (_event, deviceId: string) => {
+      try {
+        logger.info('Capturing device screenshot via IPC:', { deviceId })
+        const image = await deviceService.getScreenshot(deviceId)
+        return {
+          deviceId,
+          mime: 'image/png',
+          imageBase64: image.toString('base64')
+        }
+      } catch (error) {
+        logger.error('Failed to capture device screenshot via IPC:', { error, deviceId })
+        throw error
+      }
+    })
+
+    ipcMain.handle('device:getScreenSize', async (_event, deviceId: string) => {
+      try {
+        logger.info('Getting device screen size via IPC:', { deviceId })
+        return await deviceService.getDeviceScreenSize(deviceId)
+      } catch (error) {
+        logger.error('Failed to get device screen size via IPC:', { error, deviceId })
+        throw error
+      }
+    })
+
     ipcMain.handle('device:sendTap', async (_event, deviceId: string, x: number, y: number): Promise<void> => {
       try {
         logger.info('Sending tap via IPC:', { deviceId, x, y })
@@ -88,7 +136,32 @@ export class DeviceIpcHandler {
       }
     })
 
-    // 发送滑动
+    ipcMain.handle(
+      'device:sendDoubleTap',
+      async (_event, deviceId: string, x: number, y: number, interval?: number): Promise<void> => {
+        try {
+          logger.info('Sending double tap via IPC:', { deviceId, x, y, interval })
+          await deviceService.sendDoubleTap(deviceId, x, y, interval)
+        } catch (error) {
+          logger.error('Failed to send double tap via IPC:', { error, deviceId })
+          throw error
+        }
+      }
+    )
+
+    ipcMain.handle(
+      'device:sendLongPress',
+      async (_event, deviceId: string, x: number, y: number, duration?: number): Promise<void> => {
+        try {
+          logger.info('Sending long press via IPC:', { deviceId, x, y, duration })
+          await deviceService.sendLongPress(deviceId, x, y, duration)
+        } catch (error) {
+          logger.error('Failed to send long press via IPC:', { error, deviceId })
+          throw error
+        }
+      }
+    )
+
     ipcMain.handle(
       'device:sendSwipe',
       async (
@@ -110,7 +183,27 @@ export class DeviceIpcHandler {
       }
     )
 
-    // 发送文本
+    ipcMain.handle(
+      'device:sendDrag',
+      async (
+        _event,
+        deviceId: string,
+        x1: number,
+        y1: number,
+        x2: number,
+        y2: number,
+        duration?: number
+      ): Promise<void> => {
+        try {
+          logger.info('Sending drag via IPC:', { deviceId, x1, y1, x2, y2, duration })
+          await deviceService.sendDrag(deviceId, x1, y1, x2, y2, duration)
+        } catch (error) {
+          logger.error('Failed to send drag via IPC:', { error, deviceId })
+          throw error
+        }
+      }
+    )
+
     ipcMain.handle('device:sendText', async (_event, deviceId: string, text: string): Promise<void> => {
       try {
         logger.info('Sending text via IPC:', { deviceId, text })
@@ -121,7 +214,6 @@ export class DeviceIpcHandler {
       }
     })
 
-    // 发送按键事件
     ipcMain.handle('device:sendKeyEvent', async (_event, deviceId: string, keyCode: number): Promise<void> => {
       try {
         logger.info('Sending key event via IPC:', { deviceId, keyCode })
@@ -132,14 +224,65 @@ export class DeviceIpcHandler {
       }
     })
 
-    // 检查设备状态
+    ipcMain.handle('device:startApp', async (_event, deviceId: string, packageName: string): Promise<void> => {
+      try {
+        logger.info('Starting app via IPC:', { deviceId, packageName })
+        await deviceService.startApp(deviceId, packageName)
+      } catch (error) {
+        logger.error('Failed to start app via IPC:', { error, deviceId, packageName })
+        throw error
+      }
+    })
+
+    ipcMain.handle('device:stopApp', async (_event, deviceId: string, packageName: string): Promise<void> => {
+      try {
+        logger.info('Stopping app via IPC:', { deviceId, packageName })
+        await deviceService.stopApp(deviceId, packageName)
+      } catch (error) {
+        logger.error('Failed to stop app via IPC:', { error, deviceId, packageName })
+        throw error
+      }
+    })
+
+    ipcMain.handle('device:restartApp', async (_event, deviceId: string, packageName: string): Promise<void> => {
+      try {
+        logger.info('Restarting app via IPC:', { deviceId, packageName })
+        await deviceService.restartApp(deviceId, packageName)
+      } catch (error) {
+        logger.error('Failed to restart app via IPC:', { error, deviceId, packageName })
+        throw error
+      }
+    })
+
+    ipcMain.handle('device:getForegroundApp', async (_event, deviceId: string) => {
+      try {
+        logger.info('Getting foreground app via IPC:', { deviceId })
+        return await deviceService.getForegroundApp(deviceId)
+      } catch (error) {
+        logger.error('Failed to get foreground app via IPC:', { error, deviceId })
+        throw error
+      }
+    })
+
+    ipcMain.handle(
+      'device:handlePermissionDialog',
+      async (_event, deviceId: string, action: 'allow' | 'deny' | 'allow_once'): Promise<boolean> => {
+        try {
+          logger.info('Handling permission dialog via IPC:', { deviceId, action })
+          return await deviceService.handlePermissionDialog(deviceId, action)
+        } catch (error) {
+          logger.error('Failed to handle permission dialog via IPC:', { error, deviceId, action })
+          throw error
+        }
+      }
+    )
+
     ipcMain.handle(
       'device:checkDeviceStatus',
       async (_event, deviceId: string): Promise<'online' | 'offline' | 'unauthorized'> => {
         try {
           logger.info('Checking device status via IPC:', { deviceId })
-          const status = await deviceService.checkDeviceStatus(deviceId)
-          return status
+          return await deviceService.checkDeviceStatus(deviceId)
         } catch (error) {
           logger.error('Failed to check device status via IPC:', { error })
           return 'offline'
@@ -147,12 +290,10 @@ export class DeviceIpcHandler {
       }
     )
 
-    // 检测工具路径
     ipcMain.handle('detect-tool-paths', async (): Promise<{ adbPath?: string; scrcpyPath?: string }> => {
       try {
         logger.info('Detecting tool paths via IPC', {})
-        const paths = await deviceService.detectToolPaths()
-        return paths
+        return await deviceService.detectToolPaths()
       } catch (error) {
         logger.error('Failed to detect tool paths via IPC:', { error })
         return {}

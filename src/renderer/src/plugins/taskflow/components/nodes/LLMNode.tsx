@@ -1,7 +1,7 @@
+import { CloseOutlined, RobotOutlined } from '@ant-design/icons'
+import { Button, Form, Input, Modal, Select, Slider } from 'antd'
 import React, { useState } from 'react'
 import { Handle, Position } from 'reactflow'
-import { RobotOutlined, CloseOutlined } from '@ant-design/icons'
-import { Modal, Form, Input, Slider, Select, Button } from 'antd'
 
 const LLMNode: React.FC<{ data: any; id: string }> = ({ data, id }) => {
   const [isModalVisible, setIsModalVisible] = useState(false)

@@ -1,6 +1,9 @@
+import { loggerService } from '@logger'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
+
+const logger = loggerService.withContext('DeviceSettingsPanel')
 
 interface DeviceSettingsPanelProps {
   onClose: () => void
@@ -69,7 +72,7 @@ const DeviceSettingsPanel: React.FC<DeviceSettingsPanelProps> = ({ onClose }) =>
         setDetectedScrcpyPath(paths.scrcpyPath)
       }
     } catch (error) {
-      console.error('检测工具路径失败:', error)
+      logger.error('Failed to detect tool paths', { error })
     }
 
     setIsDetecting(false)

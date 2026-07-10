@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
+import DeviceTaskQueuePanel from '../../plugins/taskflow/components/DeviceTaskQueuePanel'
 import TaskList from '../../plugins/taskflow/components/TaskList'
 import TaskLogs from '../../plugins/taskflow/components/TaskLogs'
 
@@ -14,6 +15,7 @@ const TaskFlowPage: React.FC = () => {
   const { t } = useTranslation()
 
   const getActiveTab = () => {
+    if (location.pathname.includes('/device-queue')) return 'device-queue'
     if (location.pathname.includes('/logs')) return 'logs'
     return 'list'
   }
@@ -23,6 +25,8 @@ const TaskFlowPage: React.FC = () => {
       navigate('/taskflow')
     } else if (key === 'logs') {
       navigate('/taskflow/logs')
+    } else if (key === 'device-queue') {
+      navigate('/taskflow/device-queue')
     }
   }
 
@@ -47,6 +51,11 @@ const TaskFlowPage: React.FC = () => {
                 key: 'logs',
                 label: t('taskflow.logs.title'),
                 children: <TaskLogs />
+              },
+              {
+                key: 'device-queue',
+                label: 'Device Queue',
+                children: <DeviceTaskQueuePanel />
               }
             ]}
           />

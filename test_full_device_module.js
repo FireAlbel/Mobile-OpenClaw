@@ -23,13 +23,16 @@ async function testFullDeviceModule() {
 
     // 解析设备信息
     const deviceLines = devicesResult.stdout.split('\n').slice(1)
-    const devices = deviceLines.filter(line => line.trim() && !line.startsWith('*')).map(line => {
-      const parts = line.split(/\s+/)
-      return {
-        serial: parts[0],
-        status: parts[1]
-      }
-    }).filter(d => d.status === 'device')
+    const devices = deviceLines
+      .filter((line) => line.trim() && !line.startsWith('*'))
+      .map((line) => {
+        const parts = line.split(/\s+/)
+        return {
+          serial: parts[0],
+          status: parts[1]
+        }
+      })
+      .filter((d) => d.status === 'device')
 
     if (devices.length === 0) {
       console.log('❌ 没有连接的设备')
@@ -94,11 +97,16 @@ async function testFullDeviceModule() {
     console.log('🔄 启动scrcpy投屏（5秒后自动关闭）...')
 
     const scrcpyProcess = spawn('scrcpy', [
-      '-s', device.serial,
-      '--window-title', 'CherryStudio设备投屏测试',
-      '-m', '1024',
-      '-b', '8000000',
-      '--max-fps', '30'
+      '-s',
+      device.serial,
+      '--window-title',
+      'CherryStudio设备投屏测试',
+      '-m',
+      '1024',
+      '-b',
+      '8000000',
+      '--max-fps',
+      '30'
     ])
 
     scrcpyProcess.on('error', (err) => {
@@ -119,7 +127,6 @@ async function testFullDeviceModule() {
       console.log('- 设备信息获取正常')
       console.log('- 如需输入控制，请在设备开发者选项中启用"USB调试(安全设置)"')
     }, 5000)
-
   } catch (error) {
     console.error('❌ 测试失败:', error.message)
     console.log('\n💡 建议:')

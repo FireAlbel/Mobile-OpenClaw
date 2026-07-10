@@ -1,7 +1,7 @@
-import React from 'react'
-import { Handle, Position } from 'reactflow'
 import { CheckCircleOutlined, CloseOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
+import React from 'react'
+import { Handle, Position } from 'reactflow'
 
 const EndNode: React.FC<{ data: any; id: string }> = ({ data, id }) => {
   const handleDelete = () => {

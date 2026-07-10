@@ -1,4 +1,5 @@
 import { SearchOutlined } from '@ant-design/icons'
+import { loggerService } from '@logger'
 import PromptPopup from '@renderer/components/Popups/PromptPopup'
 import { type DeviceInfo, deviceServiceProxy } from '@renderer/services/DeviceServiceProxy'
 import {
@@ -10,29 +11,53 @@ import {
   type MenuProps,
   message,
   Modal,
+  Select,
   Space,
   Spin,
   Tag,
   Typography
 } from 'antd'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
 import BatchControlPanel from './BatchControlPanel'
 import BatchInstallPanel from './BatchInstallPanel'
 import DeviceControlPanel from './DeviceControlPanel'
+import {
+  type DeviceGroup,
+  type DeviceMetadata,
+  isDeviceGroup,
+  removeGroupAssignments,
+  sanitizeDeviceMetadataMap
+} from './deviceMetadata'
 
-interface DeviceGroup {
-  id: string
-  name: string
+const logger = loggerService.withContext('DevicePage')
+
+interface DeviceEditDraft {
+  deviceId: string
+  title: string
+  remark: string
+  groupId: string
+}
+
+interface DevicePageProps {
+  initialScanDelayMs?: number
+  refreshIntervalMs?: number
 }
 
 const DEVICE_GROUPS_CONFIG_KEY = 'device.groups'
+const DEVICE_INFO_CONFIG_KEY = 'device.info'
+const NO_GROUP_VALUE = '__none__'
+const DEFAULT_REFRESH_INTERVAL_MS = 5000
 
-const DevicePage: React.FC = () => {
+const DevicePage: React.FC<DevicePageProps> = ({
+  initialScanDelayMs = 300,
+  refreshIntervalMs = DEFAULT_REFRESH_INTERVAL_MS
+}) => {
   const [devices, setDevices] = useState<DeviceInfo[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+  const [scanning, setScanning] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
   const [scrcpyError, setScrcpyError] = useState<string | null>(null)
@@ -42,11 +67,19 @@ const DevicePage: React.FC = () => {
   const [showBatchControlPanel, setShowBatchControlPanel] = useState<boolean>(false)
   const [searchKeyword, setSearchKeyword] = useState<string>('')
   const [groups, setGroups] = useState<DeviceGroup[]>([])
-  const [deviceInfo, setDeviceInfo] = useState<Record<string, { title: string; remark: string; groupId?: string }>>({})
+  const [deviceInfo, setDeviceInfo] = useState<Record<string, DeviceMetadata>>({})
   const [connectingDevice, setConnectingDevice] = useState<string | null>(null)
+  const [connectedDevices, setConnectedDevices] = useState<Set<string>>(() => new Set())
   const [showScrcpyErrorModal, setShowScrcpyErrorModal] = useState<boolean>(false)
+  const [editDraft, setEditDraft] = useState<DeviceEditDraft | null>(null)
 
   const { t } = useTranslation()
+  const tr = useCallback(
+    (key: string, defaultValue: string, options?: Record<string, unknown>) => {
+      return t(key, { defaultValue, ...options })
+    },
+    [t]
+  )
 
   const renderStatusTag = (status: DeviceInfo['status']) => {
     switch (status) {
@@ -54,108 +87,118 @@ const DevicePage: React.FC = () => {
         return <Tag color="green">{t('device.status.online')}</Tag>
       case 'offline':
         return <Tag color="red">{t('device.status.offline')}</Tag>
-      default:
+      case 'unauthorized':
         return <Tag color="orange">{t('device.status.unauthorized')}</Tag>
     }
   }
 
   const getDevicePort = (deviceId: string) => {
-    // 从deviceId中提取端口号
-    // 对于ADB设备，通常是5555或其他端口号
     const match = deviceId.match(/:(\d+)$/)
     return match?.[1] ?? '--'
   }
 
-  const getDeviceRemark = (device: DeviceInfo) => {
-    return device.model || device.brand || '默认设备'
+  const getDeviceRemarkFallback = (device: DeviceInfo) => {
+    return device.model || device.brand || t('device.default_device')
   }
 
-  const fetchDevices = async (showLoading = false) => {
-    try {
-      if (showLoading) {
-        setLoading(true)
-      }
-      setError(null)
-
-      const newDevices = await deviceServiceProxy.scanDevices()
-      setDevices((prev) => {
-        const changed = JSON.stringify(prev) !== JSON.stringify(newDevices)
-        return changed || showLoading ? newDevices : prev
-      })
-      setLastRefresh(new Date())
-    } catch (err) {
-      setError(t('device.error.fetch_failed') || '获取设备列表失败')
-      console.error('Failed to fetch devices:', err)
-    } finally {
-      if (showLoading) {
-        setLoading(false)
-      }
-    }
-  }
-
-  const loadGroups = async () => {
+  const loadGroups = useCallback(async () => {
     try {
       const stored = await window.api.config.get(DEVICE_GROUPS_CONFIG_KEY)
-      if (!Array.isArray(stored)) {
-        setGroups([])
-        return
-      }
-      const validGroups = stored
-        .filter((item): item is DeviceGroup =>
-          Boolean(item && typeof item.id === 'string' && typeof item.name === 'string')
-        )
-        .map((item) => ({ id: item.id, name: item.name.trim() }))
-        .filter((item) => item.name.length > 0)
+      const validGroups = Array.isArray(stored)
+        ? stored
+            .filter(isDeviceGroup)
+            .map((item) => ({ id: item.id, name: item.name.trim() }))
+            .filter((item, index, list) => list.findIndex((other) => other.id === item.id) === index)
+        : []
       setGroups(validGroups)
     } catch (loadError) {
-      console.error('Failed to load device groups:', loadError)
+      logger.error('Failed to load device groups', { error: loadError })
       setGroups([])
     }
-  }
+  }, [])
+
+  const loadDeviceInfo = useCallback(async () => {
+    try {
+      const stored = await window.api.config.get(DEVICE_INFO_CONFIG_KEY)
+      setDeviceInfo(sanitizeDeviceMetadataMap(stored))
+    } catch (loadError) {
+      logger.error('Failed to load device metadata', { error: loadError })
+      setDeviceInfo({})
+    }
+  }, [])
+
+  const fetchDevices = useCallback(
+    async (showLoading = false) => {
+      try {
+        if (showLoading) {
+          setLoading(true)
+        } else {
+          setScanning(true)
+        }
+        setError(null)
+
+        const newDevices = await deviceServiceProxy.scanDevices()
+        setDevices((prev) => (JSON.stringify(prev) === JSON.stringify(newDevices) ? prev : newDevices))
+        setLastRefresh(new Date())
+      } catch (scanError) {
+        logger.error('Failed to fetch devices', { error: scanError })
+        setError(
+          tr(
+            'device.error.fetch_failed',
+            'Failed to scan devices. Please check whether ADB is available and USB debugging is enabled.'
+          )
+        )
+      } finally {
+        setLoading(false)
+        setScanning(false)
+      }
+    },
+    [tr]
+  )
+
+  useEffect(() => {
+    loadGroups()
+    loadDeviceInfo()
+
+    const timer = setTimeout(() => fetchDevices(true), initialScanDelayMs)
+    const interval = refreshIntervalMs > 0 ? setInterval(() => fetchDevices(false), refreshIntervalMs) : undefined
+
+    return () => {
+      clearTimeout(timer)
+      if (interval) {
+        clearInterval(interval)
+      }
+    }
+  }, [fetchDevices, initialScanDelayMs, loadDeviceInfo, loadGroups, refreshIntervalMs])
+
+  useEffect(() => {
+    return deviceServiceProxy.onScrcpyStopped(({ deviceId }) => {
+      setConnectedDevices((prev) => {
+        if (!prev.has(deviceId)) return prev
+        const next = new Set(prev)
+        next.delete(deviceId)
+        return next
+      })
+    })
+  }, [])
+
+  useEffect(() => {
+    const currentDeviceIds = new Set(devices.map((device) => device.id))
+    setConnectedDevices((prev) => {
+      const next = new Set([...prev].filter((deviceId) => currentDeviceIds.has(deviceId)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [devices])
 
   const saveGroups = async (nextGroups: DeviceGroup[]) => {
     setGroups(nextGroups)
     await window.api.config.set(DEVICE_GROUPS_CONFIG_KEY, nextGroups)
   }
 
-  useEffect(() => {
-    loadGroups()
-    loadDeviceInfo()
-
-    const timer = setTimeout(() => {
-      fetchDevices(true)
-    }, 1000)
-
-    const interval = setInterval(() => {
-      fetchDevices(false)
-    }, 5000)
-
-    return () => {
-      clearTimeout(timer)
-      clearInterval(interval)
-    }
-  }, [])
-
-  const DEVICE_INFO_CONFIG_KEY = 'device.info'
-
-  const loadDeviceInfo = async () => {
-    try {
-      const stored = await window.api.config.get(DEVICE_INFO_CONFIG_KEY)
-      if (stored && typeof stored === 'object') {
-        setDeviceInfo(stored)
-      }
-    } catch (error) {
-      console.error('Failed to load device info:', error)
-    }
-  }
-
-  const saveDeviceInfo = async (info: Record<string, { title: string; remark: string }>) => {
-    try {
-      setDeviceInfo(info)
-      await window.api.config.set(DEVICE_INFO_CONFIG_KEY, info)
-    } catch (error) {
-      console.error('Failed to save device info:', error)
-    }
+  const saveDeviceInfo = async (info: Record<string, DeviceMetadata>) => {
+    const sanitized = sanitizeDeviceMetadataMap(info)
+    setDeviceInfo(sanitized)
+    await window.api.config.set(DEVICE_INFO_CONFIG_KEY, sanitized)
   }
 
   const startScreenMirroring = async (serial: string) => {
@@ -164,27 +207,25 @@ const DevicePage: React.FC = () => {
       setConnectingDevice(serial)
       const result = await deviceServiceProxy.startScrcpy(serial)
       if (!result.port) {
-        setScrcpyError(t('device.error.start_failed') || '启动投屏失败')
+        setScrcpyError(t('device.error.start_failed'))
         setShowScrcpyErrorModal(true)
+        return
       }
+      setConnectedDevices((prev) => new Set(prev).add(serial))
     } catch (startError: any) {
       const errorMessage = startError.message || String(startError)
       let userMessage = ''
       if (errorMessage.includes('INJECT_EVENTS')) {
-        userMessage =
-          t('device.error.inject_events') ||
-          '设备权限不足：请在设备开发者选项中启用"USB调试(安全设置)"，然后重启设备。如果仍有问题，请尝试重新插拔USB线'
+        userMessage = t('device.error.inject_events')
       } else if (errorMessage.includes('permission')) {
-        userMessage = t('device.error.permission') || '设备权限问题：请检查USB调试权限，可能需要重新授权或更换USB端口'
+        userMessage = t('device.error.permission')
       } else if (errorMessage.includes('exited')) {
-        userMessage = t('device.error.exited') || '进程异常退出：scrcpy 启动后立即退出，可能是设备兼容性问题或权限不足'
+        userMessage = t('device.error.exited')
       } else {
-        userMessage =
-          (t('device.error.generic') || '启动投屏时发生错误：') +
-          errorMessage +
-          (t('device.error.try_command') || '。请尝试在命令行中直接运行scrcpy命令进行对比测试。')
+        userMessage = `${t('device.error.generic')}${errorMessage}${t('device.error.try_command')}`
       }
-      console.error('Failed to start screen mirroring:', startError)
+
+      logger.error('Failed to start screen mirroring', { error: startError, serial })
       setScrcpyError(userMessage)
       setShowScrcpyErrorModal(true)
     } finally {
@@ -194,13 +235,42 @@ const DevicePage: React.FC = () => {
 
   const filteredDevices = useMemo(() => {
     const key = searchKeyword.trim().toLowerCase()
-    if (!key) {
-      return devices
+    if (!key) return devices
+
+    return devices.filter((device) => {
+      const metadata = deviceInfo[device.id]
+      return [
+        metadata?.title,
+        metadata?.remark,
+        device.name,
+        device.id,
+        device.model,
+        device.brand,
+        device.androidVersion
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(key)
+    })
+  }, [deviceInfo, devices, searchKeyword])
+
+  const devicesByGroup = useMemo(() => {
+    const grouped = new Map<string, DeviceInfo[]>()
+    const ungrouped: DeviceInfo[] = []
+    const groupIds = new Set(groups.map((group) => group.id))
+
+    for (const device of filteredDevices) {
+      const groupId = deviceInfo[device.id]?.groupId
+      if (groupId && groupIds.has(groupId)) {
+        grouped.set(groupId, [...(grouped.get(groupId) || []), device])
+      } else {
+        ungrouped.push(device)
+      }
     }
-    return devices.filter((device) =>
-      [device.name, device.id, device.model, device.brand].filter(Boolean).join(' ').toLowerCase().includes(key)
-    )
-  }, [devices, searchKeyword])
+
+    return { grouped, ungrouped }
+  }, [deviceInfo, filteredDevices, groups])
 
   const batchMenuItems: MenuProps['items'] = [
     { key: 'control', label: t('device.batch_control.title') },
@@ -223,9 +293,7 @@ const DevicePage: React.FC = () => {
     })
 
     const trimmedName = groupName?.trim()
-    if (!trimmedName) {
-      return
-    }
+    if (!trimmedName) return
 
     if (groups.some((group) => group.name === trimmedName)) {
       message.warning(t('device.group.name_exists'))
@@ -237,7 +305,7 @@ const DevicePage: React.FC = () => {
       await saveGroups(nextGroups)
       message.success(t('device.group.create_success'))
     } catch (saveError) {
-      console.error('Failed to save groups:', saveError)
+      logger.error('Failed to save groups', { error: saveError })
       message.error(t('device.group.save_failed'))
     }
   }
@@ -250,9 +318,7 @@ const DevicePage: React.FC = () => {
     })
 
     const trimmedName = newName?.trim()
-    if (!trimmedName || trimmedName === group.name) {
-      return
-    }
+    if (!trimmedName || trimmedName === group.name) return
 
     if (groups.some((item) => item.id !== group.id && item.name === trimmedName)) {
       message.warning(t('device.group.name_exists'))
@@ -264,7 +330,7 @@ const DevicePage: React.FC = () => {
       await saveGroups(nextGroups)
       message.success(t('device.group.update_success'))
     } catch (saveError) {
-      console.error('Failed to update groups:', saveError)
+      logger.error('Failed to update group', { error: saveError, groupId: group.id })
       message.error(t('device.group.save_failed'))
     }
   }
@@ -276,125 +342,74 @@ const DevicePage: React.FC = () => {
       defaultValue: ''
     })
 
-    if (confirmed?.trim() !== group.name) {
-      return
-    }
+    if (confirmed?.trim() !== group.name) return
 
     const nextGroups = groups.filter((item) => item.id !== group.id)
+    const nextDeviceInfo = removeGroupAssignments(deviceInfo, group.id)
+
     try {
       await saveGroups(nextGroups)
+      await saveDeviceInfo(nextDeviceInfo)
       message.success(t('device.group.delete_success'))
-    } catch (saveError) {
-      console.error('Failed to delete groups:', saveError)
+    } catch (deleteError) {
+      logger.error('Failed to delete group', { error: deleteError, groupId: group.id })
       message.error(t('device.group.delete_failed'))
     }
   }
 
-  const handleEditDeviceInfo = async (device: DeviceInfo) => {
-    const title = await PromptPopup.show({
-      title: '编辑设备标题',
-      message: '请输入设备标题',
-      defaultValue: deviceInfo[device.id]?.title || device.name || ''
+  const openEditDeviceModal = (device: DeviceInfo) => {
+    const metadata = deviceInfo[device.id]
+    setEditDraft({
+      deviceId: device.id,
+      title: metadata?.title || device.name || '',
+      remark: metadata?.remark || getDeviceRemarkFallback(device),
+      groupId: metadata?.groupId || NO_GROUP_VALUE
     })
+  }
 
-    if (title === null) {
-      return // 用户取消
-    }
+  const saveEditDeviceModal = async () => {
+    if (!editDraft) return
 
-    const remark = await PromptPopup.show({
-      title: '编辑设备备注',
-      message: '请输入设备备注',
-      defaultValue: deviceInfo[device.id]?.remark || getDeviceRemark(device)
-    })
-
-    if (remark === null) {
-      return // 用户取消
-    }
-
-    // 创建分组选择选项
-    const groupOptions = groups.map((group) => ({
-      label: group.name,
-      value: group.id
-    }))
-
-    // 添加"无分组"选项
-    groupOptions.unshift({
-      label: '无分组',
-      value: 'none'
-    })
-
-    // 如果没有分组，跳过分组选择
-    if (groups.length === 0) {
-      const updatedInfo = {
-        ...deviceInfo,
-        [device.id]: {
-          title: title.trim(),
-          remark: remark.trim()
-        }
-      }
-
-      try {
-        await saveDeviceInfo(updatedInfo)
-        message.success('设备信息已更新')
-      } catch (error) {
-        console.error('Failed to update device info:', error)
-        message.error('设备信息更新失败')
-      }
-      return
-    }
-
-    // 显示分组选择弹窗
-    const groupNames = groupOptions.map((opt) => opt.label)
-    const currentGroupId = deviceInfo[device.id]?.groupId || 'none'
-    const currentGroupIndex = groupOptions.findIndex((opt) => opt.value === currentGroupId)
-
-    const selectedGroupIndex = await PromptPopup.show({
-      title: t('device.device_info.select_group'),
-      message: t('device.device_info.select_group'),
-      defaultValue: currentGroupIndex >= 0 ? groupNames[currentGroupIndex] : groupNames[0],
-      inputProps: {
-        rows: 1,
-        placeholder: t('device.device_info.select_group')
-      }
-    })
-
-    if (selectedGroupIndex === null) {
-      return // 用户取消
-    }
-
-    // 查找选择的分组
-    const selectedGroupName = selectedGroupIndex.trim()
-    const selectedGroup = groupOptions.find((opt) => opt.label === selectedGroupName)
-    const groupId = selectedGroup && selectedGroup.value !== 'none' ? selectedGroup.value : undefined
-
-    const updatedInfo = {
+    const nextDeviceInfo = {
       ...deviceInfo,
-      [device.id]: {
-        title: title.trim(),
-        remark: remark.trim(),
-        groupId: groupId
+      [editDraft.deviceId]: {
+        title: editDraft.title.trim(),
+        remark: editDraft.remark.trim(),
+        groupId: editDraft.groupId === NO_GROUP_VALUE ? undefined : editDraft.groupId
       }
     }
 
     try {
-      await saveDeviceInfo(updatedInfo)
-      message.success('设备信息已更新')
-    } catch (error) {
-      console.error('Failed to update device info:', error)
-      message.error('设备信息更新失败')
+      await saveDeviceInfo(nextDeviceInfo)
+      setEditDraft(null)
+      message.success(t('device.device_info.update_success'))
+    } catch (saveError) {
+      logger.error('Failed to update device metadata', { error: saveError, deviceId: editDraft.deviceId })
+      message.error(t('device.device_info.update_failed'))
     }
   }
 
   const renderDeviceCard = (device: DeviceInfo) => {
-    const customTitle = deviceInfo[device.id]?.title || device.name || '未命名设备'
-    const customRemark = deviceInfo[device.id]?.remark || ''
+    const metadata = deviceInfo[device.id]
+    const customTitle = metadata?.title || device.name || t('device.unnamed_device')
+    const customRemark = metadata?.remark || ''
     const isConnecting = connectingDevice === device.id
+    const isConnected = connectedDevices.has(device.id)
 
     return (
       <Card
+        key={device.id}
         actions={[
-          <Button key="connect" type="link" onClick={() => startScreenMirroring(device.id)}>
-            {isConnecting ? '连接中...' : '连接'}
+          <Button
+            key="connect"
+            type="link"
+            disabled={isConnecting || isConnected}
+            onClick={() => startScreenMirroring(device.id)}>
+            {isConnecting
+              ? tr('device.connecting', 'Connecting...')
+              : isConnected
+                ? tr('device.connected', 'Connected')
+                : t('device.connect')}
           </Button>,
           <Button
             key="command"
@@ -403,27 +418,49 @@ const DevicePage: React.FC = () => {
               setSelectedDevice(device.id)
               setShowControlPanel(true)
             }}>
-            指令
+            {t('device.command')}
           </Button>,
-          <Button key="edit" type="link" onClick={() => handleEditDeviceInfo(device)}>
-            编辑
+          <Button key="edit" type="link" onClick={() => openEditDeviceModal(device)}>
+            {t('device.edit')}
           </Button>
         ]}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <DeviceCardHeader>
           <Card.Meta title={customTitle} />
-          <div>{renderStatusTag(device.status)}</div>
-        </div>
-        <Card.Meta
-          description={
-            <div>
-              <p>设备ID: {device.id}</p>
-              <p>端口: {getDevicePort(device.id)}</p>
-              <p>型号: {device.model || '未知'}</p>
-              <p>品牌: {device.brand || '未知'}</p>
-              <p>备注: {customRemark}</p>
-            </div>
-          }
-        />
+          {renderStatusTag(device.status)}
+        </DeviceCardHeader>
+        <DeviceDetails>
+          <DeviceIdBlock>
+            <span>{t('device.device_id')}</span>
+            <strong>{device.id}</strong>
+          </DeviceIdBlock>
+          <DetailGrid>
+            <DetailItem>
+              <span>{t('device.model')}</span>
+              <strong>{device.model || t('device.unknown')}</strong>
+            </DetailItem>
+            <DetailItem>
+              <span>{t('device.brand')}</span>
+              <strong>{device.brand || t('device.unknown')}</strong>
+            </DetailItem>
+            <DetailItem>
+              <span>{tr('device.android_version', 'Android Version')}</span>
+              <strong>{device.androidVersion || t('device.unknown')}</strong>
+            </DetailItem>
+            <DetailItem>
+              <span>{t('device.port')}</span>
+              <strong>{getDevicePort(device.id)}</strong>
+            </DetailItem>
+            <DetailItemFull>
+              <span>{t('device.remark')}</span>
+              <strong>{customRemark || t('device.unknown')}</strong>
+            </DetailItemFull>
+          </DetailGrid>
+          {device.status === 'unauthorized' && (
+            <UnauthorizedHint>
+              {tr('device.unauthorized_hint', 'Authorize USB debugging on the device, then refresh.')}
+            </UnauthorizedHint>
+          )}
+        </DeviceDetails>
       </Card>
     )
   }
@@ -444,6 +481,9 @@ const DevicePage: React.FC = () => {
         <Dropdown menu={{ items: batchMenuItems, onClick: handleBatchMenuClick }} trigger={['click']}>
           <Button>{t('device.batch_operations')}</Button>
         </Dropdown>
+        <Button loading={scanning} onClick={() => fetchDevices(true)}>
+          {t('device.refresh')}
+        </Button>
       </Toolbar>
 
       {error && (
@@ -455,52 +495,66 @@ const DevicePage: React.FC = () => {
 
       <ContentArea>
         <Spin spinning={loading}>
-          {groups.length > 0 && (
-            <GroupSection>
-              <GroupCollapse defaultActiveKey={[groups[0]?.id]} bordered={false}>
-                {groups.map((group) => (
-                  <Collapse.Panel
-                    key={group.id}
-                    header={group.name}
-                    extra={
-                      <Space size={8}>
-                        <Button
-                          size="small"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            handleEditGroup(group)
-                          }}>
-                          {t('device.edit')}
-                        </Button>
-                        <Button
-                          danger
-                          size="small"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            handleDeleteGroup(group)
-                          }}>
-                          {t('device.group.delete')}
-                        </Button>
-                      </Space>
-                    }>
-                    <GroupEmptyHint>{t('device.group.no_group_devices')}</GroupEmptyHint>
-                  </Collapse.Panel>
-                ))}
-              </GroupCollapse>
-            </GroupSection>
-          )}
-
           {filteredDevices.length === 0 ? (
-            groups.length === 0 ? (
-              <EmptyState>
-                <Typography.Text type="secondary">{t('device.no_devices')}</Typography.Text>
-                <Button type="primary" onClick={() => fetchDevices(true)}>
-                  {t('device.refresh')}
-                </Button>
-              </EmptyState>
-            ) : null
+            <EmptyState>
+              <Typography.Text type="secondary">{t('device.no_devices')}</Typography.Text>
+              <Button type="primary" onClick={() => fetchDevices(true)}>
+                {t('device.refresh')}
+              </Button>
+            </EmptyState>
           ) : (
-            <DeviceCardList>{filteredDevices.map(renderDeviceCard)}</DeviceCardList>
+            <>
+              {groups.length > 0 && (
+                <GroupSection>
+                  <GroupCollapse defaultActiveKey={groups.map((group) => group.id)} bordered={false}>
+                    {groups.map((group) => {
+                      const groupDevices = devicesByGroup.grouped.get(group.id) || []
+                      return (
+                        <Collapse.Panel
+                          key={group.id}
+                          header={`${group.name} (${groupDevices.length})`}
+                          extra={
+                            <Space size={8}>
+                              <Button
+                                size="small"
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  handleEditGroup(group)
+                                }}>
+                                {t('device.edit')}
+                              </Button>
+                              <Button
+                                danger
+                                size="small"
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  handleDeleteGroup(group)
+                                }}>
+                                {t('device.group.delete')}
+                              </Button>
+                            </Space>
+                          }>
+                          {groupDevices.length === 0 ? (
+                            <GroupEmptyHint>{t('device.group.no_group_devices')}</GroupEmptyHint>
+                          ) : (
+                            <DeviceCardList>{groupDevices.map(renderDeviceCard)}</DeviceCardList>
+                          )}
+                        </Collapse.Panel>
+                      )
+                    })}
+                  </GroupCollapse>
+                </GroupSection>
+              )}
+
+              {devicesByGroup.ungrouped.length > 0 && (
+                <SectionBlock>
+                  {groups.length > 0 && (
+                    <SectionTitle>{tr('device.group.ungrouped', 'Ungrouped Devices')}</SectionTitle>
+                  )}
+                  <DeviceCardList>{devicesByGroup.ungrouped.map(renderDeviceCard)}</DeviceCardList>
+                </SectionBlock>
+              )}
+            </>
           )}
         </Spin>
       </ContentArea>
@@ -510,17 +564,58 @@ const DevicePage: React.FC = () => {
       </LastRefresh>
 
       <Modal
-        title={t('device.connection_error_title') || '连接错误'}
+        title={t('device.connection_error_title')}
         open={showScrcpyErrorModal}
         onCancel={() => setShowScrcpyErrorModal(false)}
         footer={[
           <Button key="close" onClick={() => setShowScrcpyErrorModal(false)}>
-            {t('common.close') || '关闭'}
+            {t('common.close')}
           </Button>
         ]}
         centered
-        width={500}>
+        width={520}>
         <Typography.Text type="danger">{scrcpyError}</Typography.Text>
+      </Modal>
+
+      <Modal
+        title={t('device.device_info.edit_title')}
+        open={Boolean(editDraft)}
+        onCancel={() => setEditDraft(null)}
+        onOk={saveEditDeviceModal}
+        okText={t('common.save')}
+        cancelText={t('common.cancel')}
+        centered
+        width={520}>
+        {editDraft && (
+          <EditForm>
+            <Field>
+              <Label>{t('device.device_info.edit_title')}</Label>
+              <Input
+                value={editDraft.title}
+                onChange={(event) => setEditDraft((prev) => (prev ? { ...prev, title: event.target.value } : prev))}
+              />
+            </Field>
+            <Field>
+              <Label>{t('device.device_info.edit_remark')}</Label>
+              <Input.TextArea
+                rows={3}
+                value={editDraft.remark}
+                onChange={(event) => setEditDraft((prev) => (prev ? { ...prev, remark: event.target.value } : prev))}
+              />
+            </Field>
+            <Field>
+              <Label>{t('device.device_info.select_group')}</Label>
+              <Select
+                value={editDraft.groupId}
+                onChange={(groupId) => setEditDraft((prev) => (prev ? { ...prev, groupId } : prev))}
+                options={[
+                  { value: NO_GROUP_VALUE, label: t('device.device_info.no_group') },
+                  ...groups.map((group) => ({ value: group.id, label: group.name }))
+                ]}
+              />
+            </Field>
+          </EditForm>
+        )}
       </Modal>
 
       {showBatchControlPanel && <BatchControlPanel onClose={() => setShowBatchControlPanel(false)} />}
@@ -558,11 +653,11 @@ const Toolbar = styled.div`
 
   > *:first-child {
     flex: 0 0 100%;
-    max-width: 280px;
+    max-width: 320px;
   }
 
   .ant-btn {
-    border-radius: 10px;
+    border-radius: 8px;
     font-weight: 600;
   }
 `
@@ -571,7 +666,7 @@ const SearchInput = styled(Input)`
   width: 100%;
 
   .ant-input-affix-wrapper {
-    border-radius: 10px;
+    border-radius: 8px;
     min-height: 38px;
   }
 `
@@ -592,7 +687,7 @@ const GroupCollapse = styled(Collapse)`
 
   .ant-collapse-item {
     border: 1px solid var(--color-border);
-    border-radius: 16px !important;
+    border-radius: 8px !important;
     background: var(--color-background);
     overflow: hidden;
     margin-bottom: 10px;
@@ -622,15 +717,132 @@ const GroupEmptyHint = styled.div`
   font-size: 13px;
 `
 
+const SectionBlock = styled.div`
+  margin-bottom: 14px;
+`
+
+const SectionTitle = styled.h3`
+  margin: 0 0 10px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+`
+
 const DeviceCardList = styled.div`
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 14px;
+
+  .ant-card {
+    min-width: 0;
+  }
+
+  .ant-card-body {
+    padding: 16px;
+  }
+
+  .ant-card-actions > li {
+    margin: 8px 0;
+  }
+`
+
+const DeviceCardHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+
+  .ant-card-meta {
+    min-width: 0;
+  }
+
+  .ant-card-meta-title {
+    margin-bottom: 0 !important;
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  .ant-tag {
+    flex: 0 0 auto;
+    margin-inline-end: 0;
+  }
+`
+
+const DeviceDetails = styled.div`
+  display: grid;
+  gap: 12px;
+`
+
+const DeviceIdBlock = styled.div`
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 8px;
+  background: var(--color-background-soft);
+
+  span {
+    color: var(--color-text-secondary);
+    font-size: 12px;
+  }
+
+  strong {
+    color: var(--color-text);
+    font-family: var(--font-mono, ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+`
+
+const DetailGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+
+  @media (max-width: 360px) {
+    grid-template-columns: 1fr;
+  }
+`
+
+const DetailItem = styled.div`
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--color-background-soft);
+  font-size: 13px;
+
+  span {
+    color: var(--color-text-secondary);
+    font-size: 12px;
+  }
+
+  strong {
+    color: var(--color-text);
+    font-weight: 600;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+`
+
+const DetailItemFull = styled(DetailItem)`
+  grid-column: 1 / -1;
+`
+
+const UnauthorizedHint = styled.div`
+  margin-top: 6px;
+  color: var(--color-warning);
+  font-size: 12px;
 `
 
 const EmptyState = styled.div`
   height: 220px;
-  border-radius: 12px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -641,17 +853,33 @@ const EmptyState = styled.div`
 const ErrorState = styled.div`
   margin-bottom: 12px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--color-error-soft);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 `
 
 const LastRefresh = styled.div`
   margin-top: 10px;
   color: var(--color-text-tertiary);
   font-size: 12px;
+`
+
+const EditForm = styled.div`
+  display: grid;
+  gap: 14px;
+`
+
+const Field = styled.div`
+  display: grid;
+  gap: 6px;
+`
+
+const Label = styled.label`
+  color: var(--color-text-secondary);
+  font-size: 13px;
 `
 
 export default DevicePage

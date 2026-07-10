@@ -41,6 +41,43 @@ const SYSTEM_INFO = {
 const APP_VERSION = `${app?.getVersion?.() || 'unknown'}`
 
 const DEFAULT_LEVEL = isDev ? LEVEL.SILLY : LEVEL.INFO
+let consolePipeErrorHandlersRegistered = false
+
+function isConsolePipeError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error.code === 'EPIPE' || error.code === 'ERR_STREAM_DESTROYED')
+  )
+}
+
+function registerConsolePipeErrorHandlers(): void {
+  if (consolePipeErrorHandlersRegistered) {
+    return
+  }
+
+  consolePipeErrorHandlersRegistered = true
+
+  const handlePipeError = (error: Error & { code?: string }) => {
+    if (!isConsolePipeError(error)) {
+      throw error
+    }
+  }
+
+  process.stdout?.on('error', handlePipeError)
+  process.stderr?.on('error', handlePipeError)
+}
+
+function safeConsoleWrite(method: 'debug' | 'error' | 'info' | 'log' | 'warn', ...args: any[]): void {
+  try {
+    console[method](...args)
+  } catch (error) {
+    if (!isConsolePipeError(error)) {
+      throw error
+    }
+  }
+}
 
 /**
  * IMPORTANT: How to use LoggerService
@@ -66,6 +103,8 @@ class LoggerService {
       throw new Error('[LoggerService] NOT support worker thread yet, can only be instantiated in main process.')
     }
 
+    registerConsolePipeErrorHandlers()
+
     // Create logs directory path
     this.logsDir = path.join(app.getPath('userData'), 'logs')
 
@@ -79,7 +118,7 @@ class LoggerService {
       ) {
         this.envLevel = process.env.CSLOGGER_MAIN_LEVEL as LogLevel
 
-        console.log(colorText(`[LoggerService] env CSLOGGER_MAIN_LEVEL loaded: ${this.envLevel}`, 'BLUE'))
+        safeConsoleWrite('log', colorText(`[LoggerService] env CSLOGGER_MAIN_LEVEL loaded: ${this.envLevel}`, 'BLUE'))
       }
 
       // load env show module if exists
@@ -90,7 +129,8 @@ class LoggerService {
         if (showModules.length > 0) {
           this.envShowModules = showModules
 
-          console.log(
+          safeConsoleWrite(
+            'log',
             colorText(`[LoggerService] env CSLOGGER_MAIN_SHOW_MODULES loaded: ${this.envShowModules.join(' ')}`, 'BLUE')
           )
         }
@@ -138,7 +178,7 @@ class LoggerService {
 
     // Handle transport events
     this.logger.on('error', (error) => {
-      console.error('LoggerService fatal error:', error)
+      safeConsoleWrite('error', 'LoggerService fatal error:', error)
     })
 
     //register ipc handler, for renderer process to log to main process
@@ -217,34 +257,46 @@ class LoggerService {
 
       switch (level) {
         case LEVEL.ERROR:
-          console.error(
+          safeConsoleWrite(
+            'error',
             `${datetimeColored} ${colorText(colorText('<ERROR>', 'RED'), 'BOLD')}${moduleString}${message}`,
             ...meta
           )
           break
         case LEVEL.WARN:
-          console.warn(
+          safeConsoleWrite(
+            'warn',
             `${datetimeColored} ${colorText(colorText('<WARN>', 'YELLOW'), 'BOLD')}${moduleString}${message}`,
             ...meta
           )
           break
         case LEVEL.INFO:
-          console.info(
+          safeConsoleWrite(
+            'info',
             `${datetimeColored} ${colorText(colorText('<INFO>', 'GREEN'), 'BOLD')}${moduleString}${message}`,
             ...meta
           )
           break
         case LEVEL.DEBUG:
-          console.debug(
+          safeConsoleWrite(
+            'debug',
             `${datetimeColored} ${colorText(colorText('<DEBUG>', 'BLUE'), 'BOLD')}${moduleString}${message}`,
             ...meta
           )
           break
         case LEVEL.VERBOSE:
-          console.log(`${datetimeColored} ${colorText('<VERBOSE>', 'BOLD')}${moduleString}${message}`, ...meta)
+          safeConsoleWrite(
+            'log',
+            `${datetimeColored} ${colorText('<VERBOSE>', 'BOLD')}${moduleString}${message}`,
+            ...meta
+          )
           break
         case LEVEL.SILLY:
-          console.log(`${datetimeColored} ${colorText('<SILLY>', 'BOLD')}${moduleString}${message}`, ...meta)
+          safeConsoleWrite(
+            'log',
+            `${datetimeColored} ${colorText('<SILLY>', 'BOLD')}${moduleString}${message}`,
+            ...meta
+          )
           break
       }
     }

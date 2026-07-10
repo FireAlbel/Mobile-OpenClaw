@@ -1,7 +1,7 @@
+import { CloseOutlined, MessageOutlined } from '@ant-design/icons'
+import { Button, Form, Input, Modal } from 'antd'
 import React, { useState } from 'react'
 import { Handle, Position } from 'reactflow'
-import { MessageOutlined, CloseOutlined } from '@ant-design/icons'
-import { Modal, Form, Input, Button } from 'antd'
 
 const ListenMessageNode: React.FC<{ data: any; id: string }> = ({ data, id }) => {
   const [isModalVisible, setIsModalVisible] = useState(false)

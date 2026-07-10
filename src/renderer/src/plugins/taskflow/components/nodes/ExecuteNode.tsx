@@ -1,7 +1,7 @@
+import { CloseOutlined, CodeOutlined } from '@ant-design/icons'
+import { Button, Form, Input, InputNumber, Modal } from 'antd'
 import React, { useState } from 'react'
 import { Handle, Position } from 'reactflow'
-import { CodeOutlined, CloseOutlined } from '@ant-design/icons'
-import { Modal, Form, Input, InputNumber, Button } from 'antd'
 
 const ExecuteNode: React.FC<{ data: any; id: string }> = ({ data, id }) => {
   const [isModalVisible, setIsModalVisible] = useState(false)

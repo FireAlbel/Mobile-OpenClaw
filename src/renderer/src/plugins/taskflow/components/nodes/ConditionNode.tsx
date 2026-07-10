@@ -1,7 +1,7 @@
+import { CloseOutlined, ForkOutlined } from '@ant-design/icons'
+import { Button, Form, Input, Modal, Select } from 'antd'
 import React, { useState } from 'react'
 import { Handle, Position } from 'reactflow'
-import { ForkOutlined, CloseOutlined } from '@ant-design/icons'
-import { Modal, Form, Input, Select, Button } from 'antd'
 
 const ConditionNode: React.FC<{ data: any; id: string }> = ({ data, id }) => {
   const [isModalVisible, setIsModalVisible] = useState(false)

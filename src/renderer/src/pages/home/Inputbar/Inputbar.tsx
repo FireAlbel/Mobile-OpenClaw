@@ -24,14 +24,18 @@ import {
 } from '@renderer/pages/home/Inputbar/context/InputbarToolsProvider'
 import { getDefaultTopic } from '@renderer/services/AssistantService'
 import { CacheService } from '@renderer/services/CacheService'
+import { deviceChatCommandService } from '@renderer/services/DeviceChatCommandService'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import FileManager from '@renderer/services/FileManager'
-import { checkRateLimit, getUserMessage } from '@renderer/services/MessagesService'
+import { checkRateLimit, getAssistantMessage, getUserMessage } from '@renderer/services/MessagesService'
 import { spanManagerService } from '@renderer/services/SpanManagerService'
 import { estimateTextTokens as estimateTxtTokens, estimateUserPromptUsage } from '@renderer/services/TokenService'
 import WebSearchService from '@renderer/services/WebSearchService'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
+import { upsertManyBlocks } from '@renderer/store/messageBlock'
+import { newMessagesActions } from '@renderer/store/newMessage'
 import { sendMessage as _sendMessage } from '@renderer/store/thunk/messageThunk'
+import { saveMessageAndBlocksToDB } from '@renderer/store/thunk/messageThunk'
 import {
   type Assistant,
   type FileMetadata,
@@ -41,8 +45,10 @@ import {
   TopicType
 } from '@renderer/types'
 import type { MessageInputBaseParams } from '@renderer/types/newMessage'
+import { AssistantMessageStatus, MessageBlockStatus } from '@renderer/types/newMessage'
 import { delay } from '@renderer/utils'
 import { getSendMessageShortcutLabel } from '@renderer/utils/input'
+import { createMainTextBlock } from '@renderer/utils/messageUtils/create'
 import { documentExts, imageExts, textExts } from '@shared/config/constant'
 import { debounce } from 'lodash'
 import type { FC } from 'react'
@@ -233,6 +239,37 @@ const InputbarInner: FC<InputbarInnerProps> = ({ assistant: initialAssistant, se
       })
 
   const sendMessage = useCallback(async () => {
+    if (deviceChatCommandService.isDeviceCommand(text)) {
+      try {
+        const result = await deviceChatCommandService.run(text)
+        const baseUserMessage: MessageInputBaseParams = { assistant, topic, content: text }
+        const { message: userMessage, blocks: userBlocks } = getUserMessage(baseUserMessage)
+        const assistantMessage = getAssistantMessage({ assistant, topic })
+        assistantMessage.askId = userMessage.id
+        assistantMessage.status = AssistantMessageStatus.SUCCESS
+        const assistantBlock = createMainTextBlock(assistantMessage.id, result, {
+          status: MessageBlockStatus.SUCCESS
+        })
+        assistantMessage.blocks = [assistantBlock.id]
+
+        await saveMessageAndBlocksToDB(topic.id, userMessage, userBlocks)
+        await saveMessageAndBlocksToDB(topic.id, assistantMessage, [assistantBlock])
+        dispatch(newMessagesActions.addMessage({ topicId: topic.id, message: userMessage }))
+        dispatch(upsertManyBlocks(userBlocks))
+        dispatch(newMessagesActions.addMessage({ topicId: topic.id, message: assistantMessage }))
+        dispatch(upsertManyBlocks([assistantBlock]))
+
+        setText('')
+        setTimeoutTimer('sendMessage_1', () => setText(''), 500)
+        setTimeoutTimer('sendMessage_2', () => resizeTextArea(), 0)
+        focusTextarea()
+      } catch (error) {
+        logger.warn('Failed to run device chat command:', error as Error)
+        window.toast.error(error instanceof Error ? error.message : String(error))
+      }
+      return
+    }
+
     if (checkRateLimit(assistant)) {
       return
     }

@@ -1,10 +1,10 @@
 // 主进程服务，处理与Python脚本的交互
-import { ipcMain } from 'electron'
 import type { ChildProcess } from 'child_process'
 import { spawn } from 'child_process'
-import path from 'path'
+import { ipcMain } from 'electron'
 import fs from 'fs'
 import os from 'os'
+import path from 'path'
 
 interface PythonScriptResult {
   success: boolean

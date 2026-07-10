@@ -30,7 +30,6 @@ async function testDeviceModule() {
     console.log('📱 设备型号:', propsResult.stdout.trim())
 
     console.log('\n🎉 所有测试通过！设备模块可以正常工作。')
-
   } catch (error) {
     console.error('❌ 测试失败:', error.message)
     console.log('\n💡 建议:')

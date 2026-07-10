@@ -1,12 +1,19 @@
 import { loggerService } from '@logger'
 import { isLinux, isMac, isWin } from '@main/constant'
-import ElectronShutdownHandler from '@paymoapp/electron-shutdown-handler'
 import { BrowserWindow } from 'electron'
 import { powerMonitor } from 'electron'
+import { existsSync } from 'fs'
+import { dirname, join } from 'path'
 
 const logger = loggerService.withContext('PowerMonitorService')
 
 type ShutdownHandler = () => void | Promise<void>
+
+interface WindowsShutdownHandler {
+  setWindowHandle: (handle: Buffer) => void
+  on: (event: 'shutdown', listener: () => void | Promise<void>) => void
+  releaseShutdown: () => void
+}
 
 export class PowerMonitorService {
   private static instance: PowerMonitorService
@@ -71,22 +78,50 @@ export class PowerMonitorService {
    */
   private initWindowsShutdownHandler(): void {
     try {
+      const electronShutdownHandler = this.loadWindowsShutdownHandler()
+      if (!electronShutdownHandler) {
+        return
+      }
+
       const zeroMemoryWindow = new BrowserWindow({ show: false })
       // Set the window handle for the shutdown handler
-      ElectronShutdownHandler.setWindowHandle(zeroMemoryWindow.getNativeWindowHandle())
+      electronShutdownHandler.setWindowHandle(zeroMemoryWindow.getNativeWindowHandle())
 
       // Listen for shutdown event
-      ElectronShutdownHandler.on('shutdown', async () => {
+      electronShutdownHandler.on('shutdown', async () => {
         logger.info('System shutdown event detected (Windows)')
         // Execute all registered shutdown handlers
         await this.executeShutdownHandlers()
         // Release the shutdown block to allow the system to shut down
-        ElectronShutdownHandler.releaseShutdown()
+        electronShutdownHandler.releaseShutdown()
       })
 
       logger.info('Windows shutdown handler registered')
     } catch (error) {
       logger.error('Failed to initialize Windows shutdown handler', error as Error)
+    }
+  }
+
+  private loadWindowsShutdownHandler(): WindowsShutdownHandler | null {
+    try {
+      const packageJsonPath = require.resolve('@paymoapp/electron-shutdown-handler/package.json')
+      const nativeModulePath = join(dirname(packageJsonPath), 'build', 'Release', 'PaymoWinShutdownHandler.node')
+
+      if (!existsSync(nativeModulePath)) {
+        logger.warn('Windows shutdown handler native module is unavailable; skipping shutdown interception', {
+          nativeModulePath
+        })
+        return null
+      }
+
+      const shutdownHandlerModule = require('@paymoapp/electron-shutdown-handler') as {
+        default?: WindowsShutdownHandler
+      } & WindowsShutdownHandler
+
+      return shutdownHandlerModule.default || shutdownHandlerModule
+    } catch (error) {
+      logger.warn('Windows shutdown handler native module is unavailable; skipping shutdown interception', { error })
+      return null
     }
   }
 

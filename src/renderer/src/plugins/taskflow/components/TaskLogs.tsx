@@ -1,17 +1,17 @@
 import { ReloadOutlined } from '@ant-design/icons'
+import { loggerService } from '@logger'
 import { Button, DatePicker, Input, Space, Table, Tag } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 
 import taskStore from '../store/taskStore'
 import type { TaskLog } from '../types/task'
 
 const { Search } = Input
 const { RangePicker } = DatePicker
+const logger = loggerService.withContext('TaskLogs')
 
 const TaskLogs: React.FC = () => {
-  const navigate = useNavigate()
   const { t } = useTranslation()
   const [logs, setLogs] = useState<TaskLog[]>([])
   const [filteredLogs, setFilteredLogs] = useState<TaskLog[]>([])
@@ -51,7 +51,7 @@ const TaskLogs: React.FC = () => {
       const sortedLogs = allLogs.sort((a, b) => b.timestamp - a.timestamp)
       setLogs(sortedLogs)
     } catch (error) {
-      console.error('加载日志失败:', error)
+      logger.error('Failed to load task logs', { error })
     } finally {
       setLoading(false)
     }

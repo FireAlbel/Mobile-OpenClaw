@@ -754,7 +754,13 @@ d.swipe(${startX}, ${startY}, ${endX}, ${endY}, duration=${duration})
   }
 
   // Helper methods
-  private async getFirstDeviceId(): Promise<string | null> {
+  getRandomOffset(base = 0.5, range = 0.1): number {
+    const min = Math.max(0, base - range)
+    const max = Math.min(1, base + range)
+    return Math.random() * (max - min) + min
+  }
+
+  async getFirstDeviceId(): Promise<string | null> {
     try {
       const toolPaths = toolPathManager.getToolPaths()
       const { stdout } = await execAsync(`"${toolPaths.adbPath}" devices`)
@@ -774,7 +780,7 @@ d.swipe(${startX}, ${startY}, ${endX}, ${endY}, duration=${duration})
     }
   }
 
-  private buildSelectorString(selector: any): string {
+  buildSelectorString(selector: any): string {
     const parts: string[] = []
 
     if (selector.text) {

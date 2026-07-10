@@ -1,12 +1,10 @@
-import { spawn, spawnSync, type SpawnOptionsWithoutStdio } from 'child_process'
+import { spawn, type SpawnOptionsWithoutStdio, spawnSync } from 'child_process'
 import { app } from 'electron'
 import { existsSync } from 'fs'
 import { join } from 'path'
 
 import { toolPathManager } from '../../utils/tool-paths'
-import { type ScrcpyOptions, DeviceController } from '../device-control/controller'
-
-
+import { DeviceController, type ScrcpyOptions } from '../device-control/controller'
 
 interface CommandResult {
   code: number | null
@@ -313,11 +311,7 @@ export class ChatMonitorController {
       const pythonPkgs = ['uiautomator2', 'faster_whisper', 'webrtcvad', 'pyaudio', 'numpy']
       for (const pkg of pythonPkgs) {
         try {
-          const check = await this.executeCommand(
-            python.command,
-            [...python.prefixArgs, '-c', `import ${pkg}`],
-            15000
-          )
+          const check = await this.executeCommand(python.command, [...python.prefixArgs, '-c', `import ${pkg}`], 15000)
 
           if (check.code === 0) {
             available.push(`python-package:${pkg}`)
@@ -395,12 +389,7 @@ export class ChatMonitorController {
     }
   }
 
-  async listenTextMessages(args: {
-    contactName?: string
-    groupName?: string
-    keywords?: string[]
-    timeout?: number
-  }) {
+  async listenTextMessages(args: { contactName?: string; groupName?: string; keywords?: string[]; timeout?: number }) {
     const timeout = args.timeout ?? 30
     return this.runPythonWeChatScript(
       'listen',
@@ -409,10 +398,7 @@ export class ChatMonitorController {
     )
   }
 
-  async listenVoiceMessages(args: {
-    deviceId?: string
-    timeout?: number
-  }) {
+  async listenVoiceMessages(args: { deviceId?: string; timeout?: number }) {
     const timeout = args.timeout ?? 15
     return this.runVoiceListenerScript(args.deviceId, timeout)
   }

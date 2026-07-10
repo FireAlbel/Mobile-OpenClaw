@@ -1349,6 +1349,7 @@
     "no_results": "沒有結果",
     "none": "無",
     "off": "關閉",
+    "ok": "確定",
     "on": "開啟",
     "open": "開啟",
     "paste": "貼上",
@@ -1363,6 +1364,7 @@
     "prompt": "提示詞",
     "provider": "供應商",
     "reasoning_content": "已深度思考",
+    "records": "條記錄",
     "refresh": "重新整理",
     "regenerate": "重新產生",
     "remove_image": "移除圖片",
@@ -1391,6 +1393,7 @@
     "success": "成功",
     "swap": "交換",
     "topics": "話題",
+    "total": "共",
     "translate_text": "翻譯文字",
     "unknown": "未知",
     "unnamed": "未命名",
@@ -1399,16 +1402,18 @@
     "upload_files": "上傳檔案",
     "upload_image": "上傳圖片檔案",
     "uploaded_image": "已上傳圖片",
+    "vision_action": {
+      "device": "裝置",
+      "execute": "執行",
+      "placeholder": "例如：點擊搜尋按鈕，或向上滑動",
+      "success": "視覺動作已執行",
+      "title": "視覺執行"
+    },
     "warning": "警告",
     "you": "您"
   },
-  "common": {
-    "cancel": "取消",
-    "ok": "確定",
-    "records": "條記錄",
-    "total": "共"
-  },
   "device": {
+    "android_version": "[to be translated]:Android Version",
     "batch_control": {
       "back": "[to be translated]:Back",
       "batch_back": "[to be translated]:Batch Back",
@@ -1472,6 +1477,8 @@
     "brand": "[to be translated]:Brand",
     "command": "[to be translated]:Command",
     "connect": "[to be translated]:Connect",
+    "connected": "已連線",
+    "connecting": "[to be translated]:Connecting...",
     "connection_error_title": "[to be translated]:Connection Error",
     "control_panel": {
       "back": "[to be translated]:Back",
@@ -1481,6 +1488,7 @@
       "input_failed": "[to be translated]:Text input failed",
       "input_success": "[to be translated]:Text input successful",
       "key_failed": "[to be translated]:{{key}} key operation failed",
+      "key_sending": "按下 {{key}} 鍵",
       "key_success": "[to be translated]:{{key}} key operation successful",
       "log_title": "[to be translated]:Log",
       "menu": "[to be translated]:Menu",
@@ -1489,10 +1497,16 @@
       "reboot": "[to be translated]:Reboot",
       "reboot_sending": "[to be translated]:Rebooting device...",
       "screenshot": "[to be translated]:Screenshot",
+      "screenshot_adb_success": "已透過 ADB 截圖",
+      "screenshot_failed": "截圖失敗",
       "screenshot_not_implemented": "[to be translated]:Screenshot feature not yet implemented",
+      "screenshot_saved": "截圖已儲存",
+      "screenshot_scrcpy_success": "已擷取投屏視窗畫面",
+      "screenshot_sending": "正在截圖...",
       "swipe": "[to be translated]:Swipe",
       "swipe_failed": "[to be translated]:Swipe operation failed",
       "swipe_success": "[to be translated]:Swipe operation successful",
+      "system_operations": "系統操作",
       "tap": "[to be translated]:Tap",
       "tap_failed": "[to be translated]:Tap operation failed",
       "tap_success": "[to be translated]:Tap operation successful",
@@ -1513,6 +1527,7 @@
     "edit": "[to be translated]:Edit",
     "error": {
       "exited": "[to be translated]:Process exited abnormally: scrcpy exited immediately after startup, possibly due to device compatibility issues or insufficient permissions",
+      "fetch_failed": "[to be translated]:Failed to scan devices. Please check whether ADB is available and USB debugging is enabled.",
       "generic": "[to be translated]:Error starting screen mirroring: ",
       "inject_events": "[to be translated]:Insufficient device permissions: Please enable \"USB debugging (security settings)\" in developer options on your device, then restart the device. If issues persist, try reconnecting the USB cable",
       "permission": "[to be translated]:Device permission issue: Please check USB debugging permissions, you may need to re-authorize or change USB ports",
@@ -1530,6 +1545,7 @@
       "name_exists": "[to be translated]:Group name already exists",
       "no_group_devices": "[to be translated]:No devices in this group",
       "save_failed": "[to be translated]:Failed to save group",
+      "ungrouped": "[to be translated]:Ungrouped Devices",
       "update_success": "[to be translated]:Group updated successfully"
     },
     "last_refresh": "[to be translated]:Last refresh time",
@@ -1576,6 +1592,7 @@
       "unauthorized": "未授權"
     },
     "title": "設備",
+    "unauthorized_hint": "[to be translated]:Authorize USB debugging on the device, then refresh.",
     "unknown": "[to be translated]:Unknown",
     "unnamed_device": "[to be translated]:Unnamed Device"
   },
@@ -4539,6 +4556,7 @@
       "builtinServersDescriptions": {
         "brave_search": "一個整合了 Brave 搜尋 API 的 MCP 伺服器實做，提供網頁與本機搜尋雙重功能。需要設定 BRAVE_API_KEY 環境變數",
         "browser": "透過 Chrome DevTools Protocol 控制 headless Electron 視窗。工具：開啟 URL、執行單行 JS、重設工作階段。",
+        "chat_monitor": "[to be translated]:Monitor mobile chat messages and trigger automated replies through ADB, scrcpy, and uiautomator2.",
         "device_control": "[to be translated]:Control Android devices through ADB and scrcpy. Provides tools for device listing, screen mirroring, touch events, APK management, and ADB command execution.",
         "didi_mcp": "一個整合了滴滴 MCP 伺服器實做，提供網約車服務包括地圖搜尋、價格預估、訂單管理和司機追蹤。僅支援中國大陸地區。需要設定 DIDI_API_KEY 環境變數",
         "dify_knowledge": "Dify 的 MCP 伺服器實做，提供了一個簡單的 API 來與 Dify 進行互動。需要設定 Dify Key",
@@ -5564,6 +5582,35 @@
   },
   "taskflow": {
     "description": "安卓微信訊息監聽與自動回覆任務流",
+    "deviceQueue": {
+      "actions": {
+        "cancel": "[to be translated]:Cancel",
+        "pause": "[to be translated]:Pause",
+        "resume": "[to be translated]:Resume"
+      },
+      "columns": {
+        "actions": "[to be translated]:Actions",
+        "device": "[to be translated]:Device",
+        "goal": "[to be translated]:Goal",
+        "progress": "[to be translated]:Progress",
+        "status": "[to be translated]:Status",
+        "updated": "[to be translated]:Updated"
+      },
+      "enqueue": "[to be translated]:Enqueue",
+      "enqueueSuccess": "[to be translated]:Device task enqueued",
+      "goalPlaceholder": "[to be translated]:Example: open the target app and tap the visible reward button",
+      "localVlm": "[to be translated]:Local VLM",
+      "onlineDevice": "[to be translated]:Online device",
+      "refresh": "[to be translated]:Refresh",
+      "selectTaskLogs": "[to be translated]:Select a task to view logs.",
+      "selectedLogs": "[to be translated]:Selected task logs",
+      "title": "[to be translated]:Device task queue",
+      "tryDeerFlow": "[to be translated]:Try DeerFlow",
+      "validation": {
+        "device": "[to be translated]:Select a device",
+        "goal": "[to be translated]:Input task goal"
+      }
+    },
     "editor": {
       "back": "返回列表",
       "create": "建立任務",
@@ -5611,11 +5658,14 @@
     },
     "logs": {
       "back": "返回任務列表",
+      "endTime": "結束時間",
       "error": "錯誤",
       "info": "資訊",
       "level": "級別",
       "message": "訊息",
       "refresh": "重新整理",
+      "search": "搜尋日誌",
+      "startTime": "開始時間",
       "time": "時間",
       "title": "任務日誌",
       "warn": "警告"

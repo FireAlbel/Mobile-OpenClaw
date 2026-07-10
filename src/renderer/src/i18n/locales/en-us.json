@@ -1349,6 +1349,7 @@
     "no_results": "No results",
     "none": "None",
     "off": "Off",
+    "ok": "OK",
     "on": "On",
     "open": "Open",
     "paste": "Paste",
@@ -1363,6 +1364,7 @@
     "prompt": "Prompt",
     "provider": "Provider",
     "reasoning_content": "Deep reasoning",
+    "records": "records",
     "refresh": "Refresh",
     "regenerate": "Regenerate",
     "remove_image": "Remove image",
@@ -1391,6 +1393,7 @@
     "success": "Success",
     "swap": "Swap",
     "topics": "Topics",
+    "total": "Total",
     "translate_text": "Translate text",
     "unknown": "Unknown",
     "unnamed": "Unnamed",
@@ -1399,16 +1402,18 @@
     "upload_files": "Upload file",
     "upload_image": "Upload image file",
     "uploaded_image": "Uploaded image",
+    "vision_action": {
+      "device": "Device",
+      "execute": "Execute",
+      "placeholder": "Example: tap the search button or swipe up",
+      "success": "Vision action executed",
+      "title": "Vision Action"
+    },
     "warning": "Warning",
     "you": "You"
   },
-  "common": {
-    "cancel": "Cancel",
-    "ok": "OK",
-    "records": "records",
-    "total": "Total"
-  },
   "device": {
+    "android_version": "Android Version",
     "batch_control": {
       "back": "Back",
       "batch_back": "Batch Back",
@@ -1472,6 +1477,8 @@
     "brand": "Brand",
     "command": "Command",
     "connect": "Connect",
+    "connected": "Connected",
+    "connecting": "Connecting...",
     "connection_error_title": "Connection Error",
     "control_panel": {
       "back": "Back",
@@ -1481,6 +1488,7 @@
       "input_failed": "Text input failed",
       "input_success": "Text input successful",
       "key_failed": "{{key}} key operation failed",
+      "key_sending": "Pressing {{key}} key",
       "key_success": "{{key}} key operation successful",
       "log_title": "Log",
       "menu": "Menu",
@@ -1489,10 +1497,16 @@
       "reboot": "Reboot",
       "reboot_sending": "Rebooting device...",
       "screenshot": "Screenshot",
+      "screenshot_adb_success": "ADB screenshot captured",
+      "screenshot_failed": "Screenshot failed",
       "screenshot_not_implemented": "Screenshot feature not yet implemented",
+      "screenshot_saved": "Screenshot saved",
+      "screenshot_scrcpy_success": "Scrcpy window screenshot captured",
+      "screenshot_sending": "Capturing screenshot...",
       "swipe": "Swipe",
       "swipe_failed": "Swipe operation failed",
       "swipe_success": "Swipe operation successful",
+      "system_operations": "System Operations",
       "tap": "Tap",
       "tap_failed": "Tap operation failed",
       "tap_success": "Tap operation successful",
@@ -1513,6 +1527,7 @@
     "edit": "Edit",
     "error": {
       "exited": "Process exited abnormally: scrcpy exited immediately after startup, possibly due to device compatibility issues or insufficient permissions",
+      "fetch_failed": "Failed to scan devices. Please check whether ADB is available and USB debugging is enabled.",
       "generic": "Error starting screen mirroring: ",
       "inject_events": "Insufficient device permissions: Please enable \"USB debugging (security settings)\" in developer options on your device, then restart the device. If issues persist, try reconnecting the USB cable",
       "permission": "Device permission issue: Please check USB debugging permissions, you may need to re-authorize or change USB ports",
@@ -1530,6 +1545,7 @@
       "name_exists": "Group name already exists",
       "no_group_devices": "No devices in this group",
       "save_failed": "Failed to save group",
+      "ungrouped": "Ungrouped Devices",
       "update_success": "Group updated successfully"
     },
     "last_refresh": "Last refresh time",
@@ -1576,6 +1592,7 @@
       "unauthorized": "Unauthorized"
     },
     "title": "Devices",
+    "unauthorized_hint": "Authorize USB debugging on the device, then refresh.",
     "unknown": "Unknown",
     "unnamed_device": "Unnamed Device"
   },
@@ -5565,6 +5582,35 @@
   },
   "taskflow": {
     "description": "Android WeChat message monitoring and auto-reply task flow",
+    "deviceQueue": {
+      "actions": {
+        "cancel": "Cancel",
+        "pause": "Pause",
+        "resume": "Resume"
+      },
+      "columns": {
+        "actions": "Actions",
+        "device": "Device",
+        "goal": "Goal",
+        "progress": "Progress",
+        "status": "Status",
+        "updated": "Updated"
+      },
+      "enqueue": "Enqueue",
+      "enqueueSuccess": "Device task enqueued",
+      "goalPlaceholder": "Example: open the target app and tap the visible reward button",
+      "localVlm": "Local VLM",
+      "onlineDevice": "Online device",
+      "refresh": "Refresh",
+      "selectTaskLogs": "Select a task to view logs.",
+      "selectedLogs": "Selected task logs",
+      "title": "Device task queue",
+      "tryDeerFlow": "Try DeerFlow",
+      "validation": {
+        "device": "Select a device",
+        "goal": "Input task goal"
+      }
+    },
     "editor": {
       "back": "Back to List",
       "create": "Create Task",
@@ -5574,8 +5620,8 @@
       "nodePalette": "Node Palette",
       "nodeTypes": "Node Types",
       "run": "Run Task",
-      "runError": "Task execution failed",
-      "runSuccess": "Task executed successfully",
+      "runError": "Task run failed",
+      "runSuccess": "Task run successfully",
       "save": "Save Task",
       "saveFirst": "Please save the task first",
       "startingTask": "Starting task...",
@@ -5602,92 +5648,9 @@
       "executionType": "Execution Type",
       "lastRunAt": "Last Run",
       "name": "Task Name",
-      "neverRun": "Never Run",
+      "neverRun": "Never run",
       "run": "Run Task",
-      "runSuccess": "Task executed successfully",
-      "search": "Search Tasks",
-      "status": "Status",
-      "title": "Task List"
-    },
-    "logs": {
-      "back": "Back to Task List",
-      "error": "Error",
-      "info": "Info",
-      "level": "Level",
-      "message": "Message",
-      "refresh": "Refresh",
-      "time": "Time",
-      "title": "Task Logs",
-      "warn": "Warning"
-    },
-    "nodeConfig": {
-      "contactName": "Contact Name",
-      "field": "Field",
-      "groupName": "Group Name",
-      "keywords": "Keywords",
-      "message": "Message Content",
-      "model": "Model",
-      "operator": "Operator",
-      "prompt": "Prompt",
-      "script": "Script Content",
-      "temperature": "Temperature",
-      "timeout": "Timeout",
-      "useTemplate": "Use Template",
-      "value": "Value"
-    },
-    "nodes": {
-      "condition": "Condition",
-      "end": "End",
-      "execute": "Execute Action",
-      "listenMessage": "Listen Message",
-      "llm": "LLM Processing",
-      "sendMessage": "Send Message",
-      "start": "Start"
-    },
-    "operators": {
-      "contains": "Contains",
-      "equals": "Equals",
-      "greater": "Greater Than",
-      "less": "Less Than"
-    },
-    "status": {
-      "completed": "Completed",
-      "created": "Created",
-      "error": "Failed",
-      "running": "Running",
-      "stopped": "Stopped"
-    },
-    "title": "Task Flow"
-  },
-  "taskflow": {
-    "description": "Android WeChat message monitoring and auto-reply task flow",
-    "editor": {
-      "back": "Back to List",
-      "nodePalette": "Node Palette",
-      "nodeTypes": "Node Types",
-      "run": "Run Task",
-      "save": "Save Task",
-      "taskDescription": "Task Description",
-      "taskDescriptionPlaceholder": "Enter task description",
-      "taskInfo": "Task Information",
-      "taskName": "Task Name",
-      "taskNamePlaceholder": "Enter task name",
-      "title": "Task Editor"
-    },
-    "executionType": {
-      "manual": "Manual",
-      "scheduled": "Scheduled"
-    },
-    "list": {
-      "actions": "Actions",
-      "create": "Create Task",
-      "createdAt": "Created At",
-      "delete": "Delete Task",
-      "edit": "Edit Task",
-      "executionType": "Execution Type",
-      "lastRunAt": "Last Run",
-      "name": "Task Name",
-      "run": "Run Task",
+      "runSuccess": "Task run successfully",
       "search": "Search Tasks",
       "status": "Status",
       "title": "Task List",
@@ -5760,7 +5723,6 @@
     "paintings": "Paintings",
     "settings": "Settings",
     "store": "Assistant Library",
-    "taskflow": "Task Flow",
     "translate": "Translate"
   },
   "trace": {

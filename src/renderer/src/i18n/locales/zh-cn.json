@@ -1349,6 +1349,7 @@
     "no_results": "无结果",
     "none": "无",
     "off": "关闭",
+    "ok": "确定",
     "on": "启用",
     "open": "打开",
     "paste": "粘贴",
@@ -1363,6 +1364,7 @@
     "prompt": "提示词",
     "provider": "提供商",
     "reasoning_content": "已深度思考",
+    "records": "条记录",
     "refresh": "刷新",
     "regenerate": "重新生成",
     "remove_image": "移除图片",
@@ -1391,6 +1393,7 @@
     "success": "成功",
     "swap": "交换",
     "topics": "话题",
+    "total": "共",
     "translate_text": "翻译文本",
     "unknown": "未知",
     "unnamed": "未命名",
@@ -1399,16 +1402,18 @@
     "upload_files": "上传文件",
     "upload_image": "上传图片文件",
     "uploaded_image": "已上传图片",
+    "vision_action": {
+      "device": "设备",
+      "execute": "执行",
+      "placeholder": "例如：点击搜索按钮，或向上滑动",
+      "success": "视觉动作已执行",
+      "title": "视觉执行"
+    },
     "warning": "警告",
     "you": "用户"
   },
-  "common": {
-    "cancel": "取消",
-    "ok": "确定",
-    "records": "条记录",
-    "total": "共"
-  },
   "device": {
+    "android_version": "Android 版本",
     "batch_control": {
       "back": "返回",
       "batch_back": "批量返回",
@@ -1472,6 +1477,8 @@
     "brand": "品牌",
     "command": "指令",
     "connect": "连接",
+    "connected": "已连接",
+    "connecting": "连接中...",
     "connection_error_title": "连接错误",
     "control_panel": {
       "back": "返回",
@@ -1481,6 +1488,7 @@
       "input_failed": "文本输入失败",
       "input_success": "文本输入成功",
       "key_failed": "{{key}} 键操作失败",
+      "key_sending": "按下 {{key}} 键",
       "key_success": "{{key}} 键操作成功",
       "log_title": "日志",
       "menu": "菜单",
@@ -1489,10 +1497,16 @@
       "reboot": "重启",
       "reboot_sending": "正在重启设备...",
       "screenshot": "截图",
+      "screenshot_adb_success": "已通过 ADB 截图",
+      "screenshot_failed": "截图失败",
       "screenshot_not_implemented": "截图功能暂未实现",
+      "screenshot_saved": "截图已保存",
+      "screenshot_scrcpy_success": "已截取投屏窗口画面",
+      "screenshot_sending": "正在截图...",
       "swipe": "滑动",
       "swipe_failed": "滑动操作失败",
       "swipe_success": "滑动操作成功",
+      "system_operations": "系统操作",
       "tap": "点击",
       "tap_failed": "点击操作失败",
       "tap_success": "点击操作成功",
@@ -1513,6 +1527,7 @@
     "edit": "编辑",
     "error": {
       "exited": "进程异常退出：scrcpy 启动后立即退出，可能是设备兼容性问题或权限不足",
+      "fetch_failed": "扫描设备失败，请检查 ADB 是否可用，并确认设备已开启 USB 调试。",
       "generic": "启动投屏时发生错误：",
       "inject_events": "设备权限不足：请在设备开发者选项中启用\"USB调试(安全设置)\"，然后重启设备。如果仍有问题，请尝试重新插拔USB线",
       "permission": "设备权限问题：请检查USB调试权限，可能需要重新授权或更换USB端口",
@@ -1530,6 +1545,7 @@
       "name_exists": "分组名称已存在",
       "no_group_devices": "暂无分组设备",
       "save_failed": "分组保存失败",
+      "ungrouped": "未分组设备",
       "update_success": "分组已更新"
     },
     "last_refresh": "最后刷新时间",
@@ -1576,6 +1592,7 @@
       "unauthorized": "未授权"
     },
     "title": "设备管理",
+    "unauthorized_hint": "请在设备上允许 USB 调试授权，然后刷新设备列表。",
     "unknown": "未知",
     "unnamed_device": "未命名设备"
   },
@@ -5565,6 +5582,35 @@
   },
   "taskflow": {
     "description": "安卓微信消息监听与自动回复任务流",
+    "deviceQueue": {
+      "actions": {
+        "cancel": "取消",
+        "pause": "暂停",
+        "resume": "继续"
+      },
+      "columns": {
+        "actions": "操作",
+        "device": "设备",
+        "goal": "目标",
+        "progress": "进度",
+        "status": "状态",
+        "updated": "更新时间"
+      },
+      "enqueue": "加入队列",
+      "enqueueSuccess": "设备任务已加入队列",
+      "goalPlaceholder": "例如：打开目标应用并点击可见的奖励按钮",
+      "localVlm": "本地 VLM",
+      "onlineDevice": "在线设备",
+      "refresh": "刷新",
+      "selectTaskLogs": "选择一个任务查看日志。",
+      "selectedLogs": "选中任务日志",
+      "title": "设备任务队列",
+      "tryDeerFlow": "尝试 DeerFlow",
+      "validation": {
+        "device": "请选择设备",
+        "goal": "请输入任务目标"
+      }
+    },
     "editor": {
       "back": "返回列表",
       "create": "创建任务",

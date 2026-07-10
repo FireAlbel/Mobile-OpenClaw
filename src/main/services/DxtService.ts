@@ -18,11 +18,18 @@ const logger = loggerService.withContext('DxtService')
  * @throws Error if the target path escapes the base directory
  */
 export function ensurePathWithin(basePath: string, targetPath: string): string {
-  const resolvedBase = path.resolve(basePath)
-  const resolvedTarget = path.resolve(path.normalize(targetPath))
+  const pathApi =
+    /^[a-zA-Z]:[\\/]/.test(basePath) || basePath.includes('\\')
+      ? path.win32
+      : basePath.startsWith('/')
+        ? path.posix
+        : path
+  const normalizedTargetPath = pathApi === path.posix ? targetPath.replace(/\\/g, '/') : targetPath
+  const resolvedBase = pathApi.resolve(basePath)
+  const resolvedTarget = pathApi.resolve(pathApi.normalize(normalizedTargetPath))
 
   // Must be direct child of base directory, no subdirectories allowed
-  if (path.dirname(resolvedTarget) !== resolvedBase) {
+  if (pathApi.dirname(resolvedTarget) !== resolvedBase) {
     throw new Error('Path traversal detected: target path must be direct child of base directory')
   }
 

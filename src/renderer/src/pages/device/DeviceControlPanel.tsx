@@ -1,3 +1,4 @@
+import { deviceCoordinateService } from '@renderer/services/DeviceCoordinateService'
 import { deviceServiceProxy } from '@renderer/services/DeviceServiceProxy'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -14,51 +15,114 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
   const [inputText, setInputText] = useState<string>('')
   const [tapX, setTapX] = useState<string>('500')
   const [tapY, setTapY] = useState<string>('1000')
+  const [longPressDuration, setLongPressDuration] = useState<string>('800')
+  const [doubleTapInterval, setDoubleTapInterval] = useState<string>('120')
   const [swipeX1, setSwipeX1] = useState<string>('500')
   const [swipeY1, setSwipeY1] = useState<string>('1000')
   const [swipeX2, setSwipeX2] = useState<string>('500')
   const [swipeY2, setSwipeY2] = useState<string>('500')
+  const [dragDuration, setDragDuration] = useState<string>('700')
+  const [packageName, setPackageName] = useState<string>('')
 
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString()
     setLog((prev) => [...prev, `[${timestamp}] ${message}`])
   }
 
+  const downloadScreenshot = (imageBase64: string) => {
+    const link = document.createElement('a')
+    link.href = `data:image/png;base64,${imageBase64}`
+    link.download = `device-${serial}-${new Date().toISOString().replace(/[:.]/g, '-')}.png`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   const handleTap = async () => {
-    const x = parseInt(tapX)
-    const y = parseInt(tapY)
-
-    if (isNaN(x) || isNaN(y)) {
-      addLog(t('device.control_panel.coordinate_error'))
-      return
-    }
-
-    addLog(`${t('device.control_panel.tap')} (${x}, ${y})`)
     try {
-      await deviceServiceProxy.sendTap(serial, x, y)
+      const screen = await deviceServiceProxy.getScreenSize(serial)
+      const point = deviceCoordinateService.parsePoint(tapX, tapY, screen)
+      if (!point) {
+        addLog(t('device.control_panel.coordinate_error'))
+        return
+      }
+
+      addLog(`${t('device.control_panel.tap')} (${point.x}, ${point.y})`)
+      await deviceServiceProxy.sendTap(serial, point.x, point.y)
       addLog(t('device.control_panel.tap_success'))
     } catch (error) {
       addLog(t('device.control_panel.tap_failed'))
     }
   }
 
-  const handleSwipe = async () => {
-    const x1 = parseInt(swipeX1)
-    const y1 = parseInt(swipeY1)
-    const x2 = parseInt(swipeX2)
-    const y2 = parseInt(swipeY2)
-
-    if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) {
-      addLog(t('device.control_panel.coordinate_error'))
-      return
-    }
-
-    addLog(`${t('device.control_panel.swipe')}: (${x1}, ${y1}) -> (${x2}, ${y2})`)
+  const handleDoubleTap = async () => {
     try {
-      await deviceServiceProxy.sendSwipe(serial, x1, y1, x2, y2)
+      const interval = parseInt(doubleTapInterval) || 120
+      const screen = await deviceServiceProxy.getScreenSize(serial)
+      const point = deviceCoordinateService.parsePoint(tapX, tapY, screen)
+      if (!point) {
+        addLog(t('device.control_panel.coordinate_error'))
+        return
+      }
+
+      addLog(`双击 (${point.x}, ${point.y})`)
+      await deviceServiceProxy.sendDoubleTap(serial, point.x, point.y, interval)
+      addLog('双击操作成功')
+    } catch (error) {
+      addLog('双击操作失败')
+    }
+  }
+
+  const handleLongPress = async () => {
+    try {
+      const duration = parseInt(longPressDuration) || 800
+      const screen = await deviceServiceProxy.getScreenSize(serial)
+      const point = deviceCoordinateService.parsePoint(tapX, tapY, screen)
+      if (!point) {
+        addLog(t('device.control_panel.coordinate_error'))
+        return
+      }
+
+      addLog(`长按 (${point.x}, ${point.y}) ${duration}ms`)
+      await deviceServiceProxy.sendLongPress(serial, point.x, point.y, duration)
+      addLog('长按操作成功')
+    } catch (error) {
+      addLog('长按操作失败')
+    }
+  }
+
+  const handleSwipe = async () => {
+    try {
+      const screen = await deviceServiceProxy.getScreenSize(serial)
+      const action = deviceCoordinateService.parseRectAction(swipeX1, swipeY1, swipeX2, swipeY2, screen)
+      if (!action) {
+        addLog(t('device.control_panel.coordinate_error'))
+        return
+      }
+
+      addLog(`${t('device.control_panel.swipe')}: (${action.x1}, ${action.y1}) -> (${action.x2}, ${action.y2})`)
+      await deviceServiceProxy.sendSwipe(serial, action.x1, action.y1, action.x2, action.y2)
       addLog(t('device.control_panel.swipe_success'))
     } catch (error) {
       addLog(t('device.control_panel.swipe_failed'))
+    }
+  }
+
+  const handleDrag = async () => {
+    try {
+      const duration = parseInt(dragDuration) || 700
+      const screen = await deviceServiceProxy.getScreenSize(serial)
+      const action = deviceCoordinateService.parseRectAction(swipeX1, swipeY1, swipeX2, swipeY2, screen)
+      if (!action) {
+        addLog(t('device.control_panel.coordinate_error'))
+        return
+      }
+
+      addLog(`拖拽: (${action.x1}, ${action.y1}) -> (${action.x2}, ${action.y2}) ${duration}ms`)
+      await deviceServiceProxy.sendDrag(serial, action.x1, action.y1, action.x2, action.y2, duration)
+      addLog('拖拽操作成功')
+    } catch (error) {
+      addLog('拖拽操作失败')
     }
   }
 
@@ -80,21 +144,56 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
 
   const handlePressKey = async (key: 'home' | 'back' | 'menu' | 'power') => {
     const keyNames = {
-      home: '主页',
-      back: '返回',
-      menu: '菜单',
-      power: '电源'
+      home: t('device.control_panel.home'),
+      back: t('device.control_panel.back'),
+      menu: t('device.control_panel.menu'),
+      power: t('device.control_panel.power')
     }
 
-    addLog(`按下 ${keyNames[key]} 键`)
+    addLog(t('device.control_panel.key_sending', { key: keyNames[key] }))
     try {
       await deviceServiceProxy.sendKeyEvent(
         serial,
         key === 'home' ? 3 : key === 'back' ? 4 : key === 'menu' ? 82 : key === 'power' ? 26 : 3
       )
-      addLog(`${keyNames[key]} 键操作成功`)
+      addLog(t('device.control_panel.key_success', { key: keyNames[key] }))
     } catch (error) {
-      addLog(`${keyNames[key]} 键操作失败`)
+      addLog(t('device.control_panel.key_failed', { key: keyNames[key] }))
+    }
+  }
+
+  const handleAppAction = async (action: 'start' | 'stop' | 'restart' | 'foreground' | 'allow' | 'deny') => {
+    try {
+      if (action === 'foreground') {
+        const app = await deviceServiceProxy.getForegroundApp(serial)
+        addLog(`当前前台应用: ${app.packageName}${app.activity ? `/${app.activity}` : ''}`)
+        return
+      }
+
+      if (action === 'allow' || action === 'deny') {
+        const handled = await deviceServiceProxy.handlePermissionDialog(serial, action)
+        addLog(handled ? '权限弹窗已处理' : '未找到可处理的权限弹窗')
+        return
+      }
+
+      const targetPackage = packageName.trim()
+      if (!targetPackage) {
+        addLog('请输入应用包名')
+        return
+      }
+
+      if (action === 'start') {
+        await deviceServiceProxy.startApp(serial, targetPackage)
+        addLog(`已启动应用: ${targetPackage}`)
+      } else if (action === 'stop') {
+        await deviceServiceProxy.stopApp(serial, targetPackage)
+        addLog(`已停止应用: ${targetPackage}`)
+      } else {
+        await deviceServiceProxy.restartApp(serial, targetPackage)
+        addLog(`已重启应用: ${targetPackage}`)
+      }
+    } catch (error) {
+      addLog('应用操作失败')
     }
   }
 
@@ -106,7 +205,23 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
   }
 
   const handleScreenshot = async () => {
-    addLog(t('device.control_panel.screenshot_not_implemented'))
+    addLog(t('device.control_panel.screenshot_sending'))
+    try {
+      let imageBase64: string
+      try {
+        const capture = await deviceServiceProxy.captureScrcpyWindow(serial)
+        imageBase64 = capture.imageBase64
+        addLog(t('device.control_panel.screenshot_scrcpy_success'))
+      } catch {
+        const screenshot = await deviceServiceProxy.getScreenshot(serial)
+        imageBase64 = screenshot.imageBase64
+        addLog(t('device.control_panel.screenshot_adb_success'))
+      }
+      downloadScreenshot(imageBase64)
+      addLog(t('device.control_panel.screenshot_saved'))
+    } catch (error) {
+      addLog(t('device.control_panel.screenshot_failed'))
+    }
   }
 
   return (
@@ -121,10 +236,28 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
           <SectionTitle>点击操作</SectionTitle>
           <InputGroup>
             <Label>X坐标:</Label>
-            <Input type="number" value={tapX} onChange={(e) => setTapX(e.target.value)} placeholder="X坐标" />
+            <Input type="text" value={tapX} onChange={(e) => setTapX(e.target.value)} placeholder="X坐标或50%" />
             <Label>Y坐标:</Label>
-            <Input type="number" value={tapY} onChange={(e) => setTapY(e.target.value)} placeholder="Y坐标" />
+            <Input type="text" value={tapY} onChange={(e) => setTapY(e.target.value)} placeholder="Y坐标或80%" />
             <Button onClick={handleTap}>点击</Button>
+            <Button onClick={handleDoubleTap}>双击</Button>
+          </InputGroup>
+          <InputGroup>
+            <Label>长按:</Label>
+            <Input
+              type="number"
+              value={longPressDuration}
+              onChange={(e) => setLongPressDuration(e.target.value)}
+              placeholder="持续ms"
+            />
+            <Label>双击间隔:</Label>
+            <Input
+              type="number"
+              value={doubleTapInterval}
+              onChange={(e) => setDoubleTapInterval(e.target.value)}
+              placeholder="间隔ms"
+            />
+            <Button onClick={handleLongPress}>长按</Button>
           </InputGroup>
         </Section>
 
@@ -132,16 +265,26 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
           <SectionTitle>滑动操作</SectionTitle>
           <InputGroup>
             <Label>起点X:</Label>
-            <Input type="number" value={swipeX1} onChange={(e) => setSwipeX1(e.target.value)} placeholder="起点X" />
+            <Input type="text" value={swipeX1} onChange={(e) => setSwipeX1(e.target.value)} placeholder="起点X或50%" />
             <Label>起点Y:</Label>
-            <Input type="number" value={swipeY1} onChange={(e) => setSwipeY1(e.target.value)} placeholder="起点Y" />
+            <Input type="text" value={swipeY1} onChange={(e) => setSwipeY1(e.target.value)} placeholder="起点Y或80%" />
           </InputGroup>
           <InputGroup>
             <Label>终点X:</Label>
-            <Input type="number" value={swipeX2} onChange={(e) => setSwipeX2(e.target.value)} placeholder="终点X" />
+            <Input type="text" value={swipeX2} onChange={(e) => setSwipeX2(e.target.value)} placeholder="终点X或50%" />
             <Label>终点Y:</Label>
-            <Input type="number" value={swipeY2} onChange={(e) => setSwipeY2(e.target.value)} placeholder="终点Y" />
+            <Input type="text" value={swipeY2} onChange={(e) => setSwipeY2(e.target.value)} placeholder="终点Y或30%" />
             <Button onClick={handleSwipe}>滑动</Button>
+          </InputGroup>
+          <InputGroup>
+            <Label>拖拽:</Label>
+            <Input
+              type="number"
+              value={dragDuration}
+              onChange={(e) => setDragDuration(e.target.value)}
+              placeholder="持续ms"
+            />
+            <Button onClick={handleDrag}>拖拽</Button>
           </InputGroup>
         </Section>
 
@@ -157,6 +300,27 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
             />
             <Button onClick={handleInputText}>{t('device.control_panel.input')}</Button>
           </InputGroup>
+        </Section>
+
+        <Section>
+          <SectionTitle>应用操作</SectionTitle>
+          <InputGroup>
+            <Input
+              type="text"
+              value={packageName}
+              onChange={(e) => setPackageName(e.target.value)}
+              placeholder="应用包名，如 com.tencent.mm"
+              style={{ flex: 1 }}
+            />
+            <Button onClick={() => handleAppAction('start')}>启动</Button>
+            <Button onClick={() => handleAppAction('stop')}>停止</Button>
+            <Button onClick={() => handleAppAction('restart')}>重启</Button>
+          </InputGroup>
+          <ButtonGroup>
+            <Button onClick={() => handleAppAction('foreground')}>当前前台应用</Button>
+            <Button onClick={() => handleAppAction('allow')}>允许权限</Button>
+            <Button onClick={() => handleAppAction('deny')}>拒绝权限</Button>
+          </ButtonGroup>
         </Section>
 
         <Section>

@@ -1,6 +1,5 @@
 // LangGraph工作流服务 - 简化版本
-import type { FlowNode, FlowEdge } from '../types/flow'
-import _ipcService from './ipcService'
+import type { FlowEdge, FlowNode } from '../types/flow'
 
 // 定义状态类型
 export interface TaskState {

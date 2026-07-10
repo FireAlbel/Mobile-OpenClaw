@@ -1,16 +1,21 @@
 import { loggerService } from '@logger'
-import { exec, spawn } from 'child_process'
+import { exec, execFile, spawn } from 'child_process'
+import { randomUUID } from 'crypto'
 import { promisify } from 'util'
 
-import { toolPathManager } from '../utils/tool-paths'
+import { initializeToolPaths, toolPathManager } from '../utils/tool-paths'
 
 const logger = loggerService.withContext('DeviceService')
 
 const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
+const SCREENSHOT_MAX_BUFFER = 50 * 1024 * 1024
+
+export type AdbRawStatus = 'device' | 'offline' | 'unauthorized' | 'bootloader' | 'unknown'
 
 export interface AdbDevice {
   serial: string
-  status: 'device' | 'offline' | 'unauthorized' | 'bootloader'
+  status: AdbRawStatus
   transportId?: string
 }
 
@@ -27,146 +32,271 @@ export interface DeviceInfo {
 
 export interface ScrcpyProcess {
   deviceId: string
-  process: any
+  process: ReturnType<typeof spawn>
   port: number
+  windowTitle: string
+}
+
+export interface DeviceScreenSize {
+  width: number
+  height: number
+}
+
+export interface ForegroundAppInfo {
+  packageName: string
+  activity?: string
+}
+
+type PermissionDialogAction = 'allow' | 'deny' | 'allow_once'
+
+export function normalizeAdbStatus(status: string): DeviceInfo['status'] {
+  switch (status) {
+    case 'device':
+      return 'online'
+    case 'unauthorized':
+      return 'unauthorized'
+    case 'offline':
+    case 'bootloader':
+    default:
+      return 'offline'
+  }
+}
+
+export function parseAdbDevicesOutput(output: string): AdbDevice[] {
+  return output
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('List of devices') && !line.startsWith('*'))
+    .map((line) => {
+      const parts = line.split(/\s+/)
+      const serial = parts[0]
+      const status = (parts[1] || 'unknown') as AdbRawStatus
+      const transportPart = parts.find((part) => part.startsWith('transport_id:'))
+
+      return {
+        serial,
+        status,
+        transportId: transportPart?.split(':')[1]
+      }
+    })
+    .filter((device) => Boolean(device.serial))
+}
+
+export function parseForegroundAppInfo(output: string): ForegroundAppInfo | null {
+  for (const line of output.split(/\r?\n/)) {
+    const activityMatch = line.match(/^\s*ACTIVITY\s+([a-zA-Z0-9_.]+)\/([^\s]+).*?\spid=(?!\(not running\))\S+/)
+    if (activityMatch) {
+      return {
+        packageName: activityMatch[1],
+        activity: activityMatch[2]
+      }
+    }
+  }
+
+  const patterns = [
+    /topResumedActivity=.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)/,
+    /mResumedActivity:.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)/,
+    /mCurrentFocus=Window\{.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)\}/,
+    /mFocusedApp=.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)/
+  ]
+
+  for (const pattern of patterns) {
+    const match = output.match(pattern)
+    if (match) {
+      return {
+        packageName: match[1],
+        activity: match[2]
+      }
+    }
+  }
+
+  return null
+}
+
+function assertSafePackageName(packageName: string): void {
+  if (!/^[a-zA-Z0-9_.]+$/.test(packageName)) {
+    throw new Error(`Invalid Android package name: ${packageName}`)
+  }
+}
+
+function getBoundsCenter(bounds: string): { x: number; y: number } | null {
+  const match = bounds.match(/\[(\d+),(\d+)\]\[(\d+),(\d+)\]/)
+  if (!match) return null
+
+  return {
+    x: Math.round((Number(match[1]) + Number(match[3])) / 2),
+    y: Math.round((Number(match[2]) + Number(match[4])) / 2)
+  }
+}
+
+function findPermissionButtonCenter(uiXml: string, action: PermissionDialogAction): { x: number; y: number } | null {
+  const patterns: Record<PermissionDialogAction, RegExp> = {
+    allow: /(允许|同意|始终允许|仅在使用中允许|ALLOW|Allow|While using)/i,
+    allow_once: /(仅本次允许|仅此一次|Only this time)/i,
+    deny: /(拒绝|不允许|DENY|Deny|Don'?t allow)/i
+  }
+  const targetPattern = patterns[action]
+  const nodePattern = /<node\b[^>]*>/g
+
+  for (const nodeMatch of uiXml.matchAll(nodePattern)) {
+    const node = nodeMatch[0]
+    const text = `${node.match(/\btext="([^"]*)"/)?.[1] ?? ''} ${node.match(/\bcontent-desc="([^"]*)"/)?.[1] ?? ''}`
+    const bounds = node.match(/\bbounds="([^"]+)"/)?.[1]
+    if (bounds && targetPattern.test(text)) {
+      return getBoundsCenter(bounds)
+    }
+  }
+
+  return null
 }
 
 class DeviceService {
   private scrcpyProcesses: Map<string, ScrcpyProcess> = new Map()
+  private toolPathsReady: Promise<void> | null = null
+  private scrcpyStoppedListeners = new Set<(payload: { deviceId: string }) => void>()
+  private scrcpyWindowTitlePrefix = 'Mobile-OpenClaw'
 
-  constructor() {
-    // 使用工具路径管理器
+  private async ensureToolPathsInitialized(): Promise<void> {
+    this.toolPathsReady ??= initializeToolPaths()
+    await this.toolPathsReady
   }
 
-  /**
-   * 获取当前ADB路径
-   */
   private getAdbPath(): string {
     return toolPathManager.getToolPaths().adbPath
   }
 
-  /**
-   * 获取当前Scrcpy路径
-   */
   private getScrcpyPath(): string {
     return toolPathManager.getToolPaths().scrcpyPath
   }
 
-  async scanDevices(): Promise<DeviceInfo[]> {
-    try {
-      const { stdout } = await execAsync(`${this.getAdbPath()} devices -l`)
-      // logger.info('ADB devices output:', { output: stdout })
+  private createScrcpyWindowTitle(deviceId: string): string {
+    return `${this.scrcpyWindowTitlePrefix}:${deviceId}:${randomUUID().slice(0, 8)}`
+  }
 
-      const devices: DeviceInfo[] = []
-      const lines = stdout.trim().split('\n')
-
-      // 跳过第一行标题
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim()
-        if (line && !line.startsWith('*')) {
-          const parts = line.split(/\s+/)
-          const serial = parts[0]
-          const status = parts[1] as 'device' | 'offline' | 'unauthorized' | 'bootloader'
-
-          if (status === 'device') {
-            const deviceInfo: DeviceInfo = {
-              id: serial,
-              name: serial,
-              status: 'online'
-            }
-
-            // 尝试获取设备详细信息
-            try {
-              const deviceName = await this.getDeviceName(serial)
-              const model = await this.getDeviceProperty(serial, 'ro.product.model')
-              const brand = await this.getDeviceProperty(serial, 'ro.product.brand')
-              const androidVersion = await this.getDeviceProperty(serial, 'ro.build.version.release')
-              const screenSize = await this.getScreenSize(serial)
-              const density = await this.getDeviceProperty(serial, 'ro.sf.lcd_density')
-
-              deviceInfo.name = deviceName || `${brand || 'Unknown'} ${model || 'Device'}`
-              deviceInfo.model = model || undefined
-              deviceInfo.brand = brand || undefined
-              deviceInfo.androidVersion = androidVersion || undefined
-              deviceInfo.screenSize = screenSize || undefined
-              deviceInfo.density = density || undefined
-            } catch (error) {
-              logger.warn('Failed to get device details:', { error })
-            }
-
-            devices.push(deviceInfo)
-          } else {
-            devices.push({
-              id: serial,
-              name: serial,
-              status: status as 'offline' | 'unauthorized'
-            })
-          }
-        }
-      }
-
-      // logger.info('Found devices:', { devices })
-      return devices
-    } catch (error) {
-      logger.error('Failed to scan devices:', { error })
-      return []
+  onScrcpyStopped(listener: (payload: { deviceId: string }) => void): () => void {
+    this.scrcpyStoppedListeners.add(listener)
+    return () => {
+      this.scrcpyStoppedListeners.delete(listener)
     }
   }
 
-  private async getDeviceName(serial: string): Promise<string | null> {
+  private notifyScrcpyStopped(deviceId: string): void {
+    for (const listener of this.scrcpyStoppedListeners) {
+      listener({ deviceId })
+    }
+  }
+
+  async scanDevices(): Promise<DeviceInfo[]> {
     try {
-      const { stdout } = await execAsync(`${this.getAdbPath()} -s ${serial} shell getprop ro.product.model`)
-      return stdout.trim()
-    } catch {
-      return null
+      await this.ensureToolPathsInitialized()
+
+      const { stdout } = await execFileAsync(this.getAdbPath(), ['devices', '-l'])
+      const adbDevices = parseAdbDevicesOutput(stdout)
+      const devices: DeviceInfo[] = []
+
+      for (const adbDevice of adbDevices) {
+        const deviceInfo: DeviceInfo = {
+          id: adbDevice.serial,
+          name: adbDevice.serial,
+          status: normalizeAdbStatus(adbDevice.status)
+        }
+
+        if (deviceInfo.status === 'online') {
+          try {
+            const [model, brand, androidVersion, screenSize, density] = await Promise.all([
+              this.getDeviceProperty(adbDevice.serial, 'ro.product.model'),
+              this.getDeviceProperty(adbDevice.serial, 'ro.product.brand'),
+              this.getDeviceProperty(adbDevice.serial, 'ro.build.version.release'),
+              this.getScreenSize(adbDevice.serial),
+              this.getDeviceProperty(adbDevice.serial, 'ro.sf.lcd_density')
+            ])
+
+            deviceInfo.model = model || undefined
+            deviceInfo.brand = brand || undefined
+            deviceInfo.androidVersion = androidVersion || undefined
+            deviceInfo.screenSize = screenSize || undefined
+            deviceInfo.density = density || undefined
+            deviceInfo.name = [brand, model].filter(Boolean).join(' ') || adbDevice.serial
+          } catch (error) {
+            logger.warn('Failed to get device details', { deviceId: adbDevice.serial, error })
+          }
+        }
+
+        devices.push(deviceInfo)
+      }
+
+      return devices
+    } catch (error) {
+      logger.error('Failed to scan devices', { error, adbPath: this.getAdbPath() })
+      throw error
     }
   }
 
   private async getDeviceProperty(serial: string, property: string): Promise<string | null> {
     try {
-      const { stdout } = await execAsync(`${this.getAdbPath()} -s ${serial} shell getprop ${property}`)
+      const { stdout } = await execFileAsync(this.getAdbPath(), ['-s', serial, 'shell', 'getprop', property])
       return stdout.trim() || null
-    } catch {
+    } catch (error) {
+      logger.debug('Failed to read device property', { serial, property, error })
       return null
     }
   }
 
   private async getScreenSize(serial: string): Promise<string | null> {
     try {
-      const { stdout } = await execAsync(`${this.getAdbPath()} -s ${serial} shell wm size`)
+      const { stdout } = await execFileAsync(this.getAdbPath(), ['-s', serial, 'shell', 'wm', 'size'])
       const match = stdout.match(/Physical size: (\d+x\d+)/)
       return match ? match[1] : null
-    } catch {
+    } catch (error) {
+      logger.debug('Failed to read screen size', { serial, error })
       return null
+    }
+  }
+
+  async getDeviceScreenSize(deviceId: string): Promise<DeviceScreenSize> {
+    try {
+      const output = await this.executeAdbCommand(deviceId, 'shell wm size')
+      const match = output.match(/(\d+)\s*x\s*(\d+)/)
+      if (!match) {
+        throw new Error(`Unable to parse device screen size: ${output}`)
+      }
+
+      return {
+        width: Number(match[1]),
+        height: Number(match[2])
+      }
+    } catch (error) {
+      logger.error('Failed to get device screen size', { error, deviceId })
+      throw error
     }
   }
 
   async executeAdbCommand(deviceId: string, command: string): Promise<string> {
     try {
-      // 验证 deviceId
+      await this.ensureToolPathsInitialized()
+
       if (!deviceId || deviceId === 'undefined') {
         throw new Error('Invalid deviceId: deviceId is required and cannot be undefined')
       }
 
-      // 检查 command 是否包含了 adb 命令前缀，如果是则提取实际的命令部分
       let actualCommand = command
       const adbPrefixMatch = command.match(/^adb\s+-s\s+\S+\s+(.+)$/)
       if (adbPrefixMatch) {
-        logger.warn('Command contains adb prefix, extracting actual command:', { command })
+        logger.warn('Command contains adb prefix, extracting actual command', { command })
         actualCommand = adbPrefixMatch[1]
       }
 
-      const fullCommand = `${this.getAdbPath()} -s ${deviceId} ${actualCommand}`
-      logger.info('Executing ADB command:', { deviceId, command: actualCommand, fullCommand })
+      const fullCommand = `"${this.getAdbPath()}" -s ${deviceId} ${actualCommand}`
+      logger.info('Executing ADB command', { deviceId, command: actualCommand, fullCommand })
       const { stdout, stderr } = await execAsync(fullCommand)
 
       if (stderr) {
-        logger.warn('ADB command stderr:', { stderr })
+        logger.warn('ADB command stderr', { stderr })
       }
 
       return stdout.trim()
     } catch (error) {
-      logger.error('ADB command failed:', { error, deviceId, command })
+      logger.error('ADB command failed', { error, deviceId, command })
       throw error
     }
   }
@@ -179,41 +309,43 @@ class DeviceService {
       bitRate?: number
       maxFps?: number
     } = {}
-  ): Promise<{ port: number; process: any }> {
+  ): Promise<{ port: number; process: ReturnType<typeof spawn> }> {
     try {
+      await this.ensureToolPathsInitialized()
+
       const port = options.port || 8080
       const maxSize = options.maxSize || 1024
       const bitRate = options.bitRate || 8000000
       const maxFps = options.maxFps || 30
+      const windowTitle = this.createScrcpyWindowTitle(deviceId)
 
       const deviceStatus = await this.checkDeviceStatus(deviceId)
       if (deviceStatus !== 'online') {
         throw new Error(`Device is not online: ${deviceStatus}`)
       }
 
-      // 杀死可能存在的旧进程
       await this.stopScrcpy(deviceId)
 
       const scrcpyArgs = [
         '-s',
         deviceId,
+        '--window-title',
+        windowTitle,
         '--max-size',
         String(maxSize),
         '--video-bit-rate',
         String(bitRate),
         '--max-fps',
         String(maxFps),
-        '--no-audio' // 禁用音频，避免音频设备初始化错误
+        '--no-audio'
       ]
 
       const scrcpyPath = this.getScrcpyPath()
-      const fullCommand = `${scrcpyPath} ${scrcpyArgs.join(' ')}`
-      logger.info('Starting Scrcpy with args:', { command: scrcpyPath, args: scrcpyArgs, fullCommand })
+      logger.info('Starting Scrcpy', { command: scrcpyPath, args: scrcpyArgs })
 
-      // 使用直接执行方式，避免shell转义问题
       const process = spawn(scrcpyPath, scrcpyArgs, {
-        windowsHide: false, // 不隐藏窗口
-        shell: false // 不使用shell执行
+        windowsHide: false,
+        shell: false
       })
 
       let stderrOutput = ''
@@ -223,7 +355,7 @@ class DeviceService {
         const text = String(chunk)
         stderrOutput = `${stderrOutput}${text}`.slice(-2000)
         if (text.trim()) {
-          logger.warn('Scrcpy stderr:', { deviceId, stderr: text.trim() })
+          logger.warn('Scrcpy stderr', { deviceId, stderr: text.trim() })
         }
       })
 
@@ -233,11 +365,6 @@ class DeviceService {
       })
 
       const startup = await new Promise<{ started: boolean; errorMessage?: string }>((resolve) => {
-        const timer = setTimeout(() => {
-          cleanup()
-          resolve({ started: true })
-        }, 1200)
-
         const cleanup = () => {
           clearTimeout(timer)
           process.off('error', onError)
@@ -258,6 +385,11 @@ class DeviceService {
           })
         }
 
+        const timer = setTimeout(() => {
+          cleanup()
+          resolve({ started: true })
+        }, 1200)
+
         process.once('error', onError)
         process.once('exit', onExit)
       })
@@ -266,7 +398,7 @@ class DeviceService {
         try {
           process.kill()
         } catch {
-          // ignore
+          // Process already exited.
         }
         throw new Error(startup.errorMessage || 'Scrcpy startup failed')
       }
@@ -274,27 +406,51 @@ class DeviceService {
       const scrcpyProcess: ScrcpyProcess = {
         deviceId,
         process,
-        port
+        port,
+        windowTitle
       }
 
       this.scrcpyProcesses.set(deviceId, scrcpyProcess)
+
+      const handleProcessStopped = (reason: {
+        code?: number | null
+        signal?: NodeJS.Signals | null
+        error?: Error
+      }) => {
+        const currentProcess = this.scrcpyProcesses.get(deviceId)
+        if (currentProcess?.process !== process) return
+
+        this.scrcpyProcesses.delete(deviceId)
+        logger.info('Scrcpy process stopped', { deviceId, ...reason })
+        this.notifyScrcpyStopped(deviceId)
+      }
+
+      process.once('exit', (code, signal) => {
+        handleProcessStopped({ code, signal })
+      })
+
+      process.once('error', (error) => {
+        handleProcessStopped({ error })
+      })
+
       return { port, process }
     } catch (error) {
-      logger.error('Failed to start Scrcpy:', { error, deviceId })
+      logger.error('Failed to start Scrcpy', { error, deviceId })
       throw error
     }
   }
 
   async stopScrcpy(deviceId: string): Promise<void> {
     const existingProcess = this.scrcpyProcesses.get(deviceId)
-    if (existingProcess) {
-      try {
-        existingProcess.process.kill()
-        this.scrcpyProcesses.delete(deviceId)
-        logger.info('Stopped Scrcpy for device:', { deviceId })
-      } catch (error) {
-        logger.error('Failed to stop Scrcpy:', { error })
-      }
+    if (!existingProcess) return
+
+    try {
+      existingProcess.process.kill()
+      this.scrcpyProcesses.delete(deviceId)
+      logger.info('Stopped Scrcpy for device', { deviceId })
+      this.notifyScrcpyStopped(deviceId)
+    } catch (error) {
+      logger.error('Failed to stop Scrcpy', { error, deviceId })
     }
   }
 
@@ -309,7 +465,29 @@ class DeviceService {
       await this.executeAdbCommand(deviceId, `shell input tap ${x} ${y}`)
       logger.info('Sent tap to device', { deviceId, x, y })
     } catch (error) {
-      logger.error('Failed to send tap:', { error })
+      logger.error('Failed to send tap', { error, deviceId, x, y })
+      throw error
+    }
+  }
+
+  async sendDoubleTap(deviceId: string, x: number, y: number, interval: number = 120): Promise<void> {
+    try {
+      await this.sendTap(deviceId, x, y)
+      await new Promise((resolve) => setTimeout(resolve, Math.max(30, Math.min(interval, 1000))))
+      await this.sendTap(deviceId, x, y)
+      logger.info('Sent double tap to device', { deviceId, x, y, interval })
+    } catch (error) {
+      logger.error('Failed to send double tap', { error, deviceId, x, y, interval })
+      throw error
+    }
+  }
+
+  async sendLongPress(deviceId: string, x: number, y: number, duration: number = 800): Promise<void> {
+    try {
+      await this.sendSwipe(deviceId, x, y, x, y, Math.max(300, Math.min(duration, 10000)))
+      logger.info('Sent long press to device', { deviceId, x, y, duration })
+    } catch (error) {
+      logger.error('Failed to send long press', { error, deviceId, x, y, duration })
       throw error
     }
   }
@@ -324,22 +502,73 @@ class DeviceService {
   ): Promise<void> {
     try {
       await this.executeAdbCommand(deviceId, `shell input swipe ${x1} ${y1} ${x2} ${y2} ${duration}`)
-      logger.info('Sent swipe to device', { deviceId, x1, y1, x2, y2 })
+      logger.info('Sent swipe to device', { deviceId, x1, y1, x2, y2, duration })
     } catch (error) {
-      logger.error('Failed to send swipe:', { error })
+      logger.error('Failed to send swipe', { error, deviceId })
+      throw error
+    }
+  }
+
+  async sendDrag(
+    deviceId: string,
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    duration: number = 700
+  ): Promise<void> {
+    try {
+      await this.sendSwipe(deviceId, x1, y1, x2, y2, Math.max(100, Math.min(duration, 10000)))
+      logger.info('Sent drag to device', { deviceId, x1, y1, x2, y2, duration })
+    } catch (error) {
+      logger.error('Failed to send drag', { error, deviceId, x1, y1, x2, y2, duration })
       throw error
     }
   }
 
   async sendText(deviceId: string, text: string): Promise<void> {
     try {
-      // 转义特殊字符
-      const escapedText = text.replace(/"/g, '\\"')
-      await this.executeAdbCommand(deviceId, `shell input text "${escapedText}"`)
-      logger.info('Sent text to device', { deviceId, text })
+      if (/^[\x20-\x7e]*$/.test(text)) {
+        const escapedText = text.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\s/g, '%s')
+        await this.executeAdbCommand(deviceId, `shell input text "${escapedText}"`)
+      } else {
+        await this.sendUnicodeText(deviceId, text)
+      }
+      logger.info('Sent text to device', { deviceId })
     } catch (error) {
-      logger.error('Failed to send text:', { error })
+      logger.error('Failed to send text', { error, deviceId })
       throw error
+    }
+  }
+
+  private async sendUnicodeText(deviceId: string, text: string): Promise<void> {
+    const inputMethods = await this.executeAdbCommand(deviceId, 'shell ime list -s')
+    const adbKeyboardIme = inputMethods
+      .split(/\r?\n/)
+      .map((ime) => ime.trim())
+      .find((ime) => /adbkeyboard|ADBKeyboard/i.test(ime))
+
+    if (!adbKeyboardIme) {
+      throw new Error(
+        'Chinese input requires ADB Keyboard or another supported Unicode input bridge. Install and enable ADB Keyboard, then retry.'
+      )
+    }
+
+    const currentImeOutput = await this.executeAdbCommand(deviceId, 'shell settings get secure default_input_method')
+    const previousIme = currentImeOutput.trim()
+    const textBase64 = Buffer.from(text, 'utf8').toString('base64')
+
+    try {
+      await this.executeAdbCommand(deviceId, `shell ime set ${adbKeyboardIme}`)
+      await this.executeAdbCommand(deviceId, `shell am broadcast -a ADB_INPUT_B64 --es msg ${textBase64}`)
+    } finally {
+      if (previousIme && previousIme !== 'null' && previousIme !== adbKeyboardIme) {
+        try {
+          await this.executeAdbCommand(deviceId, `shell ime set ${previousIme}`)
+        } catch (restoreError) {
+          logger.warn('Failed to restore previous input method', { restoreError, deviceId, previousIme })
+        }
+      }
     }
   }
 
@@ -348,47 +577,119 @@ class DeviceService {
       await this.executeAdbCommand(deviceId, `shell input keyevent ${keyCode}`)
       logger.info('Sent key event to device', { deviceId, keyCode })
     } catch (error) {
-      logger.error('Failed to send key event:', { error })
+      logger.error('Failed to send key event', { error, deviceId, keyCode })
+      throw error
+    }
+  }
+
+  async startApp(deviceId: string, packageName: string): Promise<void> {
+    try {
+      assertSafePackageName(packageName)
+      await this.executeAdbCommand(deviceId, `shell monkey -p ${packageName} -c android.intent.category.LAUNCHER 1`)
+      logger.info('Started app on device', { deviceId, packageName })
+    } catch (error) {
+      logger.error('Failed to start app', { error, deviceId, packageName })
+      throw error
+    }
+  }
+
+  async stopApp(deviceId: string, packageName: string): Promise<void> {
+    try {
+      assertSafePackageName(packageName)
+      await this.executeAdbCommand(deviceId, `shell am force-stop ${packageName}`)
+      logger.info('Stopped app on device', { deviceId, packageName })
+    } catch (error) {
+      logger.error('Failed to stop app', { error, deviceId, packageName })
+      throw error
+    }
+  }
+
+  async restartApp(deviceId: string, packageName: string): Promise<void> {
+    await this.stopApp(deviceId, packageName)
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    await this.startApp(deviceId, packageName)
+    logger.info('Restarted app on device', { deviceId, packageName })
+  }
+
+  async getForegroundApp(deviceId: string): Promise<ForegroundAppInfo> {
+    try {
+      const topOutput = await this.executeAdbCommand(deviceId, 'shell dumpsys activity top')
+      const topInfo = parseForegroundAppInfo(topOutput)
+      if (topInfo) return topInfo
+
+      const activityOutput = await this.executeAdbCommand(deviceId, 'shell dumpsys activity activities')
+      const activityInfo = parseForegroundAppInfo(activityOutput)
+      if (activityInfo) return activityInfo
+
+      const windowOutput = await this.executeAdbCommand(deviceId, 'shell dumpsys window windows')
+      const windowInfo = parseForegroundAppInfo(windowOutput)
+      if (windowInfo) return windowInfo
+
+      throw new Error('Unable to parse foreground app from dumpsys output')
+    } catch (error) {
+      logger.error('Failed to get foreground app', { error, deviceId })
+      throw error
+    }
+  }
+
+  async handlePermissionDialog(deviceId: string, action: PermissionDialogAction): Promise<boolean> {
+    try {
+      await this.executeAdbCommand(deviceId, 'shell uiautomator dump /sdcard/mobile_openclaw_window.xml')
+      const uiXml = await this.executeAdbCommand(deviceId, 'shell cat /sdcard/mobile_openclaw_window.xml')
+      const center = findPermissionButtonCenter(uiXml, action)
+      if (!center) {
+        logger.info('No matching permission dialog button found', { deviceId, action })
+        return false
+      }
+
+      await this.sendTap(deviceId, center.x, center.y)
+      logger.info('Handled permission dialog', { deviceId, action, center })
+      return true
+    } catch (error) {
+      logger.error('Failed to handle permission dialog', { error, deviceId, action })
       throw error
     }
   }
 
   async getScreenshot(deviceId: string): Promise<Buffer> {
     try {
-      const { stdout } = await execAsync(`${this.getAdbPath()} -s ${deviceId} shell screencap -p`)
-      return Buffer.from(stdout, 'binary')
+      await this.ensureToolPathsInitialized()
+      const { stdout } = await execFileAsync(this.getAdbPath(), ['-s', deviceId, 'exec-out', 'screencap', '-p'], {
+        encoding: 'buffer',
+        maxBuffer: SCREENSHOT_MAX_BUFFER
+      })
+      return Buffer.from(stdout)
     } catch (error) {
-      logger.error('Failed to get screenshot:', { error })
+      logger.error('Failed to get screenshot', { error, deviceId })
       throw error
     }
   }
 
-  async checkDeviceStatus(deviceId: string): Promise<'online' | 'offline' | 'unauthorized'> {
-    try {
-      const { stdout } = await execAsync(`${this.getAdbPath()} -s ${deviceId} get-state`)
-      const status = stdout.trim()
+  getScrcpyWindowTitle(deviceId: string): string | null {
+    const process = this.scrcpyProcesses.get(deviceId)
+    return process?.windowTitle ?? null
+  }
 
-      if (status === 'device') {
-        return 'online'
-      } else if (status === 'offline') {
-        return 'offline'
-      } else {
-        return 'unauthorized'
-      }
+  async checkDeviceStatus(deviceId: string): Promise<DeviceInfo['status']> {
+    try {
+      await this.ensureToolPathsInitialized()
+      const { stdout } = await execFileAsync(this.getAdbPath(), ['-s', deviceId, 'get-state'])
+      return normalizeAdbStatus(stdout.trim())
     } catch (error) {
-      logger.error('Failed to check device status:', { error })
+      logger.error('Failed to check device status', { error, deviceId })
       return 'offline'
     }
   }
 
   async detectToolPaths(): Promise<{ adbPath?: string; scrcpyPath?: string }> {
     try {
+      await this.ensureToolPathsInitialized()
       return {
         adbPath: this.getAdbPath(),
         scrcpyPath: this.getScrcpyPath()
       }
     } catch (error) {
-      logger.error('Failed to detect tool paths:', { error })
+      logger.error('Failed to detect tool paths', { error })
       return {}
     }
   }

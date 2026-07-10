@@ -37,9 +37,7 @@ import type {
   OpenAIReasoningSummary,
   OpenAIVerbosity
 } from '@renderer/types/aiCoreTypes'
-import type {
-  SidebarIcon
-} from '@renderer/types/sidebar'
+import type { SidebarIcon } from '@renderer/types/sidebar'
 import { uuid } from '@renderer/utils'
 import { API_SERVER_DEFAULTS, UpgradeChannel } from '@shared/config/constant'
 

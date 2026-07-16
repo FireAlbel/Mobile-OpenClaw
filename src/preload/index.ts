@@ -672,6 +672,10 @@ const api = {
       ipcRenderer.invoke(IpcChannel.LocalTransfer_SendFile, { filePath }),
     cancelTransfer: (): Promise<void> => ipcRenderer.invoke(IpcChannel.LocalTransfer_CancelTransfer)
   },
+  rpa: {
+    loadRuns: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadRuns),
+    saveRuns: (runs: unknown[]): Promise<void> => ipcRenderer.invoke(IpcChannel.Rpa_SaveRuns, runs)
+  },
   openclaw: {
     checkInstalled: (): Promise<{ installed: boolean; path: string | null }> =>
       ipcRenderer.invoke(IpcChannel.OpenClaw_CheckInstalled),

@@ -1,5 +1,6 @@
 import { deviceCoordinateService } from '@renderer/services/DeviceCoordinateService'
 import { deviceServiceProxy } from '@renderer/services/DeviceServiceProxy'
+import { scrcpyFrameService } from '@renderer/services/ScrcpyFrameService'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -207,17 +208,9 @@ const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({ serial, onClose
   const handleScreenshot = async () => {
     addLog(t('device.control_panel.screenshot_sending'))
     try {
-      let imageBase64: string
-      try {
-        const capture = await deviceServiceProxy.captureScrcpyWindow(serial)
-        imageBase64 = capture.imageBase64
-        addLog(t('device.control_panel.screenshot_scrcpy_success'))
-      } catch {
-        const screenshot = await deviceServiceProxy.getScreenshot(serial)
-        imageBase64 = screenshot.imageBase64
-        addLog(t('device.control_panel.screenshot_adb_success'))
-      }
-      downloadScreenshot(imageBase64)
+      const screenshot = await scrcpyFrameService.getLatestFrame(serial)
+      downloadScreenshot(screenshot.imageBase64)
+      addLog(t('device.control_panel.screenshot_scrcpy_success'))
       addLog(t('device.control_panel.screenshot_saved'))
     } catch (error) {
       addLog(t('device.control_panel.screenshot_failed'))

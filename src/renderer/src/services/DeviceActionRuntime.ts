@@ -1,7 +1,9 @@
 import { loggerService } from '@logger'
+import type { Model } from '@renderer/types'
 
 import { deviceServiceProxy } from './DeviceServiceProxy'
-import { deviceVisionActionService } from './DeviceVisionActionService'
+import { deviceVisionActionService, VisionActionNeedsHumanError } from './DeviceVisionActionService'
+import { scrcpyFrameService } from './ScrcpyFrameService'
 
 const logger = loggerService.withContext('DeviceActionRuntime')
 
@@ -51,6 +53,28 @@ function toPermissionAction(value: unknown): 'allow' | 'deny' | 'allow_once' {
   return 'allow'
 }
 
+function toVisionAllowedActions(value: unknown): Array<'tap' | 'swipe'> {
+  if (!Array.isArray(value)) return ['tap', 'swipe']
+  const actions = value.filter((item): item is 'tap' | 'swipe' => item === 'tap' || item === 'swipe')
+  return actions.length ? actions : ['tap', 'swipe']
+}
+
+function toVisionModel(value: unknown): Model | undefined {
+  if (value === undefined) return undefined
+  if (!value || typeof value !== 'object') throw new Error('Invalid vision model configuration')
+  const model = value as Partial<Model>
+  if (!model.id || !model.provider || !model.name || !model.group) {
+    throw new Error('Vision model must include id, provider, name and group')
+  }
+  return value as Model
+}
+
+function toAbortSignal(value: unknown): AbortSignal | undefined {
+  if (value === undefined) return undefined
+  if (value instanceof AbortSignal) return value
+  throw new Error('Invalid abort signal')
+}
+
 function assertPackageName(packageName: string): void {
   if (!/^[a-zA-Z0-9_.]+$/.test(packageName)) {
     throw new Error(`Invalid Android package name: ${packageName}`)
@@ -78,6 +102,7 @@ export class DeviceActionRuntime {
         type: request.type,
         success: false,
         message: error instanceof Error ? error.message : String(error),
+        data: error instanceof VisionActionNeedsHumanError ? error.intervention : undefined,
         startedAt,
         finishedAt
       }
@@ -139,7 +164,7 @@ export class DeviceActionRuntime {
         const packageName = toString(params.packageName, 'packageName')
         assertPackageName(packageName)
         await deviceServiceProxy.startApp(deviceId, packageName)
-        return undefined
+        return { packageName }
       }
       case 'stop_app': {
         const packageName = toString(params.packageName, 'packageName')
@@ -156,7 +181,13 @@ export class DeviceActionRuntime {
       case 'permission':
         return await deviceServiceProxy.handlePermissionDialog(deviceId, toPermissionAction(params.action))
       case 'vision_instruction':
-        return await deviceVisionActionService.runVisionAction(deviceId, toString(params.instruction, 'instruction'))
+        return await deviceVisionActionService.runVisionAction(
+          deviceId,
+          toString(params.instruction, 'instruction'),
+          toVisionAllowedActions(params.allowedActions),
+          toVisionModel(params.model),
+          toAbortSignal(params.signal)
+        )
       default:
         throw new Error(`Unsupported device action: ${(request as DeviceActionRequest).type}`)
     }
@@ -164,8 +195,9 @@ export class DeviceActionRuntime {
 
   private async captureScreenshot(deviceId: string) {
     try {
-      return await deviceServiceProxy.captureScrcpyWindow(deviceId)
-    } catch {
+      return await scrcpyFrameService.getLatestFrame(deviceId)
+    } catch (error) {
+      logger.warn('Scrcpy frame capture failed, falling back to ADB screenshot', { error, deviceId })
       return await deviceServiceProxy.getScreenshot(deviceId)
     }
   }

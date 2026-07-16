@@ -31,6 +31,7 @@ import {
   removeGroupAssignments,
   sanitizeDeviceMetadataMap
 } from './deviceMetadata'
+import RpaTaskRunnerPanel from './RpaTaskRunnerPanel'
 
 const logger = loggerService.withContext('DevicePage')
 
@@ -65,6 +66,7 @@ const DevicePage: React.FC<DevicePageProps> = ({
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null)
   const [showBatchInstallPanel, setShowBatchInstallPanel] = useState<boolean>(false)
   const [showBatchControlPanel, setShowBatchControlPanel] = useState<boolean>(false)
+  const [showRpaRunnerPanel, setShowRpaRunnerPanel] = useState<boolean>(false)
   const [searchKeyword, setSearchKeyword] = useState<string>('')
   const [groups, setGroups] = useState<DeviceGroup[]>([])
   const [deviceInfo, setDeviceInfo] = useState<Record<string, DeviceMetadata>>({})
@@ -481,6 +483,7 @@ const DevicePage: React.FC<DevicePageProps> = ({
         <Dropdown menu={{ items: batchMenuItems, onClick: handleBatchMenuClick }} trigger={['click']}>
           <Button>{t('device.batch_operations')}</Button>
         </Dropdown>
+        <Button onClick={() => setShowRpaRunnerPanel(true)}>{tr('device.rpa.title', 'RPA Runner')}</Button>
         <Button loading={scanning} onClick={() => fetchDevices(true)}>
           {t('device.refresh')}
         </Button>
@@ -619,6 +622,8 @@ const DevicePage: React.FC<DevicePageProps> = ({
       </Modal>
 
       {showBatchControlPanel && <BatchControlPanel onClose={() => setShowBatchControlPanel(false)} />}
+
+      {showRpaRunnerPanel && <RpaTaskRunnerPanel devices={devices} onClose={() => setShowRpaRunnerPanel(false)} />}
 
       {showControlPanel && selectedDevice && (
         <DeviceControlPanel

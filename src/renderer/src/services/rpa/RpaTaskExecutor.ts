@@ -1,9 +1,12 @@
 import { loggerService } from '@logger'
 
 import { type RpaModuleRegistry } from './RpaModuleRegistry'
+import { RpaObservationService } from './RpaObservationService'
+import { RpaReplanService } from './RpaReplanService'
 import { RpaTaskValidator } from './RpaTaskValidator'
 import type {
   RpaDeviceRuntime,
+  RpaFailureContext,
   RpaModuleResult,
   RpaRetryPolicy,
   RpaRunResult,
@@ -11,23 +14,40 @@ import type {
   RpaStep,
   RpaStepStatus,
   RpaTask,
-  RpaVerification,
   RpaVerificationResult
 } from './RpaTypes'
+import { RpaVerificationEngine } from './RpaVerificationEngine'
 
 const logger = loggerService.withContext('RpaTaskExecutor')
+
+interface RpaStepExecutionResult {
+  result: RpaModuleResult
+  verification: RpaVerificationResult
+}
 
 export interface RpaTaskExecutorOptions {
   registry: RpaModuleRegistry
   runtime: RpaDeviceRuntime
+  verificationEngine?: RpaVerificationEngine
+  observationService?: RpaObservationService
+  replanService?: RpaReplanService
+  maxRecoveryAttempts?: number
   onEvent?: (event: RpaRunStepEvent) => void
 }
 
 export class RpaTaskExecutor {
   private readonly validator: RpaTaskValidator
+  private readonly verificationEngine: RpaVerificationEngine
+  private readonly observationService: RpaObservationService
+  private readonly replanService: RpaReplanService
+  private readonly maxRecoveryAttempts: number
 
   constructor(private readonly options: RpaTaskExecutorOptions) {
     this.validator = new RpaTaskValidator(options.registry)
+    this.verificationEngine = options.verificationEngine ?? new RpaVerificationEngine({ runtime: options.runtime })
+    this.observationService = options.observationService ?? new RpaObservationService(options.runtime)
+    this.replanService = options.replanService ?? new RpaReplanService({ registry: options.registry })
+    this.maxRecoveryAttempts = options.maxRecoveryAttempts ?? 2
   }
 
   async run(input: unknown, deviceId: string): Promise<RpaRunResult> {
@@ -67,15 +87,31 @@ export class RpaTaskExecutor {
 
     try {
       for (const step of task.steps) {
-        const stepResult = await this.runStep(task, deviceId, step, emit)
+        const stepIndex = task.steps.findIndex((item) => item.id === step.id)
+        let stepExecution = await this.runStep(task, deviceId, step, emit)
+        const stepResult = stepExecution.result
         if (!stepResult.success && !step.continueOnFailure) {
+          stepExecution = await this.recoverStep(task, deviceId, step, stepIndex, stepExecution, events, emit)
+          if (stepExecution.result.success) continue
+          const finalResult = stepExecution.result
+
+          const failureContext = this.createFailureContext(
+            task,
+            deviceId,
+            step,
+            stepIndex,
+            stepExecution,
+            events,
+            finalResult.message
+          )
           return {
             taskId: task.id,
             deviceId,
             success: false,
-            status: stepResult.status === 'needs_human' ? 'needs_human' : 'failed',
+            status: finalResult.status === 'needs_human' ? 'needs_human' : 'failed',
             events,
-            error: stepResult.message,
+            error: finalResult.message,
+            failureContext,
             startedAt,
             finishedAt: Date.now()
           }
@@ -111,7 +147,7 @@ export class RpaTaskExecutor {
     deviceId: string,
     step: RpaStep,
     emit: (step: RpaStep, status: RpaStepStatus, attempt: number, message: string, data?: unknown) => void
-  ): Promise<RpaModuleResult> {
+  ): Promise<RpaStepExecutionResult> {
     const module = this.options.registry.require(step.moduleId)
     const retry = this.resolveRetryPolicy(task.retry, step.retry, module.metadata.defaultRetry)
     let lastResult: RpaModuleResult | undefined
@@ -121,98 +157,196 @@ export class RpaTaskExecutor {
       const params = module.paramsSchema.parse(step.params)
       const timeoutMs = step.timeoutMs ?? module.metadata.defaultTimeoutMs
       const result = await this.withTimeout(
-        module.execute(
-          {
-            deviceId,
-            task,
-            step,
-            attempt,
-            runtime: this.options.runtime
-          },
-          params
-        ),
+        (signal) =>
+          module.execute(
+            {
+              deviceId,
+              task,
+              step,
+              attempt,
+              runtime: this.options.runtime,
+              signal
+            },
+            params
+          ),
         timeoutMs
       )
       lastResult = result
 
-      const verification = await this.verify(step.verify, result, deviceId)
+      const verification = await this.verificationEngine.verify(step.verify, result, deviceId)
       if (result.success && verification.status === 'passed') {
         emit(step, 'passed', attempt, result.message, { result, verification })
-        return result
+        return { result, verification }
       }
 
-      const failureStatus = result.status === 'timeout' ? 'timeout' : 'failed'
+      const failureStatus =
+        result.status === 'timeout' ? 'timeout' : result.status === 'needs_human' ? 'needs_human' : 'failed'
       emit(step, failureStatus, attempt, verification.message, { result, verification })
 
       if (!this.shouldRetry(result, verification, retry) || attempt >= retry.maxAttempts) {
         return {
-          ...result,
-          success: false,
-          status: verification.status === 'uncertain' ? 'needs_human' : failureStatus,
-          message: verification.message
+          result: {
+            ...result,
+            success: false,
+            status:
+              result.status === 'needs_human' || verification.status === 'uncertain' ? 'needs_human' : failureStatus,
+            message: verification.message
+          },
+          verification
         }
       }
 
       await delay(retry.backoffMs)
     }
 
-    return (
-      lastResult ?? {
-        success: false,
+    const result = lastResult ?? {
+      success: false,
+      status: 'failed',
+      message: 'Step did not execute',
+      startedAt: Date.now(),
+      finishedAt: Date.now()
+    }
+    return {
+      result,
+      verification: {
         status: 'failed',
-        message: 'Step did not execute',
-        startedAt: Date.now(),
-        finishedAt: Date.now()
+        confidence: 1,
+        message: result.message,
+        evidence: result.data
       }
-    )
+    }
   }
 
-  private async verify(
-    verification: RpaVerification | undefined,
-    result: RpaModuleResult,
-    deviceId: string
-  ): Promise<RpaVerificationResult> {
-    if (!verification || verification.type === 'module_result_success') {
-      return result.success
-        ? { status: 'passed', confidence: 1, message: result.message, evidence: result.data }
-        : { status: 'failed', confidence: 1, message: result.message, evidence: result.data }
-    }
+  private async recoverStep(
+    task: RpaTask,
+    deviceId: string,
+    originalStep: RpaStep,
+    originalStepIndex: number,
+    initialExecution: RpaStepExecutionResult,
+    events: RpaRunStepEvent[],
+    emit: (step: RpaStep, status: RpaStepStatus, attempt: number, message: string, data?: unknown) => void
+  ): Promise<RpaStepExecutionResult> {
+    let failedStep = originalStep
+    let failedStepIndex = originalStepIndex
+    let failedExecution = initialExecution
+    let latestObservation = await this.observationService.capture(deviceId)
 
-    if (verification.type === 'none') {
-      return { status: 'passed', confidence: 1, message: 'Verification skipped' }
-    }
+    for (let correctionAttempt = 0; correctionAttempt < this.maxRecoveryAttempts; correctionAttempt += 1) {
+      const failureContext = this.createFailureContext(
+        task,
+        deviceId,
+        failedStep,
+        failedStepIndex,
+        failedExecution,
+        events,
+        failedExecution.result.message
+      )
+      emit(
+        originalStep,
+        'running',
+        correctionAttempt + 1,
+        `Analyzing failure with VLM (${correctionAttempt + 1}/${this.maxRecoveryAttempts})`,
+        { phase: 'recovery_analysis', failureContext, observation: latestObservation }
+      )
 
-    if (verification.type === 'screenshot_exists') {
-      const screenshot = result.success && result.data ? result : await this.options.runtime.screenshot(deviceId)
-      return screenshot.success && screenshot.data
-        ? { status: 'passed', confidence: 1, message: 'Screenshot captured', evidence: screenshot.data }
-        : { status: 'failed', confidence: 1, message: screenshot.message }
-    }
+      let decision
+      try {
+        decision = await this.replanService.replan({
+          failureContext,
+          latestObservation,
+          correctionAttempt,
+          maxCorrectionAttempts: this.maxRecoveryAttempts
+        })
+      } catch (error) {
+        const message = `VLM recovery analysis failed: ${error instanceof Error ? error.message : String(error)}`
+        emit(originalStep, 'needs_human', correctionAttempt + 1, message, {
+          phase: 'recovery_decision',
+          observation: latestObservation
+        })
+        return this.needsHumanExecution(message, { observation: latestObservation })
+      }
 
-    if (verification.type === 'foreground_app') {
-      const foreground = await this.options.runtime.getForegroundApp(deviceId)
-      const packageName =
-        typeof foreground.data === 'object' && foreground.data && 'packageName' in foreground.data
-          ? String(foreground.data.packageName)
-          : ''
-      return foreground.success && packageName === verification.packageName
-        ? {
-            status: 'passed',
-            confidence: 1,
-            message: `Foreground app matched ${verification.packageName}`,
-            evidence: foreground.data
+      emit(
+        originalStep,
+        decision.status === 'needs_human' ? 'needs_human' : 'running',
+        correctionAttempt + 1,
+        `Recovery decision: ${decision.status} - ${decision.message}`,
+        { phase: 'recovery_decision', decision, observation: latestObservation }
+      )
+
+      if (decision.status === 'needs_human') {
+        return this.needsHumanExecution(decision.message, { decision, observation: latestObservation })
+      }
+
+      let recoveryFailed = false
+      if (decision.status === 'corrected') {
+        for (const recoveryStep of decision.steps) {
+          const recoveryExecution = await this.runStep(task, deviceId, recoveryStep, emit)
+          if (!recoveryExecution.result.success) {
+            failedStep = recoveryStep
+            failedStepIndex = originalStepIndex
+            failedExecution = recoveryExecution
+            recoveryFailed = true
+            break
           }
-        : {
-            status: foreground.success ? 'failed' : 'uncertain',
-            confidence: foreground.success ? 1 : 0,
-            message: foreground.success
-              ? `Foreground app mismatch, expected ${verification.packageName}, got ${packageName || 'unknown'}`
-              : foreground.message,
-            evidence: foreground.data
-          }
+        }
+      }
+
+      if (!recoveryFailed) {
+        const retriedOriginal = await this.runStep(task, deviceId, originalStep, emit)
+        if (retriedOriginal.result.success) return retriedOriginal
+        failedStep = originalStep
+        failedStepIndex = originalStepIndex
+        failedExecution = retriedOriginal
+      }
+
+      latestObservation = await this.observationService.capture(deviceId)
     }
 
-    return { status: 'uncertain', confidence: 0, message: 'Unsupported verification rule' }
+    const message = `VLM recovery attempts exhausted after ${this.maxRecoveryAttempts} attempts`
+    emit(originalStep, 'needs_human', this.maxRecoveryAttempts, message, {
+      phase: 'recovery_exhausted',
+      observation: latestObservation
+    })
+    return this.needsHumanExecution(message, { observation: latestObservation })
+  }
+
+  private needsHumanExecution(message: string, data: unknown): RpaStepExecutionResult {
+    const now = Date.now()
+    const result: RpaModuleResult = {
+      success: false,
+      status: 'needs_human',
+      message,
+      data,
+      startedAt: now,
+      finishedAt: now
+    }
+    return {
+      result,
+      verification: { status: 'uncertain', confidence: 0, message, evidence: data }
+    }
+  }
+
+  private createFailureContext(
+    task: RpaTask,
+    deviceId: string,
+    failedStep: RpaStep,
+    failedStepIndex: number,
+    stepExecution: RpaStepExecutionResult,
+    events: RpaRunStepEvent[],
+    reason: string
+  ): RpaFailureContext {
+    return {
+      task,
+      deviceId,
+      failedStep,
+      failedStepIndex,
+      result: stepExecution.result,
+      verification: stepExecution.verification,
+      events: [...events],
+      reason,
+      occurredAt: Date.now()
+    }
   }
 
   private resolveRetryPolicy(
@@ -224,19 +358,25 @@ export class RpaTaskExecutor {
   }
 
   private shouldRetry(result: RpaModuleResult, verification: RpaVerificationResult, retry: RpaRetryPolicy): boolean {
+    if (result.status === 'needs_human') return false
     if (result.status === 'timeout') return retry.retryOn.includes('timeout')
     if (verification.status === 'uncertain') return retry.retryOn.includes('uncertain')
     return retry.retryOn.includes('failed')
   }
 
-  private async withTimeout(operation: Promise<RpaModuleResult>, timeoutMs: number): Promise<RpaModuleResult> {
+  private async withTimeout(
+    operation: (signal: AbortSignal) => Promise<RpaModuleResult>,
+    timeoutMs: number
+  ): Promise<RpaModuleResult> {
     const startedAt = Date.now()
+    const controller = new AbortController()
     let timeoutHandle: ReturnType<typeof setTimeout> | undefined
     try {
       return await Promise.race([
-        operation,
+        operation(controller.signal),
         new Promise<RpaModuleResult>((resolve) => {
           timeoutHandle = setTimeout(() => {
+            controller.abort(new Error(`Step timed out after ${timeoutMs}ms`))
             resolve({
               success: false,
               status: 'timeout',

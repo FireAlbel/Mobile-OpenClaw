@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { normalizeAdbStatus, parseAdbDevicesOutput, parseForegroundAppInfo } from '../DeviceService'
+import {
+  normalizeAdbStatus,
+  parseAdbDevicesOutput,
+  parseForegroundAppInfo,
+  parseResolvedActivity
+} from '../DeviceService'
 
 describe('DeviceService utilities', () => {
   it('parses adb devices output', () => {
@@ -58,5 +63,40 @@ describe('DeviceService utilities', () => {
       packageName: 'com.example.top',
       activity: '.TopActivity'
     })
+
+    expect(
+      parseForegroundAppInfo('ResumedActivity: ActivityRecord{123 u0 com.sankuai.meituan/.activity.MainActivity t42}')
+    ).toEqual({
+      packageName: 'com.sankuai.meituan',
+      activity: '.activity.MainActivity'
+    })
+
+    expect(parseForegroundAppInfo('topActivity=ComponentInfo{com.sankuai.meituan/.home.HomeActivity}')).toEqual({
+      packageName: 'com.sankuai.meituan',
+      activity: '.home.HomeActivity'
+    })
+
+    expect(
+      parseForegroundAppInfo(
+        [
+          '  ACTIVITY com.old.app/.OldActivity 2650ddb pid=28897 userId=0',
+          '  topResumedActivity=ActivityRecord{123 u0 com.sankuai.meituan/.MainActivity t42}'
+        ].join('\n')
+      )
+    ).toEqual({
+      packageName: 'com.sankuai.meituan',
+      activity: '.MainActivity'
+    })
+  })
+
+  it('parses resolved launcher activity from cmd package output', () => {
+    expect(
+      parseResolvedActivity(
+        [
+          'priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=false',
+          'com.sankuai.meituan/com.meituan.android.pt.homepage.activity.MainActivity'
+        ].join('\n')
+      )
+    ).toBe('com.sankuai.meituan/com.meituan.android.pt.homepage.activity.MainActivity')
   })
 })

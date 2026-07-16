@@ -1,3 +1,4 @@
+import type { Model } from '@renderer/types'
 import * as z from 'zod'
 
 export type RpaStepStatus = 'pending' | 'running' | 'passed' | 'failed' | 'timeout' | 'needs_human' | 'cancelled'
@@ -40,6 +41,9 @@ export const RpaVerificationSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('module_result_success')
+  }),
+  z.object({
+    type: z.literal('observation_has_screenshot')
   })
 ])
 
@@ -59,6 +63,15 @@ export const RpaStepSchema = z.object({
   continueOnFailure: z.boolean().default(false)
 })
 
+export const RpaVisionModelSchema = z.custom<Model>(
+  (value) => {
+    if (!value || typeof value !== 'object') return false
+    const model = value as Partial<Model>
+    return Boolean(model.id && model.provider && model.name && model.group)
+  },
+  { message: 'Invalid RPA vision model' }
+)
+
 export const RpaTaskSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -67,6 +80,7 @@ export const RpaTaskSchema = z.object({
   steps: z.array(RpaStepSchema).min(1),
   retry: RpaRetryPolicySchema.optional(),
   timeout: RpaTimeoutPolicySchema.optional(),
+  visionModel: RpaVisionModelSchema.optional(),
   metadata: z.record(z.string(), z.unknown()).default({})
 })
 
@@ -123,6 +137,27 @@ export interface RpaVerificationResult {
   evidence?: unknown
 }
 
+export interface RpaObservationWarning {
+  source: 'screenshot' | 'foreground_app' | 'screen_size'
+  message: string
+}
+
+export interface RpaDeviceObservation {
+  deviceId: string
+  capturedAt: number
+  screenshot?: unknown
+  foregroundApp?: unknown
+  screenSize?: { width: number; height: number }
+  warnings: RpaObservationWarning[]
+  artifacts: Record<string, unknown>
+}
+
+export interface RpaObservationOptions {
+  includeScreenshot?: boolean
+  includeForegroundApp?: boolean
+  includeScreenSize?: boolean
+}
+
 export interface RpaDeviceRuntimeResult<TData = unknown> {
   success: boolean
   message: string
@@ -146,6 +181,17 @@ export interface RpaDeviceRuntime {
   startApp(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult>
   getForegroundApp(deviceId: string): Promise<RpaDeviceRuntimeResult>
   getScreenSize(deviceId: string): Promise<RpaDeviceRuntimeResult<{ width: number; height: number }>>
+  handlePermissionDialog(
+    deviceId: string,
+    action: 'allow' | 'deny' | 'allow_once'
+  ): Promise<RpaDeviceRuntimeResult<boolean>>
+  visionInstruction(
+    deviceId: string,
+    instruction: string,
+    allowedActions?: Array<'tap' | 'swipe'>,
+    model?: Model,
+    signal?: AbortSignal
+  ): Promise<RpaDeviceRuntimeResult>
 }
 
 export interface RpaActionModule<TParams = unknown> {
@@ -166,6 +212,18 @@ export interface RpaRunStepEvent {
   data?: unknown
 }
 
+export interface RpaFailureContext {
+  task: RpaTask
+  deviceId: string
+  failedStep: RpaStep
+  failedStepIndex: number
+  result: RpaModuleResult
+  verification: RpaVerificationResult
+  events: RpaRunStepEvent[]
+  reason: string
+  occurredAt: number
+}
+
 export interface RpaRunResult {
   taskId: string
   deviceId: string
@@ -173,6 +231,7 @@ export interface RpaRunResult {
   status: 'completed' | 'failed' | 'cancelled' | 'needs_human'
   events: RpaRunStepEvent[]
   error?: string
+  failureContext?: RpaFailureContext
   startedAt: number
   finishedAt: number
 }

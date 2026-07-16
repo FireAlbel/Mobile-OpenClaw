@@ -1,13 +1,17 @@
 import { loggerService } from '@logger'
+import { isVisionModel } from '@renderer/config/models'
 import { fetchChatCompletion } from '@renderer/services/ApiService'
 import { getDefaultAssistant, getDefaultModel } from '@renderer/services/AssistantService'
+import type { Assistant, Model } from '@renderer/types'
 import { type Chunk, ChunkType } from '@renderer/types/chunk'
 import type { ModelMessage } from 'ai'
 
-import { deviceServiceProxy, type ScrcpyWindowCapture } from './DeviceServiceProxy'
+import { createAiCompletionError } from './AiCompletionError'
+import { type DeviceScreenshot, deviceServiceProxy } from './DeviceServiceProxy'
+import { parseFirstJsonValue } from './JsonExtraction'
+import { scrcpyFrameService } from './ScrcpyFrameService'
 
 const logger = loggerService.withContext('DeviceVisionActionService')
-
 type VisionActionKind = 'tap' | 'swipe'
 
 export interface VisionTapAction {
@@ -31,30 +35,29 @@ export type VisionAction = VisionTapAction | VisionSwipeAction
 
 export interface DeviceVisionActionResult {
   deviceId: string
-  capture: Omit<ScrcpyWindowCapture, 'imageBase64'>
+  capture: Omit<DeviceScreenshot, 'imageBase64'>
   action: VisionAction
   deviceAction: VisionAction
   rawResponse: string
+  repairResponse?: string
+  takeoverResponse?: string
 }
 
-interface DeviceScreenSize {
-  width: number
-  height: number
+export interface VisionInterventionData {
+  needsHuman: true
+  code: 'vision_output_invalid'
+  message: string
+  rawResponse: string
+  repairResponse?: string
+  takeoverResponse?: string
+  screenshot: DeviceScreenshot
 }
 
-function extractJsonObject(text: string): string {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i)
-  if (fenced?.[1]) {
-    return fenced[1].trim()
+export class VisionActionNeedsHumanError extends Error {
+  constructor(readonly intervention: VisionInterventionData) {
+    super(intervention.message)
+    this.name = 'VisionActionNeedsHumanError'
   }
-
-  const firstBrace = text.indexOf('{')
-  const lastBrace = text.lastIndexOf('}')
-  if (firstBrace >= 0 && lastBrace > firstBrace) {
-    return text.slice(firstBrace, lastBrace + 1)
-  }
-
-  return text.trim()
 }
 
 function asFiniteNumber(value: unknown): number | null {
@@ -62,8 +65,8 @@ function asFiniteNumber(value: unknown): number | null {
   return Number.isFinite(numeric) ? numeric : null
 }
 
-function parseVisionAction(rawResponse: string, allowedActions: VisionActionKind[]): VisionAction {
-  const parsed = JSON.parse(extractJsonObject(rawResponse)) as Record<string, unknown>
+export function parseVisionAction(rawResponse: string, allowedActions: VisionActionKind[]): VisionAction {
+  const parsed = parseFirstJsonValue<Record<string, unknown>>(rawResponse)
   const action = parsed.action
 
   if (action !== 'tap' && action !== 'swipe') {
@@ -115,8 +118,8 @@ function clamp(value: number, min: number, max: number): number {
 
 function mapPointToDevice(
   point: { x: number; y: number },
-  capture: Pick<ScrcpyWindowCapture, 'width' | 'height'>,
-  screen: DeviceScreenSize
+  capture: Pick<DeviceScreenshot, 'width' | 'height'>,
+  screen: Pick<DeviceScreenshot, 'width' | 'height'>
 ) {
   return {
     x: clamp((point.x / capture.width) * screen.width, 0, screen.width - 1),
@@ -126,8 +129,8 @@ function mapPointToDevice(
 
 function mapActionToDevice(
   action: VisionAction,
-  capture: Pick<ScrcpyWindowCapture, 'width' | 'height'>,
-  screen: DeviceScreenSize
+  capture: Pick<DeviceScreenshot, 'width' | 'height'>,
+  screen: Pick<DeviceScreenshot, 'width' | 'height'>
 ): VisionAction {
   if (action.action === 'tap') {
     const point = mapPointToDevice(action, capture, screen)
@@ -149,26 +152,6 @@ function mapActionToDevice(
   }
 }
 
-async function getDeviceScreenSize(deviceId: string, fallback: Pick<ScrcpyWindowCapture, 'width' | 'height'>) {
-  try {
-    const output = await deviceServiceProxy.executeAdbCommand(deviceId, 'shell wm size')
-    const matches = output.match(/(\d+)\s*x\s*(\d+)/i)
-    if (matches) {
-      return {
-        width: Number(matches[1]),
-        height: Number(matches[2])
-      }
-    }
-  } catch (error) {
-    logger.warn('Failed to read device screen size, using capture size fallback', { error, deviceId })
-  }
-
-  return {
-    width: fallback.width,
-    height: fallback.height
-  }
-}
-
 async function executeDeviceAction(deviceId: string, action: VisionAction): Promise<void> {
   if (action.action === 'tap') {
     await deviceServiceProxy.sendTap(deviceId, action.x, action.y)
@@ -178,18 +161,127 @@ async function executeDeviceAction(deviceId: string, action: VisionAction): Prom
   await deviceServiceProxy.sendSwipe(deviceId, action.x1, action.y1, action.x2, action.y2, action.duration ?? 500)
 }
 
-class DeviceVisionActionService {
+async function captureVisionScreen(deviceId: string): Promise<DeviceScreenshot> {
+  try {
+    return await scrcpyFrameService.getLatestFrame(deviceId, { maxAgeMs: 1_000 })
+  } catch (error) {
+    logger.warn('Scrcpy vision frame unavailable, falling back to ADB screenshot', { error, deviceId })
+    return await deviceServiceProxy.getScreenshot(deviceId)
+  }
+}
+
+async function requestModelText(
+  messages: ModelMessage[],
+  assistant: Assistant,
+  model: Model,
+  signal?: AbortSignal
+): Promise<string> {
+  signal?.throwIfAborted()
+  let response = ''
+  let streamError: unknown
+  try {
+    await fetchChatCompletion({
+      messages,
+      assistant,
+      requestOptions: { signal },
+      onChunkReceived: (chunk: Chunk) => {
+        if (chunk.type === ChunkType.TEXT_DELTA || chunk.type === ChunkType.TEXT_COMPLETE) {
+          response += chunk.text
+        } else if (chunk.type === ChunkType.ERROR) {
+          streamError ??= chunk.error
+        }
+      },
+      uiMessages: [],
+      allowedTools: []
+    })
+  } catch (error) {
+    throw createAiCompletionError(`VLM request (${model.name || model.id})`, streamError, error)
+  }
+
+  if (streamError) {
+    throw createAiCompletionError(`VLM request (${model.name || model.id})`, streamError)
+  }
+  if (!response.trim()) {
+    throw createAiCompletionError(`VLM request (${model.name || model.id})`, undefined)
+  }
+  return response
+}
+
+function createRepairMessages(rawResponse: string, error: unknown, allowedActions: VisionActionKind[]): ModelMessage[] {
+  return [
+    {
+      role: 'system',
+      content: [
+        'Repair an Android vision action response.',
+        'Return exactly one JSON object and no other text.',
+        'Do not change the intended target or invent a different action.'
+      ].join('\n')
+    },
+    {
+      role: 'user',
+      content: [
+        `Allowed actions: ${allowedActions.join(', ')}`,
+        `Validation error: ${error instanceof Error ? error.message : String(error)}`,
+        'Tap schema: {"action":"tap","x":number,"y":number,"reason":"short reason"}',
+        'Swipe schema: {"action":"swipe","x1":number,"y1":number,"x2":number,"y2":number,"duration":number,"reason":"short reason"}',
+        `Invalid response:\n${rawResponse}`
+      ].join('\n')
+    }
+  ]
+}
+
+function createVisionMessages(capture: DeviceScreenshot, instruction: string, takeoverReason?: string): ModelMessage[] {
+  const systemPrompt = [
+    'You control one Android phone by looking at an ADB screenshot of its current screen.',
+    'Return exactly one JSON object and no other text.',
+    'Use screenshot pixel coordinates, with origin at the top-left of the screenshot.',
+    'Allowed actions are tap and swipe.',
+    takeoverReason ? `This is a correction attempt because: ${takeoverReason}` : undefined
+  ]
+    .filter(Boolean)
+    .join('\n')
+  const userPrompt = [
+    `Instruction: ${instruction}`,
+    `Screenshot size: ${capture.width}x${capture.height}`,
+    'Return schema for tap: {"action":"tap","x":number,"y":number,"reason":"short reason"}',
+    'Return schema for swipe: {"action":"swipe","x1":number,"y1":number,"x2":number,"y2":number,"duration":number,"reason":"short reason"}'
+  ].join('\n')
+
+  return [
+    { role: 'system', content: systemPrompt },
+    {
+      role: 'user',
+      content: [
+        { type: 'text', text: userPrompt },
+        { type: 'image', image: capture.imageBase64, mediaType: capture.mime }
+      ]
+    }
+  ]
+}
+
+export class DeviceVisionActionService {
   async runVisionAction(
     deviceId: string,
     instruction: string,
-    allowedActions: VisionActionKind[] = ['tap', 'swipe']
+    allowedActions: VisionActionKind[] = ['tap', 'swipe'],
+    selectedModel?: Model,
+    signal?: AbortSignal
   ): Promise<DeviceVisionActionResult> {
-    const capture = await deviceServiceProxy.captureScrcpyWindow(deviceId)
+    signal?.throwIfAborted()
+    const capture = await captureVisionScreen(deviceId)
     if (capture.width <= 0 || capture.height <= 0) {
-      throw new Error('Captured scrcpy window has invalid size')
+      throw new Error('Captured Android screen has invalid size')
     }
 
-    const model = getDefaultModel()
+    const model = selectedModel ?? getDefaultModel()
+    if (!model) {
+      throw new Error('No vision model is configured. Select a vision-capable model in the RPA runner.')
+    }
+    if (!isVisionModel(model)) {
+      throw new Error(
+        `Model ${model.name || model.id} does not support image input. Select a vision-capable model in the RPA runner.`
+      )
+    }
     const defaultAssistant = getDefaultAssistant()
     const assistant = {
       ...defaultAssistant,
@@ -202,67 +294,71 @@ class DeviceVisionActionService {
       }
     }
 
-    const systemPrompt =
-      'You control one Android phone by looking at a scrcpy window screenshot. Return only one JSON object. Use screenshot pixel coordinates, with origin at the top-left of the screenshot. Allowed actions are tap and swipe. Do not include markdown.'
-    const userPrompt = [
-      `Instruction: ${instruction}`,
-      `Screenshot size: ${capture.width}x${capture.height}`,
-      'Return schema for tap: {"action":"tap","x":number,"y":number,"reason":"short reason"}',
-      'Return schema for swipe: {"action":"swipe","x1":number,"y1":number,"x2":number,"y2":number,"duration":number,"reason":"short reason"}'
-    ].join('\n')
+    const messages = createVisionMessages(capture, instruction)
 
-    const messages: ModelMessage[] = [
-      {
-        role: 'system',
-        content: systemPrompt
-      },
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: userPrompt },
-          { type: 'image', image: capture.imageBase64, mediaType: capture.mime }
-        ]
-      }
-    ]
-
-    let rawResponse = ''
-    await fetchChatCompletion({
-      messages,
-      assistant,
-      requestOptions: {},
-      onChunkReceived: (chunk: Chunk) => {
-        if (chunk.type === ChunkType.TEXT_DELTA || chunk.type === ChunkType.TEXT_COMPLETE) {
-          rawResponse += chunk.text
+    const rawResponse = await requestModelText(messages, assistant, model, signal)
+    let action: VisionAction
+    let repairResponse: string | undefined
+    let takeoverResponse: string | undefined
+    let actionCapture = capture
+    try {
+      action = parseVisionAction(rawResponse, allowedActions)
+    } catch (initialError) {
+      try {
+        repairResponse = await requestModelText(
+          createRepairMessages(rawResponse, initialError, allowedActions),
+          assistant,
+          model,
+          signal
+        )
+        action = parseVisionAction(repairResponse, allowedActions)
+      } catch (repairError) {
+        signal?.throwIfAborted()
+        try {
+          actionCapture = await captureVisionScreen(deviceId)
+          signal?.throwIfAborted()
+          takeoverResponse = await requestModelText(
+            createVisionMessages(
+              actionCapture,
+              instruction,
+              repairError instanceof Error ? repairError.message : String(repairError)
+            ),
+            assistant,
+            model,
+            signal
+          )
+          action = parseVisionAction(takeoverResponse, allowedActions)
+        } catch (takeoverError) {
+          throw new VisionActionNeedsHumanError({
+            needsHuman: true,
+            code: 'vision_output_invalid',
+            message: `VLM takeover could not determine a valid action: ${takeoverError instanceof Error ? takeoverError.message : String(takeoverError)}`,
+            rawResponse,
+            repairResponse,
+            takeoverResponse,
+            screenshot: actionCapture
+          })
         }
-      },
-      uiMessages: [],
-      allowedTools: []
-    })
-
-    if (!rawResponse.trim()) {
-      throw new Error('VLM returned an empty response')
+      }
     }
-
-    const action = parseVisionAction(rawResponse, allowedActions)
-    const screen = await getDeviceScreenSize(deviceId, capture)
-    const deviceAction = mapActionToDevice(action, capture, screen)
+    signal?.throwIfAborted()
+    const deviceAction = mapActionToDevice(action, actionCapture, actionCapture)
     await executeDeviceAction(deviceId, deviceAction)
 
     return {
       deviceId,
       capture: {
         deviceId: capture.deviceId,
-        hwnd: capture.hwnd,
-        title: capture.title,
+        source: capture.source,
         width: capture.width,
         height: capture.height,
-        x: capture.x,
-        y: capture.y,
         mime: capture.mime
       },
       action,
       deviceAction,
-      rawResponse
+      rawResponse,
+      repairResponse,
+      takeoverResponse
     }
   }
 }

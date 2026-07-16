@@ -24,6 +24,7 @@ import { lanTransferClientService } from './services/lanTransfer'
 import mcpService from './services/MCPService'
 import { localTransferService } from './services/LocalTransferService'
 import { openClawService } from './services/OpenClawService'
+import { scrcpyFrameStreamService } from './services/ScrcpyFrameStreamService'
 import { nodeTraceService } from './services/NodeTraceService'
 import powerMonitorService from './services/PowerMonitorService'
 import {
@@ -275,6 +276,7 @@ if (!app.requestSingleInstanceLock()) {
     try {
       await analyticsService.destroy()
       await openClawService.stopGateway()
+      await scrcpyFrameStreamService.stopAll()
       await mcpService.cleanup()
       await apiServerService.stop()
     } catch (error) {

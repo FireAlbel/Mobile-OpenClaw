@@ -1,13 +1,34 @@
 import { loggerService } from '@logger'
+import {
+  ScrcpyFrameStreamChannels,
+  type ScrcpyFrameStreamOptions,
+  type ScrcpyFrameStreamStatusEvent
+} from '@shared/types/ScrcpyStream'
 import { BrowserWindow, ipcMain } from 'electron'
 
 import { type DeviceInfo, deviceService } from '../services/DeviceService'
+import { scrcpyFrameStreamService } from '../services/ScrcpyFrameStreamService'
 import { scrcpyWindowService } from '../services/ScrcpyWindowService'
 
 const logger = loggerService.withContext('DeviceIpcHandler')
 
+function readPngDimensions(image: Buffer): { width: number; height: number } {
+  const pngSignature = '89504e470d0a1a0a'
+  if (image.length < 24 || image.subarray(0, 8).toString('hex') !== pngSignature) {
+    throw new Error('ADB screenshot is not a valid PNG image')
+  }
+
+  const width = image.readUInt32BE(16)
+  const height = image.readUInt32BE(20)
+  if (width <= 0 || height <= 0) {
+    throw new Error(`ADB screenshot has invalid dimensions: ${width}x${height}`)
+  }
+  return { width, height }
+}
+
 export class DeviceIpcHandler {
   private static isScrcpyStoppedForwarderRegistered = false
+  private static isScrcpyFrameForwarderRegistered = false
 
   static registerHandlers(): void {
     if (!DeviceIpcHandler.isScrcpyStoppedForwarderRegistered) {
@@ -17,6 +38,21 @@ export class DeviceIpcHandler {
         }
       })
       DeviceIpcHandler.isScrcpyStoppedForwarderRegistered = true
+    }
+
+    if (!DeviceIpcHandler.isScrcpyFrameForwarderRegistered) {
+      scrcpyFrameStreamService.onPacket((packet) => {
+        for (const window of BrowserWindow.getAllWindows()) {
+          window.webContents.send(ScrcpyFrameStreamChannels.packet, packet)
+        }
+      })
+      scrcpyFrameStreamService.onHealthChanged((health) => {
+        const event: ScrcpyFrameStreamStatusEvent = { health }
+        for (const window of BrowserWindow.getAllWindows()) {
+          window.webContents.send(ScrcpyFrameStreamChannels.status, event)
+        }
+      })
+      DeviceIpcHandler.isScrcpyFrameForwarderRegistered = true
     }
 
     ipcMain.handle('device:scanDevices', async (): Promise<DeviceInfo[]> => {
@@ -101,14 +137,32 @@ export class DeviceIpcHandler {
       }
     })
 
+    ipcMain.handle(
+      ScrcpyFrameStreamChannels.start,
+      async (_event, deviceId: string, options: ScrcpyFrameStreamOptions = {}) => {
+        return await scrcpyFrameStreamService.start(deviceId, options)
+      }
+    )
+
+    ipcMain.handle(ScrcpyFrameStreamChannels.stop, async (_event, deviceId: string): Promise<void> => {
+      await scrcpyFrameStreamService.stop(deviceId)
+    })
+
+    ipcMain.handle(ScrcpyFrameStreamChannels.health, (_event, deviceId: string) => {
+      return scrcpyFrameStreamService.getHealth(deviceId)
+    })
+
     ipcMain.handle('device:getScreenshot', async (_event, deviceId: string) => {
       try {
         logger.info('Capturing device screenshot via IPC:', { deviceId })
         const image = await deviceService.getScreenshot(deviceId)
+        const dimensions = readPngDimensions(image)
         return {
           deviceId,
           mime: 'image/png',
-          imageBase64: image.toString('base64')
+          imageBase64: image.toString('base64'),
+          source: 'adb',
+          ...dimensions
         }
       } catch (error) {
         logger.error('Failed to capture device screenshot via IPC:', { error, deviceId })

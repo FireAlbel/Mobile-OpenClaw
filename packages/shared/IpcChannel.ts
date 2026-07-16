@@ -409,6 +409,10 @@ export enum IpcChannel {
   LocalTransfer_SendFile = 'local-transfer:send-file',
   LocalTransfer_CancelTransfer = 'local-transfer:cancel-transfer',
 
+  // RPA
+  Rpa_LoadRuns = 'rpa:load-runs',
+  Rpa_SaveRuns = 'rpa:save-runs',
+
   // OpenClaw
   OpenClaw_CheckInstalled = 'openclaw:check-installed',
   OpenClaw_CheckNodeVersion = 'openclaw:check-node-version',

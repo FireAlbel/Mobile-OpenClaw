@@ -10,6 +10,7 @@ const logger = loggerService.withContext('DeviceService')
 const execAsync = promisify(exec)
 const execFileAsync = promisify(execFile)
 const SCREENSHOT_MAX_BUFFER = 50 * 1024 * 1024
+const ADB_TEXT_MAX_BUFFER = 16 * 1024 * 1024
 
 export type AdbRawStatus = 'device' | 'offline' | 'unauthorized' | 'bootloader' | 'unknown'
 
@@ -83,39 +84,58 @@ export function parseAdbDevicesOutput(output: string): AdbDevice[] {
 }
 
 export function parseForegroundAppInfo(output: string): ForegroundAppInfo | null {
-  for (const line of output.split(/\r?\n/)) {
-    const activityMatch = line.match(/^\s*ACTIVITY\s+([a-zA-Z0-9_.]+)\/([^\s]+).*?\spid=(?!\(not running\))\S+/)
-    if (activityMatch) {
-      return {
-        packageName: activityMatch[1],
-        activity: activityMatch[2]
-      }
-    }
-  }
-
   const patterns = [
-    /topResumedActivity=.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)/,
-    /mResumedActivity:.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)/,
-    /mCurrentFocus=Window\{.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)\}/,
-    /mFocusedApp=.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)/
+    /topResumedActivity=.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)/i,
+    /mResumedActivity:.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)/i,
+    /ResumedActivity:.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)/i,
+    /topActivity=ComponentInfo\{([a-zA-Z0-9_.]+)\/([^\s}]+)\}/i,
+    /topActivity=.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)/i,
+    /mCurrentFocus=Window\{.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)\}/i,
+    /mFocusedApp=.*?\s([a-zA-Z0-9_.]+)\/([^\s}]+)/i
   ]
 
   for (const pattern of patterns) {
     const match = output.match(pattern)
     if (match) {
-      return {
-        packageName: match[1],
-        activity: match[2]
-      }
+      return normalizeForegroundApp(match[1], match[2])
+    }
+  }
+
+  for (const line of output.split(/\r?\n/)) {
+    const activityMatch = line.match(/^\s*ACTIVITY\s+([a-zA-Z0-9_.]+)\/([^\s]+).*?\spid=(?!\(not running\))\S+/)
+    if (activityMatch) {
+      return normalizeForegroundApp(activityMatch[1], activityMatch[2])
     }
   }
 
   return null
 }
 
+export function parseResolvedActivity(output: string): string | null {
+  const componentLine = output
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => /^[a-zA-Z0-9_.]+\/[a-zA-Z0-9_.$]+$/.test(line))
+
+  return componentLine ?? null
+}
+
+function normalizeForegroundApp(packageName: string, activity: string): ForegroundAppInfo {
+  return {
+    packageName,
+    activity: activity.replace(/[),]+$/, '')
+  }
+}
+
 function assertSafePackageName(packageName: string): void {
   if (!/^[a-zA-Z0-9_.]+$/.test(packageName)) {
     throw new Error(`Invalid Android package name: ${packageName}`)
+  }
+}
+
+function assertSafeComponentName(componentName: string): void {
+  if (!/^[a-zA-Z0-9_.]+\/[a-zA-Z0-9_.$]+$/.test(componentName)) {
+    throw new Error(`Invalid Android component name: ${componentName}`)
   }
 }
 
@@ -271,7 +291,7 @@ class DeviceService {
     }
   }
 
-  async executeAdbCommand(deviceId: string, command: string): Promise<string> {
+  async executeAdbCommand(deviceId: string, command: string, options: { maxBuffer?: number } = {}): Promise<string> {
     try {
       await this.ensureToolPathsInitialized()
 
@@ -288,7 +308,9 @@ class DeviceService {
 
       const fullCommand = `"${this.getAdbPath()}" -s ${deviceId} ${actualCommand}`
       logger.info('Executing ADB command', { deviceId, command: actualCommand, fullCommand })
-      const { stdout, stderr } = await execAsync(fullCommand)
+      const { stdout, stderr } = await execAsync(fullCommand, {
+        maxBuffer: options.maxBuffer
+      })
 
       if (stderr) {
         logger.warn('ADB command stderr', { stderr })
@@ -585,7 +607,22 @@ class DeviceService {
   async startApp(deviceId: string, packageName: string): Promise<void> {
     try {
       assertSafePackageName(packageName)
-      await this.executeAdbCommand(deviceId, `shell monkey -p ${packageName} -c android.intent.category.LAUNCHER 1`)
+      const resolvedActivityOutput = await this.executeAdbCommand(
+        deviceId,
+        `shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER ${packageName}`
+      )
+      const componentName = parseResolvedActivity(resolvedActivityOutput)
+
+      if (componentName) {
+        assertSafeComponentName(componentName)
+        await this.executeAdbCommand(
+          deviceId,
+          `shell am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n ${componentName}`
+        )
+      } else {
+        await this.executeAdbCommand(deviceId, `shell monkey -p ${packageName} -c android.intent.category.LAUNCHER 1`)
+      }
+
       logger.info('Started app on device', { deviceId, packageName })
     } catch (error) {
       logger.error('Failed to start app', { error, deviceId, packageName })
@@ -612,24 +649,28 @@ class DeviceService {
   }
 
   async getForegroundApp(deviceId: string): Promise<ForegroundAppInfo> {
-    try {
-      const topOutput = await this.executeAdbCommand(deviceId, 'shell dumpsys activity top')
-      const topInfo = parseForegroundAppInfo(topOutput)
-      if (topInfo) return topInfo
+    const commands = ['shell dumpsys activity activities', 'shell dumpsys window windows', 'shell dumpsys activity top']
+    const failures: string[] = []
 
-      const activityOutput = await this.executeAdbCommand(deviceId, 'shell dumpsys activity activities')
-      const activityInfo = parseForegroundAppInfo(activityOutput)
-      if (activityInfo) return activityInfo
-
-      const windowOutput = await this.executeAdbCommand(deviceId, 'shell dumpsys window windows')
-      const windowInfo = parseForegroundAppInfo(windowOutput)
-      if (windowInfo) return windowInfo
-
-      throw new Error('Unable to parse foreground app from dumpsys output')
-    } catch (error) {
-      logger.error('Failed to get foreground app', { error, deviceId })
-      throw error
+    for (const command of commands) {
+      try {
+        const output = await this.executeAdbCommand(deviceId, command, { maxBuffer: ADB_TEXT_MAX_BUFFER })
+        const info = parseForegroundAppInfo(output)
+        if (info) return info
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        failures.push(`${command}: ${message}`)
+        logger.warn('Failed to parse foreground app from ADB source', { error, deviceId, command })
+      }
     }
+
+    const error = new Error(
+      failures.length
+        ? `Unable to parse foreground app from dumpsys output. Sources failed: ${failures.join('; ')}`
+        : 'Unable to parse foreground app from dumpsys output'
+    )
+    logger.error('Failed to get foreground app', { error, deviceId })
+    throw error
   }
 
   async handlePermissionDialog(deviceId: string, action: PermissionDialogAction): Promise<boolean> {

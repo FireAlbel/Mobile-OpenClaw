@@ -72,6 +72,7 @@ import powerMonitorService from './services/PowerMonitorService'
 import { proxyManager } from './services/ProxyManager'
 import { pythonService } from './services/PythonService'
 import { FileServiceManager } from './services/remotefile/FileServiceManager'
+import { rpaRunStorageService } from './services/RpaRunStorageService'
 import { searchService } from './services/SearchService'
 import { SelectionService } from './services/SelectionService'
 import { registerShortcuts, unregisterAllShortcuts } from './services/ShortcutService'
@@ -1153,6 +1154,9 @@ export async function registerIpc(mainWindow: BrowserWindow, app: Electron.App) 
     lanTransferClientService.sendFile(payload.filePath)
   )
   ipcMain.handle(IpcChannel.LocalTransfer_CancelTransfer, () => lanTransferClientService.cancelTransfer())
+
+  ipcMain.handle(IpcChannel.Rpa_LoadRuns, () => rpaRunStorageService.loadRuns())
+  ipcMain.handle(IpcChannel.Rpa_SaveRuns, (_, runs: unknown[]) => rpaRunStorageService.saveRuns(runs))
 
   ipcMain.handle(IpcChannel.APP_CrashRenderProcess, () => {
     mainWindow.webContents.forcefullyCrashRenderer()

@@ -1,4 +1,11 @@
 import { loggerService } from '@logger'
+import {
+  ScrcpyFrameStreamChannels,
+  type ScrcpyFrameStreamHealth,
+  type ScrcpyFrameStreamOptions,
+  type ScrcpyFrameStreamPacket,
+  type ScrcpyFrameStreamStatusEvent
+} from '@shared/types/ScrcpyStream'
 
 const logger = loggerService.withContext('DeviceServiceProxy')
 
@@ -36,6 +43,11 @@ export interface DeviceScreenshot {
   deviceId: string
   mime: 'image/png'
   imageBase64: string
+  source: 'adb' | 'scrcpy_stream'
+  width: number
+  height: number
+  capturedAt?: number
+  sequence?: number
 }
 
 export interface DeviceScreenSize {
@@ -122,6 +134,31 @@ export class DeviceServiceProxy {
       logger.error('Failed to capture Scrcpy window', { error, deviceId })
       throw error
     }
+  }
+
+  async startScrcpyFrameStream(
+    deviceId: string,
+    options: ScrcpyFrameStreamOptions = {}
+  ): Promise<ScrcpyFrameStreamHealth> {
+    return await window.electron.ipcRenderer.invoke(ScrcpyFrameStreamChannels.start, deviceId, options)
+  }
+
+  async stopScrcpyFrameStream(deviceId: string): Promise<void> {
+    await window.electron.ipcRenderer.invoke(ScrcpyFrameStreamChannels.stop, deviceId)
+  }
+
+  async getScrcpyFrameStreamHealth(deviceId: string): Promise<ScrcpyFrameStreamHealth> {
+    return await window.electron.ipcRenderer.invoke(ScrcpyFrameStreamChannels.health, deviceId)
+  }
+
+  onScrcpyFrameStreamPacket(callback: (packet: ScrcpyFrameStreamPacket) => void): () => void {
+    return window.electron.ipcRenderer.on(ScrcpyFrameStreamChannels.packet, (_event, packet) => callback(packet))
+  }
+
+  onScrcpyFrameStreamStatus(callback: (event: ScrcpyFrameStreamStatusEvent) => void): () => void {
+    return window.electron.ipcRenderer.on(ScrcpyFrameStreamChannels.status, (_event, statusEvent) =>
+      callback(statusEvent)
+    )
   }
 
   async getScreenshot(deviceId: string): Promise<DeviceScreenshot> {

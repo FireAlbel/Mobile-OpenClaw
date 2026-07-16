@@ -20,7 +20,7 @@ Functions:
 - Execute atomic actions: tap, swipe, drag, long press, double tap, key event, text input, app launch, app stop, app restart, screenshot, foreground app query, screen size query.
 - Route actions to the correct physical device.
 - Keep per-device action mutexes so commands for one device do not interfere with another device.
-- Support scrcpy-window-based capture first and ADB screenshot fallback.
+- Use an independent scrcpy raw video frame stream per device for RPA/VLM visual input.
 - Normalize coordinate systems between screenshots, scrcpy windows, and physical screen size.
 
 Primary inputs:
@@ -41,7 +41,7 @@ How to use:
 
 - Called only by upper layers through a typed runtime API.
 - Example: `runtime.tap({ deviceId, x, y })`
-- Example: `runtime.screenshot({ deviceId, preferWindowCapture: true })`
+- Example: `runtime.screenshot({ deviceId, source: "scrcpy_stream", requireFreshFrame: true })`
 
 Exception handling:
 
@@ -60,7 +60,7 @@ This layer converts raw device state into structured observations that planning,
 
 Functions:
 
-- Capture current screen image from scrcpy window or ADB.
+- Capture the current screen image from the device's scrcpy raw video frame stream.
 - Collect foreground app/package/activity.
 - Collect screen size and density.
 - Collect optional UIAutomator XML tree when available.
@@ -93,7 +93,7 @@ How to use:
 
 Exception handling:
 
-- Screenshot timeout: fallback from window capture to ADB screenshot.
+- Screenshot timeout: retry the scrcpy frame stream once, then mark visual observation unavailable and pause visual steps.
 - UIAutomator blocked or unavailable: continue with screenshot, OCR, and VLM.
 - OCR/VLM failure: return partial observation with explicit missing fields.
 - Stale observation: mark observations with timestamps and require refresh before high-risk actions.
@@ -456,16 +456,17 @@ Exception handling:
 - [x] P0-3. Wrap Existing Device Runtime APIs
 - [x] P0-4. Implement Base Modules
 - [x] P0-5. Implement Minimal RPA Task Executor
-- [ ] P1-1. Implement Observation Snapshot Service
-- [ ] P1-2. Implement Verification Engine
-- [ ] P1-3. Implement Global Popup Handler Module
-- [ ] P1-4. Implement Visual Target Modules
-- [ ] P2-1. Implement Planner Prompt Contract
-- [ ] P2-2. Implement LLM Re-planning After Failure
-- [ ] P2-3. Implement VLM Visual Correction
-- [ ] P3-1. Build RPA Task Runner UI
-- [ ] P3-2. Implement Multi-device Fan-out
-- [ ] P3-3. Persist Queue and Run State in Main Process
+- [x] P1-1. Implement Observation Snapshot Service
+- [x] P1-2. Implement Verification Engine
+- [x] P1-3. Implement Global Popup Handler Module
+- [x] P1-4. Implement Visual Target Modules
+- [x] P2-1. Implement Planner Prompt Contract
+- [x] P2-2. Implement LLM Re-planning After Failure
+- [x] P2-3. Implement VLM Visual Correction
+- [x] P3-1. Build RPA Task Runner UI (basic runner panel)
+- [x] P3-2. Implement Multi-device Fan-out
+- [x] P3-3. Persist Queue and Run State in Main Process (run state persisted through main-process IPC; full executor migration remains a follow-up)
+- [ ] P3-4. Implement Per-device Scrcpy Video Frame Capture
 - [ ] P4-1. Integrate DeerFlow as Optional Planner/Workflow Backend
 - [ ] P4-2. Add Multi-agent Roles
 - [ ] P5-1. Add Safety Policy Engine
@@ -1027,6 +1028,56 @@ Acceptance criteria:
 
 - Tests cover persistence, restore, interrupted run marking, and IPC state sync.
 
+### P3-4. Implement Per-device Scrcpy Video Frame Capture
+
+Background:
+
+Current HWND capture reads desktop pixels and can capture an overlapping Electron window instead of mobile content. RPA/VLM must receive the actual video frame produced by scrcpy for the target device.
+
+Function:
+
+- Maintain one independent scrcpy video session per `deviceId`.
+- Read the scrcpy H.264/H.265 video stream and decode the newest frame to PNG or RGBA.
+- Keep a bounded latest-frame cache containing timestamp, sequence, width, height, codec, and stream health.
+- Expose typed APIs: `startFrameStream`, `getLatestFrame`, `stopFrameStream`, and `getFrameStreamHealth`.
+- Route screenshot modules, observations, VLM actions, correction evidence, and runner preview to the stream frame source.
+- Do not use `CopyFromScreen` or HWND desktop capture as RPA/VLM evidence.
+
+Input:
+
+- `deviceId`
+- Stream options: `maxFps`, `maxSize`, bitrate, and codec preference
+- Optional freshness requirement
+
+Output:
+
+- `ScrcpyFrame { deviceId, imageBase64, mime, width, height, capturedAt, sequence, source: "scrcpy_stream" }`
+- Stream health and structured error details
+
+How to use:
+
+- Start or reuse the device frame stream before a visual RPA step.
+- Call `getLatestFrame(deviceId, { maxAgeMs: 1000 })` when sending an image to VLM or recording recovery evidence.
+- Stop the stream when the device disconnects or no task/UI consumer remains.
+
+Exception handling:
+
+- Startup timeout: retry once, then mark the device visual channel unavailable.
+- No new frame within 2 seconds: reconnect with exponential backoff.
+- Decode failure: discard the invalid frame, retain the last valid frame only for diagnostics, then reconnect.
+- Stale frame for a visual action: reject the action and obtain a fresh frame.
+- Device offline or unauthorized: pause only that device run and request human action.
+- Memory pressure: retain only the newest decoded frame and bounded diagnostic metadata.
+- Low VLM confidence: submit a fresh stream frame to recovery analysis, then enter `needs_human` when confidence or correction limits require it.
+
+Acceptance criteria:
+
+- Two simulated devices maintain independent frame caches and no frame cross-contamination occurs.
+- An occluded or minimized scrcpy UI does not alter the frame sent to VLM.
+- Screenshot, observation, VLM action, and recovery evidence report source `scrcpy_stream`.
+- Freshness, reconnect, decode error, device disconnect, and coordinate mapping are unit-tested.
+- Integration validation confirms VLM receives the real mobile frame and returned coordinates target the correct device.
+
 ### P4-1. Integrate DeerFlow as Optional Planner/Workflow Backend
 
 Background:
@@ -1268,6 +1319,7 @@ Exit criteria:
 - RPA runner UI
 - Multi-device fan-out
 - Main-process persistent queue
+- Per-device scrcpy video frame capture
 
 Exit criteria:
 

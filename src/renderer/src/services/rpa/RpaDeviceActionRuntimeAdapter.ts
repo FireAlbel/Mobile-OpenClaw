@@ -1,4 +1,5 @@
 import { loggerService } from '@logger'
+import type { Model } from '@renderer/types'
 
 import { type DeviceActionRequest, type DeviceActionResult, deviceActionRuntime } from '../DeviceActionRuntime'
 import { deviceServiceProxy } from '../DeviceServiceProxy'
@@ -34,6 +35,41 @@ export class RpaDeviceActionRuntimeAdapter implements RpaDeviceRuntime {
 
   startApp(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult> {
     return this.runAction(deviceId, { type: 'start_app', params: { packageName } })
+  }
+
+  handlePermissionDialog(
+    deviceId: string,
+    action: 'allow' | 'deny' | 'allow_once'
+  ): Promise<RpaDeviceRuntimeResult<boolean>> {
+    return this.withDeviceLock(deviceId, async () => {
+      const startedAt = Date.now()
+      try {
+        const data = await deviceServiceProxy.handlePermissionDialog(deviceId, action)
+        return {
+          success: true,
+          message: data ? `Permission dialog handled: ${action}` : 'No matching permission dialog found',
+          data,
+          startedAt,
+          finishedAt: Date.now()
+        }
+      } catch (error) {
+        logger.error('Failed to handle permission dialog', { error, deviceId, action })
+        return this.toFailureResult<boolean>(error, startedAt)
+      }
+    })
+  }
+
+  visionInstruction(
+    deviceId: string,
+    instruction: string,
+    allowedActions: Array<'tap' | 'swipe'> = ['tap', 'swipe'],
+    model?: Model,
+    signal?: AbortSignal
+  ): Promise<RpaDeviceRuntimeResult> {
+    return this.runAction(deviceId, {
+      type: 'vision_instruction',
+      params: { instruction, allowedActions, model, signal }
+    })
   }
 
   async getForegroundApp(deviceId: string): Promise<RpaDeviceRuntimeResult> {

@@ -17,7 +17,9 @@ function runtime(): RpaDeviceRuntime {
       data: { width: 1000, height: 2000 },
       startedAt: 1,
       finishedAt: 2
-    })
+    }),
+    handlePermissionDialog: vi.fn(),
+    visionInstruction: vi.fn()
   }
 }
 

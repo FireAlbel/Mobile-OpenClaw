@@ -1,3 +1,4 @@
+import type { Model } from '@renderer/types'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createDefaultRpaModuleRegistry } from '../RpaDefaultRegistry'
@@ -47,6 +48,12 @@ describe('RpaPlannerService', () => {
   })
 
   it('repairs invalid DSL once when validation fails', async () => {
+    const selectedModel = {
+      id: 'gpt-5.6-sol',
+      name: 'gpt-5.6-sol',
+      provider: 'timecho',
+      group: 'gpt-5'
+    } as Model
     const client = modelClient([
       JSON.stringify({
         id: 'task-1',
@@ -63,10 +70,12 @@ describe('RpaPlannerService', () => {
       modelClient: client
     })
 
-    const result = await service.plan({ goal: 'open app', deviceIds: ['device-1'] })
+    const result = await service.plan({ goal: 'open app', deviceIds: ['device-1'], model: selectedModel })
 
     expect(result.success).toBe(true)
     expect(result.repaired).toBe(true)
     expect(client.complete).toHaveBeenCalledTimes(2)
+    expect(client.complete).toHaveBeenNthCalledWith(1, expect.objectContaining({ model: selectedModel }))
+    expect(client.complete).toHaveBeenNthCalledWith(2, expect.objectContaining({ model: selectedModel }))
   })
 })

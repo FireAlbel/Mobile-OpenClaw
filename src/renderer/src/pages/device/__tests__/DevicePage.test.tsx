@@ -58,10 +58,6 @@ vi.mock('../DeviceControlPanel', () => ({
   default: () => <div data-testid="device-control-panel" />
 }))
 
-vi.mock('../RpaTaskRunnerPanel', () => ({
-  default: () => <div data-testid="rpa-task-runner-panel" />
-}))
-
 describe('DevicePage', () => {
   beforeEach(() => {
     scanDevicesMock.mockReset()

@@ -25,6 +25,7 @@ interface Props {
   position: 'left' | 'right'
   forceToSeeAllTab?: boolean
   style?: React.CSSProperties
+  onTabChange?: (tab: Tab) => void
 }
 
 let _tab: Tab | null = null
@@ -36,7 +37,8 @@ const HomeTabs: FC<Props> = ({
   setActiveTopic,
   position,
   forceToSeeAllTab,
-  style
+  style,
+  onTabChange
 }) => {
   const { addAssistant } = useAssistants()
   const { topicPosition } = useSettings()
@@ -47,6 +49,12 @@ const HomeTabs: FC<Props> = ({
   const dispatch = useAppDispatch()
 
   const [tab, setTab] = useState<Tab>(position === 'left' ? _tab || 'assistants' : 'topic')
+
+  const selectTab = (nextTab: Tab) => {
+    setTab(nextTab)
+  }
+
+  useEffect(() => onTabChange?.(tab), [onTabChange, tab])
   const borderStyle = '0.5px solid var(--color-border)'
   const border =
     position === 'left'
@@ -109,13 +117,13 @@ const HomeTabs: FC<Props> = ({
       className={classNames('home-tabs', { right: position === 'right' && topicPosition === 'right' })}>
       {position === 'left' && topicPosition === 'left' && (
         <CustomTabs>
-          <TabItem active={tab === 'assistants'} onClick={() => setTab('assistants')}>
+          <TabItem active={tab === 'assistants'} onClick={() => selectTab('assistants')}>
             {t('assistants.abbr')}
           </TabItem>
-          <TabItem active={tab === 'topic'} onClick={() => setTab('topic')}>
+          <TabItem active={tab === 'topic'} onClick={() => selectTab('topic')}>
             {t('common.topics')}
           </TabItem>
-          <TabItem active={tab === 'device'} onClick={() => setTab('device')}>
+          <TabItem active={tab === 'device'} onClick={() => selectTab('device')}>
             {t('device.title')}
           </TabItem>
         </CustomTabs>

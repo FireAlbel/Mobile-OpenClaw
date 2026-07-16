@@ -31,6 +31,7 @@ export class RpaBatchRunner {
   private readonly listeners = new Set<Listener>()
   private readonly pausedDeviceRuns = new Set<string>()
   private readonly cancelledDeviceRuns = new Set<string>()
+  private persistenceQueue: Promise<void> = Promise.resolve()
   private loaded = false
 
   constructor(private readonly options: RpaBatchRunnerOptions = {}) {}
@@ -48,7 +49,7 @@ export class RpaBatchRunner {
   }
 
   getRuns(): RpaBatchRunRecord[] {
-    return [...this.runs].sort((a, b) => b.createdAt - a.createdAt)
+    return snapshotRuns(this.runs).sort((a, b) => b.createdAt - a.createdAt)
   }
 
   async start(input: StartRpaBatchRunInput): Promise<RpaBatchRunRecord> {
@@ -266,8 +267,12 @@ export class RpaBatchRunner {
   }
 
   private async persistAndEmit(): Promise<void> {
-    await this.storage.saveBatchRuns(this.runs)
     this.emit()
+    const snapshot = snapshotRuns(this.runs)
+    this.persistenceQueue = this.persistenceQueue
+      .catch((error) => logger.warn('Previous RPA run persistence failed', { error }))
+      .then(() => this.storage.saveBatchRuns(snapshot))
+    await this.persistenceQueue
   }
 
   private emit(): void {
@@ -283,6 +288,23 @@ export class RpaBatchRunner {
   private now(): number {
     return this.options.now?.() ?? Date.now()
   }
+}
+
+function snapshotRuns(runs: RpaBatchRunRecord[]): RpaBatchRunRecord[] {
+  return runs.map((run) => ({
+    ...run,
+    task: {
+      ...run.task,
+      deviceIds: [...run.task.deviceIds],
+      steps: run.task.steps.map((step) => ({ ...step })),
+      metadata: { ...run.task.metadata }
+    },
+    deviceIds: [...run.deviceIds],
+    deviceRuns: run.deviceRuns.map((deviceRun) => ({
+      ...deviceRun,
+      events: [...deviceRun.events]
+    }))
+  }))
 }
 
 function isTerminalStatus(status: RpaBatchRunRecord['deviceRuns'][number]['status']): boolean {

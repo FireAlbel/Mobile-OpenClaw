@@ -154,4 +154,40 @@ describe('RpaBatchRunner', () => {
     })
     expect(execute).toHaveBeenCalledTimes(2)
   })
+
+  it('publishes a new run snapshot for every real-time step event', async () => {
+    let emitEvent: ((event: RpaRunStepEvent) => void) | undefined
+    const runner = new RpaBatchRunner({
+      storage: storage(),
+      executorFactory: (onEvent) => {
+        emitEvent = onEvent
+        return { run: vi.fn(() => new Promise<RpaRunResult>(() => undefined)) }
+      }
+    })
+
+    await runner.start({ task: task(['device-1']) })
+    await vi.waitFor(() => expect(runner.getRuns()[0].status).toBe('running'))
+    await vi.waitFor(() => expect(emitEvent).toBeTypeOf('function'))
+    const before = runner.getRuns()[0]
+    const listener = vi.fn()
+    runner.subscribe(listener)
+
+    emitEvent?.({
+      taskId: 'task-1',
+      deviceId: 'device-1',
+      stepId: 'step-1',
+      stepName: 'Step',
+      status: 'running',
+      attempt: 1,
+      message: 'Running wait',
+      timestamp: 3
+    })
+
+    expect(listener).toHaveBeenCalled()
+    const after = runner.getRuns()[0]
+    expect(after).not.toBe(before)
+    expect(after.deviceRuns[0]).not.toBe(before.deviceRuns[0])
+    expect(after.deviceRuns[0].events).toHaveLength(1)
+    expect(after.deviceRuns[0].events[0].status).toBe('running')
+  })
 })

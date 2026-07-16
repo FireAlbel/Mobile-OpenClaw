@@ -1,3 +1,4 @@
+import type { Model } from '@renderer/types'
 import type { ModelMessage } from 'ai'
 
 import { parseJsonFromText } from './RpaJsonUtils'
@@ -12,6 +13,7 @@ export interface RpaPlannerInput {
   observations?: RpaDeviceObservation[]
   taskId?: string
   taskName?: string
+  model?: Model
 }
 
 export interface RpaPlannerResult {
@@ -38,7 +40,8 @@ export class RpaPlannerService {
 
   async plan(input: RpaPlannerInput): Promise<RpaPlannerResult> {
     const rawResponse = await this.modelClient.complete({
-      messages: this.buildPlanMessages(input)
+      messages: this.buildPlanMessages(input),
+      model: input.model
     })
     const parsed = this.parseTask(rawResponse)
     const validation = this.validator.validate(parsed)
@@ -53,7 +56,8 @@ export class RpaPlannerService {
     }
 
     const repairResponse = await this.modelClient.complete({
-      messages: this.buildRepairMessages(input, rawResponse, validation.issues)
+      messages: this.buildRepairMessages(input, rawResponse, validation.issues),
+      model: input.model
     })
     const repairedTask = this.parseTask(repairResponse)
     const repairedValidation = this.validator.validate(repairedTask)

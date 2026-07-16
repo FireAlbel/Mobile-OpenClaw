@@ -8,6 +8,7 @@ import NavigationService from '@renderer/services/NavigationService'
 import { newMessagesActions } from '@renderer/store/newMessage'
 import { setActiveAgentId, setActiveTopicOrSessionAction } from '@renderer/store/runtime'
 import type { Assistant, Topic } from '@renderer/types'
+import type { Tab } from '@renderer/types/chat'
 import { MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH, SECOND_MIN_WINDOW_WIDTH } from '@shared/config/constant'
 import { AnimatePresence, motion } from 'motion/react'
 import type { CSSProperties, FC, PointerEvent as ReactPointerEvent } from 'react'
@@ -48,6 +49,7 @@ const HomePage: FC = () => {
   const { isLeftNavbar } = useNavbarPosition()
   const [assistantsWidth, setAssistantsWidth] = useState(getStoredAssistantsWidth)
   const [isResizingAssistants, setIsResizingAssistants] = useState(false)
+  const [activeHomeTab, setActiveHomeTab] = useState<Tab>('assistants')
 
   // Initialize agent session hook
   useAgentSessionInitializer()
@@ -184,6 +186,7 @@ const HomePage: FC = () => {
                   setActiveAssistant={setActiveAssistant}
                   setActiveTopic={setActiveTopic}
                   position="left"
+                  onTabChange={setActiveHomeTab}
                 />
               </motion.div>
               <ResizeHandle onPointerDown={startResizeAssistants} aria-label="Resize sidebar" role="separator" />
@@ -196,6 +199,7 @@ const HomePage: FC = () => {
             activeTopic={activeTopic}
             setActiveTopic={setActiveTopic}
             setActiveAssistant={setActiveAssistant}
+            rpaMode={activeHomeTab === 'device'}
           />
         </ErrorBoundary>
       </ContentContainer>

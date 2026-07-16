@@ -28,6 +28,7 @@ import { useHotkeys } from 'react-hotkeys-hook'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
+import RpaChatWorkspace from '../device/RpaChatWorkspace'
 import ChatNavbar from './components/ChatNavBar'
 import AgentSessionInputbar from './Inputbar/AgentSessionInputbar'
 import { PinnedTodoPanel } from './Inputbar/components/PinnedTodoPanel'
@@ -45,6 +46,7 @@ interface Props {
   activeTopic: Topic
   setActiveTopic: (topic: Topic) => void
   setActiveAssistant: (assistant: Assistant) => void
+  rpaMode?: boolean
 }
 
 const Chat: FC<Props> = (props) => {
@@ -217,7 +219,9 @@ const Chat: FC<Props> = (props) => {
               <div
                 className="flex flex-1 flex-col justify-between"
                 style={{ height: `calc(${mainHeight} - var(--navbar-height))` }}>
-                {activeTopicOrSession === 'topic' && (
+                {props.rpaMode ? (
+                  <RpaChatWorkspace assistant={assistant} />
+                ) : activeTopicOrSession === 'topic' ? (
                   <>
                     <Messages
                       key={props.activeTopic.id}
@@ -237,10 +241,12 @@ const Chat: FC<Props> = (props) => {
                     {messageNavigation === 'buttons' && <ChatNavigation containerId="messages" />}
                     <Inputbar assistant={assistant} setActiveTopic={props.setActiveTopic} topic={props.activeTopic} />
                   </>
+                ) : null}
+                {!props.rpaMode && activeTopicOrSession === 'session' && !activeAgentId && <AgentInvalid />}
+                {!props.rpaMode && activeTopicOrSession === 'session' && activeAgentId && !activeSessionId && (
+                  <SessionInvalid />
                 )}
-                {activeTopicOrSession === 'session' && !activeAgentId && <AgentInvalid />}
-                {activeTopicOrSession === 'session' && activeAgentId && !activeSessionId && <SessionInvalid />}
-                {activeTopicOrSession === 'session' && activeAgentId && activeSessionId && (
+                {!props.rpaMode && activeTopicOrSession === 'session' && activeAgentId && activeSessionId && (
                   <>
                     {!apiServer.enabled ? (
                       <Alert type="warning" message={t('agent.warning.enable_server')} style={{ margin: '5px 16px' }} />
@@ -258,7 +264,7 @@ const Chat: FC<Props> = (props) => {
                     <AgentSessionInputbar agentId={activeAgentId} sessionId={activeSessionId} />
                   </>
                 )}
-                {isMultiSelectMode && <MultiSelectActionPopup topic={props.activeTopic} />}
+                {!props.rpaMode && isMultiSelectMode && <MultiSelectActionPopup topic={props.activeTopic} />}
               </div>
             </QuickPanelProvider>
           </Main>

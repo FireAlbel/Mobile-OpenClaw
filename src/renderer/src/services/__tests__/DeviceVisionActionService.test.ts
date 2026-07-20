@@ -135,7 +135,7 @@ describe('DeviceVisionActionService', () => {
     expect(sendTapMock).toHaveBeenCalledWith('device-1', 50, 60)
   })
 
-  it('uses the ADB screenshot dimensions as device input coordinates', async () => {
+  it('uses scrcpy frame dimensions as device input coordinates', async () => {
     getLatestFrameMock.mockResolvedValue({
       deviceId: 'device-1',
       source: 'scrcpy_stream',
@@ -151,6 +151,19 @@ describe('DeviceVisionActionService', () => {
 
     expect(result.capture).toMatchObject({ source: 'scrcpy_stream', width: 1080, height: 2400 })
     expect(sendTapMock).toHaveBeenCalledWith('device-1', 540, 1200)
+  })
+
+  it('does not fall back to ADB when the scrcpy frame is unavailable', async () => {
+    getLatestFrameMock.mockRejectedValue(new Error('scrcpy stream unavailable'))
+    const service = new DeviceVisionActionService()
+
+    await expect(service.runVisionAction('device-1', 'tap target', ['tap'], model)).rejects.toThrow(
+      'scrcpy stream unavailable'
+    )
+
+    expect(getScreenshotMock).not.toHaveBeenCalled()
+    expect(fetchChatCompletionMock).not.toHaveBeenCalled()
+    expect(sendTapMock).not.toHaveBeenCalled()
   })
 
   it('does not execute a device action after the request is aborted', async () => {

@@ -412,6 +412,7 @@ export enum IpcChannel {
   // RPA
   Rpa_LoadRuns = 'rpa:load-runs',
   Rpa_SaveRuns = 'rpa:save-runs',
+  Rpa_ExportDebugBundle = 'rpa:export-debug-bundle',
 
   // OpenClaw
   OpenClaw_CheckInstalled = 'openclaw:check-installed',

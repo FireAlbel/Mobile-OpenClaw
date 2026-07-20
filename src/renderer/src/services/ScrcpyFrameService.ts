@@ -43,6 +43,8 @@ interface ScrcpyFrameSession {
   feed: Promise<void>
   latestFrame?: DeviceScreenshot
   sequence: number
+  decoderError?: Error
+  restart?: Promise<ScrcpyFrameStreamHealth>
 }
 
 export interface GetLatestScrcpyFrameOptions extends ScrcpyFrameStreamOptions {
@@ -79,11 +81,7 @@ export class ScrcpyFrameService {
       }
       this.sessions.set(deviceId, session)
     } else if (session.health.status === 'error' || session.health.status === 'stopped') {
-      session.decoder?.dispose()
-      session.decoder = undefined
-      session.pending = []
-      session.feed = Promise.resolve()
-      session.latestFrame = undefined
+      this.resetDecoder(session)
       session.health = { deviceId, status: 'starting', packetCount: 0 }
     }
 
@@ -98,6 +96,16 @@ export class ScrcpyFrameService {
   }
 
   async getLatestFrame(deviceId: string, options: GetLatestScrcpyFrameOptions = {}): Promise<DeviceScreenshot> {
+    try {
+      return await this.captureLatestFrame(deviceId, options)
+    } catch (error) {
+      logger.warn('Scrcpy frame capture requires a device-local restart', { error, deviceId })
+      await this.restart(deviceId, options)
+      return await this.captureLatestFrame(deviceId, options)
+    }
+  }
+
+  private async captureLatestFrame(deviceId: string, options: GetLatestScrcpyFrameOptions): Promise<DeviceScreenshot> {
     const session = this.sessions.get(deviceId)
     if (!session || session.health.status !== 'running') await this.start(deviceId, options)
 
@@ -105,11 +113,16 @@ export class ScrcpyFrameService {
     if (!active) throw new Error(`Scrcpy frame session is unavailable: ${deviceId}`)
     this.ensureDecoder(active)
     await active.feed
+    if (active.decoderError) throw active.decoderError
     await this.waitForFirstFrame(active)
 
     const maxAgeMs = options.maxAgeMs ?? DEFAULT_MAX_AGE_MS
     const now = Date.now()
-    if (active.latestFrame?.capturedAt && now - active.latestFrame.capturedAt <= maxAgeMs) {
+    if (
+      active.latestFrame?.capturedAt &&
+      active.latestFrame.capturedAt >= (active.health.startedAt ?? 0) &&
+      now - active.latestFrame.capturedAt <= maxAgeMs
+    ) {
       return active.latestFrame
     }
     if (!active.health.lastPacketAt || now - active.health.lastPacketAt > maxAgeMs) {
@@ -130,10 +143,38 @@ export class ScrcpyFrameService {
       width: active.decoder.width,
       height: active.decoder.height,
       capturedAt: now,
-      sequence: active.sequence
+      sequence: active.sequence,
+      codec: active.health.codec,
+      codecName: active.health.codecName,
+      streamStatus: active.health.status,
+      reconnectCount: active.health.reconnectCount
     }
     active.latestFrame = frame
     return frame
+  }
+
+  private async restart(deviceId: string, options: ScrcpyFrameStreamOptions): Promise<ScrcpyFrameStreamHealth> {
+    const existing = this.sessions.get(deviceId)
+    if (existing?.restart) return await existing.restart
+
+    const session: ScrcpyFrameSession = existing ?? {
+      deviceId,
+      health: { deviceId, status: 'stopped', packetCount: 0 },
+      pending: [],
+      feed: Promise.resolve(),
+      sequence: 0
+    }
+    this.sessions.set(deviceId, session)
+    const restart: Promise<ScrcpyFrameStreamHealth> = (async () => {
+      await this.runtime.stopScrcpyFrameStream(deviceId)
+      this.resetDecoder(session)
+      session.health = { deviceId, status: 'starting', packetCount: 0 }
+      return await this.start(deviceId, options)
+    })().finally(() => {
+      if (session.restart === restart) session.restart = undefined
+    })
+    session.restart = restart
+    return await restart
   }
 
   async getHealth(deviceId: string): Promise<ScrcpyFrameStreamHealth> {
@@ -181,11 +222,12 @@ export class ScrcpyFrameService {
       packetCount: Math.max(session.health.packetCount, health.packetCount)
     }
     if (health.status === 'running') this.ensureDecoder(session)
+    if (health.status === 'reconnecting' || health.status === 'stopped') this.resetDecoder(session, true)
     if (health.status === 'error') logger.warn('Scrcpy frame stream entered error state', { health })
   }
 
   private ensureDecoder(session: ScrcpyFrameSession): void {
-    if (session.decoder || session.health.codec === undefined) return
+    if (session.decoder || session.decoderError || session.health.codec === undefined) return
     session.decoder = this.decoderFactory(session.health.codec as ScrcpyVideoCodecId)
     for (const packet of session.pending) this.enqueuePacket(session, packet)
     session.pending = []
@@ -210,17 +252,17 @@ export class ScrcpyFrameService {
       })
       .catch((error) => {
         logger.error('Failed to decode scrcpy packet', { error, deviceId: session.deviceId })
-        session.health = {
-          ...session.health,
-          status: 'error',
-          error: error instanceof Error ? error.message : String(error)
-        }
+        session.decoderError = error instanceof Error ? error : new Error(String(error))
+        session.decoder?.dispose()
+        session.decoder = undefined
+        session.pending = []
       })
   }
 
   private async waitForFirstFrame(session: ScrcpyFrameSession): Promise<void> {
     const startedAt = Date.now()
     while ((session.decoder?.framesRendered ?? 0) === 0) {
+      if (session.decoderError) throw session.decoderError
       if (session.health.status === 'error') {
         throw new Error(session.health.error || `Scrcpy frame stream failed for ${session.deviceId}`)
       }
@@ -230,6 +272,15 @@ export class ScrcpyFrameService {
       await new Promise((resolve) => setTimeout(resolve, 25))
       await session.feed
     }
+  }
+
+  private resetDecoder(session: ScrcpyFrameSession, retainLatestFrame = false): void {
+    session.decoder?.dispose()
+    session.decoder = undefined
+    session.pending = []
+    session.feed = Promise.resolve()
+    session.decoderError = undefined
+    if (!retainLatestFrame) session.latestFrame = undefined
   }
 }
 

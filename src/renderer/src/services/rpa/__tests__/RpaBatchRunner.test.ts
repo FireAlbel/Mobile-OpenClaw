@@ -95,8 +95,8 @@ describe('RpaBatchRunner', () => {
     })
 
     expect(run.deviceRuns).toHaveLength(2)
-    expect(execute).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-1' }), 'device-1')
-    expect(execute).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-1' }), 'device-2')
+    expect(execute).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-1' }), 'device-1', expect.any(AbortSignal))
+    expect(execute).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-1' }), 'device-2', expect.any(AbortSignal))
     expect(runner.getRuns()[0].deviceRuns.map((deviceRun) => deviceRun.status)).toEqual(['completed', 'completed'])
   })
 
@@ -189,5 +189,27 @@ describe('RpaBatchRunner', () => {
     expect(after.deviceRuns[0]).not.toBe(before.deviceRuns[0])
     expect(after.deviceRuns[0].events).toHaveLength(1)
     expect(after.deviceRuns[0].events[0].status).toBe('running')
+  })
+
+  it('aborts every active device during an emergency stop', async () => {
+    const signals: AbortSignal[] = []
+    const runner = new RpaBatchRunner({
+      storage: storage(),
+      executorFactory: () => ({
+        run: vi.fn((_input, _deviceId, signal) => {
+          if (signal) signals.push(signal)
+          return new Promise<RpaRunResult>(() => undefined)
+        })
+      })
+    })
+    await runner.start({ task: task() })
+    await vi.waitFor(() => expect(signals).toHaveLength(2))
+
+    const cancelled = await runner.emergencyStop()
+
+    expect(cancelled).toBe(2)
+    expect(signals.every((signal) => signal.aborted)).toBe(true)
+    expect(runner.getRuns()[0].status).toBe('cancelled')
+    expect(runner.getRuns()[0].deviceRuns.every((deviceRun) => deviceRun.status === 'cancelled')).toBe(true)
   })
 })

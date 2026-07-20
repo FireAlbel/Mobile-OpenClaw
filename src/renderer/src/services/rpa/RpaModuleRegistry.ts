@@ -7,6 +7,9 @@ export class RpaModuleRegistry {
 
   register(module: RpaActionModule): void {
     const moduleId = module.metadata.id
+    if (!['low', 'medium', 'high'].includes(module.metadata.riskLevel)) {
+      throw new Error(`RPA module ${moduleId} must declare a valid risk level`)
+    }
     if (this.modules.has(moduleId)) {
       throw new Error(`Duplicate RPA module id: ${moduleId}`)
     }

@@ -1,20 +1,26 @@
-export type ScrcpyFrameStreamStatus = 'starting' | 'running' | 'stopped' | 'error'
+export type ScrcpyFrameStreamStatus = 'starting' | 'running' | 'reconnecting' | 'stopped' | 'error'
+
+export type ScrcpyVideoCodecPreference = 'auto' | 'h264' | 'h265'
 
 export interface ScrcpyFrameStreamOptions {
   maxFps?: number
   maxSize?: number
   bitRate?: number
+  codecPreference?: ScrcpyVideoCodecPreference
 }
 
 export interface ScrcpyFrameStreamHealth {
   deviceId: string
   status: ScrcpyFrameStreamStatus
   codec?: number
+  codecName?: 'h264' | 'h265'
   width?: number
   height?: number
   startedAt?: number
   lastPacketAt?: number
   packetCount: number
+  reconnectCount?: number
+  lastErrorAt?: number
   error?: string
 }
 

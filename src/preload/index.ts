@@ -18,6 +18,7 @@ import type {
 import type { MCPServerLogEntry } from '@shared/config/types'
 import type { ExternalAppInfo } from '@shared/externalApp/types'
 import { IpcChannel } from '@shared/IpcChannel'
+import type { RpaDebugExportPayload, RpaDebugExportResult } from '@shared/types/RpaDebugExport'
 import type { Notification } from '@types'
 import type {
   AddMemoryOptions,
@@ -674,7 +675,9 @@ const api = {
   },
   rpa: {
     loadRuns: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadRuns),
-    saveRuns: (runs: unknown[]): Promise<void> => ipcRenderer.invoke(IpcChannel.Rpa_SaveRuns, runs)
+    saveRuns: (runs: unknown[]): Promise<void> => ipcRenderer.invoke(IpcChannel.Rpa_SaveRuns, runs),
+    exportDebugBundle: (payload: RpaDebugExportPayload): Promise<RpaDebugExportResult> =>
+      ipcRenderer.invoke(IpcChannel.Rpa_ExportDebugBundle, payload)
   },
   openclaw: {
     checkInstalled: (): Promise<{ installed: boolean; path: string | null }> =>

@@ -1,4 +1,5 @@
 import { loggerService } from '@logger'
+import { ActionIconButton } from '@renderer/components/Buttons'
 import {
   isAutoEnableImageGenerationModel,
   isGenerateImageModel,
@@ -25,9 +26,13 @@ import {
 import { getDefaultTopic } from '@renderer/services/AssistantService'
 import { CacheService } from '@renderer/services/CacheService'
 import { deviceChatCommandService } from '@renderer/services/DeviceChatCommandService'
+import { deviceServiceProxy } from '@renderer/services/DeviceServiceProxy'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import FileManager from '@renderer/services/FileManager'
 import { checkRateLimit, getAssistantMessage, getUserMessage } from '@renderer/services/MessagesService'
+import { defaultRpaModuleRegistry } from '@renderer/services/rpa/RpaDefaultRegistry'
+import { isRpaPlanningRequest } from '@renderer/services/rpa/RpaIntentDetector'
+import { RpaPlannerService } from '@renderer/services/rpa/RpaPlannerService'
 import { spanManagerService } from '@renderer/services/SpanManagerService'
 import { estimateTextTokens as estimateTxtTokens, estimateUserPromptUsage } from '@renderer/services/TokenService'
 import WebSearchService from '@renderer/services/WebSearchService'
@@ -35,7 +40,7 @@ import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { upsertManyBlocks } from '@renderer/store/messageBlock'
 import { newMessagesActions } from '@renderer/store/newMessage'
 import { sendMessage as _sendMessage } from '@renderer/store/thunk/messageThunk'
-import { saveMessageAndBlocksToDB } from '@renderer/store/thunk/messageThunk'
+import { saveMessageAndBlocksToDB, updateMessageAndBlocksThunk } from '@renderer/store/thunk/messageThunk'
 import {
   type Assistant,
   type FileMetadata,
@@ -50,7 +55,9 @@ import { delay } from '@renderer/utils'
 import { getSendMessageShortcutLabel } from '@renderer/utils/input'
 import { createMainTextBlock } from '@renderer/utils/messageUtils/create'
 import { documentExts, imageExts, textExts } from '@shared/config/constant'
+import { Tooltip } from 'antd'
 import { debounce } from 'lodash'
+import { Workflow } from 'lucide-react'
 import type { FC } from 'react'
 import React, { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -66,6 +73,16 @@ const logger = loggerService.withContext('Inputbar')
 
 const INPUTBAR_DRAFT_CACHE_KEY = 'inputbar-draft'
 const DRAFT_CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
+const rpaPlanner = new RpaPlannerService({ registry: defaultRpaModuleRegistry })
+
+const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error(message)), timeoutMs)
+    })
+  ])
+}
 
 const getMentionedModelsCacheKey = (assistantId: string) => `inputbar-mentioned-models-${assistantId}`
 
@@ -79,6 +96,7 @@ interface Props {
   assistant: Assistant
   setActiveTopic: (topic: Topic) => void
   topic: Topic
+  rpaAvailable?: boolean
 }
 
 type ProviderActionHandlers = {
@@ -94,7 +112,7 @@ interface InputbarInnerProps extends Props {
   actionsRef: React.RefObject<ProviderActionHandlers>
 }
 
-const Inputbar: FC<Props> = ({ assistant: initialAssistant, setActiveTopic, topic }) => {
+const Inputbar: FC<Props> = ({ assistant: initialAssistant, setActiveTopic, topic, rpaAvailable }) => {
   const actionsRef = useRef<ProviderActionHandlers>({
     resizeTextArea: () => {},
     addNewTopic: () => {},
@@ -134,12 +152,19 @@ const Inputbar: FC<Props> = ({ assistant: initialAssistant, setActiveTopic, topi
         setActiveTopic={setActiveTopic}
         topic={topic}
         actionsRef={actionsRef}
+        rpaAvailable={rpaAvailable}
       />
     </InputbarToolsProvider>
   )
 }
 
-const InputbarInner: FC<InputbarInnerProps> = ({ assistant: initialAssistant, setActiveTopic, topic, actionsRef }) => {
+const InputbarInner: FC<InputbarInnerProps> = ({
+  assistant: initialAssistant,
+  setActiveTopic,
+  topic,
+  actionsRef,
+  rpaAvailable
+}) => {
   const scope = topic.type ?? TopicType.Chat
   const config = getInputbarConfig(scope)
 
@@ -168,6 +193,7 @@ const InputbarInner: FC<InputbarInnerProps> = ({ assistant: initialAssistant, se
   const { sendMessageShortcut, showInputEstimatedTokens, enableQuickPanelTriggers } = useSettings()
   const [estimateTokenCount, setEstimateTokenCount] = useState(0)
   const [contextCount, setContextCount] = useState({ current: 0, max: 0 })
+  const [rpaMode, setRpaMode] = useState(false)
 
   const { t } = useTranslation()
   const { pauseMessages } = useMessageOperations(topic)
@@ -229,7 +255,7 @@ const InputbarInner: FC<InputbarInnerProps> = ({ assistant: initialAssistant, se
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assistant.id])
 
-  const placeholderText = enableQuickPanelTriggers
+  const defaultPlaceholderText = enableQuickPanelTriggers
     ? t('chat.input.placeholder', { key: getSendMessageShortcutLabel(sendMessageShortcut) })
     : t('chat.input.placeholder_without_triggers', {
         key: getSendMessageShortcutLabel(sendMessageShortcut),
@@ -237,8 +263,122 @@ const InputbarInner: FC<InputbarInnerProps> = ({ assistant: initialAssistant, se
           key: getSendMessageShortcutLabel(sendMessageShortcut)
         })
       })
+  const placeholderText =
+    rpaAvailable && rpaMode
+      ? t('device.rpa.chat_placeholder', {
+          defaultValue: 'Describe the task to perform on the selected devices. Press Enter to generate the workflow.'
+        })
+      : defaultPlaceholderText
 
   const sendMessage = useCallback(async () => {
+    const shouldGenerateRpa = rpaAvailable && (rpaMode || isRpaPlanningRequest(text))
+    if (shouldGenerateRpa) {
+      const goal = text.trim()
+      if (!goal) return
+      setRpaMode(false)
+      setText('')
+      setTimeoutTimer('sendRpaMessage', () => resizeTextArea(), 0)
+      focusTextarea()
+
+      const baseUserMessage: MessageInputBaseParams = { assistant, topic, content: goal }
+      const { message: userMessage, blocks: userBlocks } = getUserMessage(baseUserMessage)
+      const assistantMessage = getAssistantMessage({ assistant, topic })
+      assistantMessage.askId = userMessage.id
+      assistantMessage.status = AssistantMessageStatus.PROCESSING
+
+      await saveMessageAndBlocksToDB(topic.id, userMessage, userBlocks)
+      await saveMessageAndBlocksToDB(topic.id, assistantMessage, [])
+      dispatch(newMessagesActions.addMessage({ topicId: topic.id, message: userMessage }))
+      dispatch(upsertManyBlocks(userBlocks))
+      dispatch(newMessagesActions.addMessage({ topicId: topic.id, message: assistantMessage }))
+
+      const finalizeRpaMessage = async (
+        content: string,
+        status: AssistantMessageStatus.SUCCESS | AssistantMessageStatus.ERROR,
+        metadata?: Record<string, unknown>
+      ) => {
+        const block = createMainTextBlock(assistantMessage.id, content, {
+          status: status === AssistantMessageStatus.SUCCESS ? MessageBlockStatus.SUCCESS : MessageBlockStatus.ERROR,
+          metadata
+        })
+        const finalizedMessage = {
+          ...assistantMessage,
+          blocks: [block.id],
+          status
+        }
+
+        logger.info('Finalizing inline RPA message', {
+          messageId: finalizedMessage.id,
+          status,
+          hasWorkflow: Boolean(metadata?.rpaTask)
+        })
+
+        dispatch(upsertManyBlocks([block]))
+        dispatch(
+          newMessagesActions.updateMessage({
+            topicId: topic.id,
+            messageId: finalizedMessage.id,
+            updates: finalizedMessage
+          })
+        )
+
+        try {
+          await dispatch(updateMessageAndBlocksThunk(topic.id, finalizedMessage, [block]))
+          logger.info('Inline RPA message finalized', {
+            messageId: finalizedMessage.id,
+            status
+          })
+        } catch (persistenceError) {
+          logger.error('Failed to persist finalized inline RPA message', {
+            error: persistenceError,
+            errorMessage: persistenceError instanceof Error ? persistenceError.message : String(persistenceError),
+            messageId: finalizedMessage.id
+          })
+        }
+      }
+
+      try {
+        const scannedDevices = await withTimeout(
+          deviceServiceProxy.scanDevices(),
+          10_000,
+          t('device.error.fetch_failed', { defaultValue: 'Device scan timed out.' })
+        )
+        const onlineDevices = scannedDevices.filter((device) => device.status === 'online')
+        const planningSignal = AbortSignal.timeout(120_000)
+
+        const result = await rpaPlanner.plan({
+          goal,
+          deviceIds: onlineDevices.map((device) => device.id),
+          taskId: `rpa-task-${Date.now()}`,
+          taskName: goal.slice(0, 48),
+          model: assistant.model,
+          signal: planningSignal
+        })
+        if (!result.success || !result.task) {
+          throw new Error(result.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ') || 'Plan invalid')
+        }
+
+        const task = { ...result.task, visionModel: assistant.model }
+        await finalizeRpaMessage(
+          t('device.rpa.plan_generated', {
+            defaultValue: 'The RPA workflow has been generated. Review and edit the timeline before running it.'
+          }),
+          AssistantMessageStatus.SUCCESS,
+          { rpaTask: task }
+        )
+      } catch (error) {
+        const errorText = error instanceof Error ? error.message : String(error)
+        logger.error('Failed to generate inline RPA workflow', {
+          error,
+          errorMessage: errorText,
+          goal,
+          modelId: assistant.model?.id
+        })
+        await finalizeRpaMessage(errorText, AssistantMessageStatus.ERROR)
+      }
+      return
+    }
+
     if (deviceChatCommandService.isDeviceCommand(text)) {
       try {
         const result = await deviceChatCommandService.run(text)
@@ -321,7 +461,10 @@ const InputbarInner: FC<InputbarInnerProps> = ({ assistant: initialAssistant, se
     setFiles,
     setTimeoutTimer,
     resizeTextArea,
-    focusTextarea
+    focusTextarea,
+    rpaAvailable,
+    rpaMode,
+    t
   ])
 
   const tokenCountProps = useMemo(() => {
@@ -520,6 +663,24 @@ const InputbarInner: FC<InputbarInnerProps> = ({ assistant: initialAssistant, se
   // rightToolbar: 右侧工具栏
   const rightToolbar = (
     <>
+      {rpaAvailable && (
+        <Tooltip
+          title={
+            rpaMode
+              ? t('device.rpa.workspace_hint', {
+                  defaultValue: 'Describe the mobile task in the chat box to generate an editable workflow.'
+                })
+              : t('device.rpa.workspace_title', { defaultValue: 'RPA workflow planner' })
+          }>
+          <ActionIconButton
+            aria-label={t('device.rpa.workspace_title', { defaultValue: 'RPA workflow planner' })}
+            aria-pressed={rpaMode}
+            active={rpaMode}
+            onClick={() => setRpaMode((enabled) => !enabled)}>
+            <Workflow size={18} />
+          </ActionIconButton>
+        </Tooltip>
+      )}
       {tokenCountProps && (
         <TokenCount
           estimateTokenCount={tokenCountProps.estimateTokenCount}

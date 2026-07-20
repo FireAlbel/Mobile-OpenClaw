@@ -199,7 +199,7 @@ const HomePage: FC = () => {
             activeTopic={activeTopic}
             setActiveTopic={setActiveTopic}
             setActiveAssistant={setActiveAssistant}
-            rpaMode={activeHomeTab === 'device'}
+            rpaAvailable={activeHomeTab === 'device'}
           />
         </ErrorBoundary>
       </ContentContainer>

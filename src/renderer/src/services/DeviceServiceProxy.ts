@@ -48,6 +48,10 @@ export interface DeviceScreenshot {
   height: number
   capturedAt?: number
   sequence?: number
+  codec?: number
+  codecName?: 'h264' | 'h265'
+  streamStatus?: ScrcpyFrameStreamHealth['status']
+  reconnectCount?: number
 }
 
 export interface DeviceScreenSize {

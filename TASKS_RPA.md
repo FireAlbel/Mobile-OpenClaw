@@ -466,11 +466,11 @@ Exception handling:
 - [x] P3-1. Build RPA Task Runner UI (basic runner panel)
 - [x] P3-2. Implement Multi-device Fan-out
 - [x] P3-3. Persist Queue and Run State in Main Process (run state persisted through main-process IPC; full executor migration remains a follow-up)
-- [ ] P3-4. Implement Per-device Scrcpy Video Frame Capture
-- [ ] P4-1. Integrate DeerFlow as Optional Planner/Workflow Backend
-- [ ] P4-2. Add Multi-agent Roles
-- [ ] P5-1. Add Safety Policy Engine
-- [ ] P5-2. Add Run Replay and Debug Export
+- [x] P3-4. Implement Per-device Scrcpy Video Frame Capture
+- [x] P4-1. Add Safety Policy Engine
+- [x] P4-2. Add Run Replay and Debug Export
+- [ ] P5-1. Integrate DeerFlow as Optional Planner/Workflow Backend
+- [ ] P5-2. Add Multi-agent Roles
 
 ### P0-1. Define RPA Task DSL Schema
 
@@ -851,9 +851,9 @@ Input:
 
 Output:
 
-- Correction DSL fragment
-- Retry decision
-- Human handoff decision
+- Validated temporary RPA nodes compiled from the VLM decision
+- `execute_actions`, `replan`, `human_required`, or `goal_achieved` decision
+- Expected visual outcome for mandatory post-action verification
 
 How to use:
 
@@ -868,7 +868,8 @@ Exception handling:
 
 Acceptance criteria:
 
-- Tests cover successful correction, invalid correction, loop prevention, and human handoff.
+- Tests cover executable correction, invalid description-only output, mandatory verification, timeout, no-progress
+  detection, bounded correction rounds, goal confirmation, and human handoff.
 
 ### P2-3. Implement VLM Visual Correction
 
@@ -879,9 +880,10 @@ VLM is useful for visual target recognition and page state correction, but shoul
 Function:
 
 - Provide screenshot and target prompt to VLM.
-- Require structured response: target found, bbox, confidence, reasoning, suggested action.
-- Validate bbox and confidence.
-- Convert bbox center to device coordinates.
+- Require a structured decision with executable whitelisted actions; reasoning is audit metadata only.
+- Validate decision type, action parameters, confidence, coordinates, package names, and action count.
+- Reject arbitrary ADB shell, scripts, markdown, and description-only responses.
+- Execute each action group and observe the device again before another decision.
 
 Input:
 
@@ -892,9 +894,9 @@ Input:
 
 Output:
 
-- Visual correction result
-- Candidate coordinates
-- Confidence
+- Structured `execute_actions`, `replan`, `human_required`, or `goal_achieved` decision
+- Whitelisted tap, swipe, key, start-app, wait, or permission action list
+- Confidence, expected outcome, and audit reason
 
 How to use:
 
@@ -909,7 +911,8 @@ Exception handling:
 
 Acceptance criteria:
 
-- Tests mock VLM result for valid bbox, invalid bbox, low confidence, and timeout.
+- Tests mock valid executable decisions, invalid description-only output, forbidden actions, low confidence, forced
+  post-action verification, and human handoff.
 
 ### P3-1. Build RPA Task Runner UI
 
@@ -1030,6 +1033,10 @@ Acceptance criteria:
 
 ### P3-4. Implement Per-device Scrcpy Video Frame Capture
 
+Implementation status: completed with per-device H.264/H.265 streams, startup retry, stale-packet watchdog,
+exponential reconnect, decoder recovery, strict scrcpy-only RPA/VLM evidence, frame metadata UI, and automated
+isolation/freshness/recovery tests. Live-device integration validation remains environment-dependent.
+
 Background:
 
 Current HWND capture reads desktop pixels and can capture an overlapping Electron window instead of mobile content. RPA/VLM must receive the actual video frame produced by scrcpy for the target device.
@@ -1078,7 +1085,111 @@ Acceptance criteria:
 - Freshness, reconnect, decode error, device disconnect, and coordinate mapping are unit-tested.
 - Integration validation confirms VLM receives the real mobile frame and returned coordinates target the correct device.
 
-### P4-1. Integrate DeerFlow as Optional Planner/Workflow Backend
+### P4-1. Add Safety Policy Engine
+
+Implementation status: completed with structured allow/delay/confirmation-required/blocked decisions, task- and
+device-bound approval fingerprints, module and correction-action risk evaluation, shared device/task rate limits,
+injectable generated-text moderation, policy events, high-risk execution summaries, per-device abort propagation,
+and a global emergency stop. Original nodes, temporary replan nodes, and VLM correction actions use the same policy
+gate; editable DSL metadata cannot grant approval.
+
+Background:
+
+Automation involving comments, likes, messages, payment, or account settings needs explicit controls.
+
+Function:
+
+- Define action risk levels.
+- Require confirmation for high-risk modules.
+- Add per-device and per-task rate limits.
+- Add content moderation hook for generated text.
+- Add emergency stop.
+
+Input:
+
+- Module metadata
+- Task DSL
+- User policy settings
+- Runtime event stream
+
+Output:
+
+- Policy decision
+- Confirmation request
+- Rate limit delay
+
+How to use:
+
+- Planner and Orchestrator call policy engine before execution.
+
+Exception handling:
+
+- Confirmation timeout: keep paused.
+- Policy violation: block step and show reason.
+- Emergency stop: cancel all queues immediately.
+
+Acceptance criteria:
+
+- Tests cover high-risk confirmation, task tampering, device-scoped approval, device rate-limit isolation, blocked
+  content, permission-action escalation, VLM policy bypass prevention, cancellation propagation, and emergency stop.
+
+### P4-2. Add Run Replay and Debug Export
+
+Implementation status: Complete (2026-07-20)
+
+Delivered:
+
+- Added a normalized, chronological replay model for device events, actions, observations, model output, verification,
+  safety decisions, and screenshot availability.
+- Added read-only historical replay with device and execution-phase filters, plus explicit placeholders for missing
+  screenshot evidence.
+- Added a run-history picker to the inline chat workflow without replacing the existing editable DSL experience.
+- Added sanitized ZIP debug exports containing a manifest, task DSL, run record, replay timeline, screenshot inventory,
+  and extracted screenshot files.
+- Added recursive secret redaction, archive path validation, event and screenshot size limits, compression, and omitted
+  artifact reporting. Run history remains bounded to the existing 100-record retention policy.
+- Added successful-run conversion into a device-neutral editable template. Failed or partially successful runs are
+  rejected.
+- Added renderer and main-process tests for replay ordering/loading, missing artifacts, redaction, ZIP generation,
+  traversal rejection, and template creation.
+
+Background:
+
+Automation failures need reproducible evidence.
+
+Function:
+
+- Show timeline of steps, screenshots, observations, model outputs, and verification results.
+- Export a debug bundle.
+- Convert successful runs into reusable templates.
+
+Input:
+
+- Run history
+- Artifacts
+- Task DSL
+
+Output:
+
+- Replay UI
+- Export bundle
+- Template draft
+
+How to use:
+
+- User opens a failed or successful run from history.
+
+Exception handling:
+
+- Missing artifact: show placeholder.
+- Large export: compress and apply retention policy.
+- Sensitive data: redact based on policy.
+
+Acceptance criteria:
+
+- Tests cover replay loading, export bundle generation, and template creation.
+
+### P5-1. Integrate DeerFlow as Optional Planner/Workflow Backend
 
 Background:
 
@@ -1121,7 +1232,7 @@ Acceptance criteria:
 
 - Adapter tests cover success, unavailable fallback, invalid response, and timeout.
 
-### P4-2. Add Multi-agent Roles
+### P5-2. Add Multi-agent Roles
 
 Background:
 
@@ -1157,85 +1268,6 @@ Exception handling:
 Acceptance criteria:
 
 - Tests cover routing, schema validation, disagreement policy, and timeout fallback.
-
-### P5-1. Add Safety Policy Engine
-
-Background:
-
-Automation involving comments, likes, messages, payment, or account settings needs explicit controls.
-
-Function:
-
-- Define action risk levels.
-- Require confirmation for high-risk modules.
-- Add per-device and per-task rate limits.
-- Add content moderation hook for generated text.
-- Add emergency stop.
-
-Input:
-
-- Module metadata
-- Task DSL
-- User policy settings
-- Runtime event stream
-
-Output:
-
-- Policy decision
-- Confirmation request
-- Rate limit delay
-
-How to use:
-
-- Planner and Orchestrator call policy engine before execution.
-
-Exception handling:
-
-- Confirmation timeout: keep paused.
-- Policy violation: block step and show reason.
-- Emergency stop: cancel all queues immediately.
-
-Acceptance criteria:
-
-- Tests cover high-risk confirmation, rate limit, blocked action, and emergency stop.
-
-### P5-2. Add Run Replay and Debug Export
-
-Background:
-
-Automation failures need reproducible evidence.
-
-Function:
-
-- Show timeline of steps, screenshots, observations, model outputs, and verification results.
-- Export a debug bundle.
-- Convert successful runs into reusable templates.
-
-Input:
-
-- Run history
-- Artifacts
-- Task DSL
-
-Output:
-
-- Replay UI
-- Export bundle
-- Template draft
-
-How to use:
-
-- User opens a failed or successful run from history.
-
-Exception handling:
-
-- Missing artifact: show placeholder.
-- Large export: compress and apply retention policy.
-- Sensitive data: redact based on policy.
-
-Acceptance criteria:
-
-- Tests cover replay loading, export bundle generation, and template creation.
 
 ## Default Exception Policy
 
@@ -1325,16 +1357,7 @@ Exit criteria:
 
 - The same task can run on multiple devices independently with per-device pause/resume/cancel.
 
-### P4. DeerFlow and Multi-agent Integration
-
-- DeerFlow planner backend
-- Multi-agent role routing
-
-Exit criteria:
-
-- DeerFlow can optionally produce or repair task plans while local execution remains functional without it.
-
-### P5. Safety, Audit, and Replay
+### P4. Safety, Audit, and Replay
 
 - Safety policy engine
 - Run replay
@@ -1344,3 +1367,12 @@ Exit criteria:
 Exit criteria:
 
 - High-risk actions are controlled, failed runs are debuggable, and successful runs can become reusable templates.
+
+### P5. DeerFlow and Multi-agent Integration
+
+- DeerFlow planner backend
+- Multi-agent role routing
+
+Exit criteria:
+
+- DeerFlow can optionally produce or repair task plans while local execution remains functional without it.

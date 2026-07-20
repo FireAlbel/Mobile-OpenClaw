@@ -127,13 +127,47 @@ describe('ScrcpyFrameService', () => {
     service.dispose()
   })
 
-  it('rejects stale frames instead of sending them to VLM', async () => {
-    const bridge = fakeRuntime()
+  it('restarts once and rejects a frame that remains stale', async () => {
+    let emitPacket: (packet: ScrcpyFrameStreamPacket) => void = () => undefined
+    const bridge = fakeRuntime((deviceId) => emitPacket(dataPacket(deviceId, Date.now() - 5_000)))
+    emitPacket = bridge.emitPacket
     const service = new ScrcpyFrameService(bridge.runtime, () => fakeDecoder(100, 200) as never)
     await service.start('device-1')
-    bridge.emitPacket(dataPacket('device-1', Date.now() - 5_000))
 
     await expect(service.getLatestFrame('device-1', { maxAgeMs: 100 })).rejects.toThrow('stale')
+    expect(bridge.runtime.stopScrcpyFrameStream).toHaveBeenCalledTimes(1)
+    expect(bridge.runtime.startScrcpyFrameStream).toHaveBeenCalledTimes(2)
+    service.dispose()
+  })
+
+  it('recovers a decoder failure without resetting another device', async () => {
+    const bridge = fakeRuntime()
+    const broken = fakeDecoder(100, 200)
+    broken.writable.getWriter = () => ({
+      write: vi.fn().mockRejectedValue(new Error('decode failed')),
+      releaseLock: vi.fn()
+    })
+    const recovered = fakeDecoder(100, 200)
+    const other = fakeDecoder(300, 600)
+    const decoders = [broken, other, recovered]
+    const service = new ScrcpyFrameService(bridge.runtime, () => decoders.shift() as never)
+
+    await service.start('device-1')
+    await service.start('device-2')
+    bridge.emitPacket(dataPacket('device-1'))
+    bridge.emitPacket(dataPacket('device-2'))
+    await Promise.resolve()
+
+    const otherFrame = await service.getLatestFrame('device-2')
+    const recovering = service.getLatestFrame('device-1')
+    await vi.waitFor(() => expect(bridge.runtime.startScrcpyFrameStream).toHaveBeenCalledTimes(3))
+    bridge.emitPacket(dataPacket('device-1'))
+    const recoveredFrame = await recovering
+
+    expect(otherFrame).toMatchObject({ deviceId: 'device-2', width: 300 })
+    expect(recoveredFrame).toMatchObject({ deviceId: 'device-1', width: 100 })
+    expect(bridge.runtime.stopScrcpyFrameStream).toHaveBeenCalledWith('device-1')
+    expect(bridge.runtime.stopScrcpyFrameStream).not.toHaveBeenCalledWith('device-2')
     service.dispose()
   })
 })

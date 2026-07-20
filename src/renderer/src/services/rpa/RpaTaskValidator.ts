@@ -2,7 +2,10 @@ import type { RpaModuleRegistry } from './RpaModuleRegistry'
 import { type RpaTask, RpaTaskSchema, type RpaValidationIssue, type RpaValidationResult } from './RpaTypes'
 
 export class RpaTaskValidator {
-  constructor(private readonly registry: RpaModuleRegistry) {}
+  constructor(
+    private readonly registry: RpaModuleRegistry,
+    private readonly options: { requireDeviceIds?: boolean } = {}
+  ) {}
 
   validate(input: unknown): RpaValidationResult {
     const parsed = RpaTaskSchema.safeParse(input)
@@ -28,6 +31,10 @@ export class RpaTaskValidator {
     const issues: RpaValidationIssue[] = []
     const stepIds = new Set<string>()
 
+    if (this.options.requireDeviceIds !== false && task.deviceIds.length === 0) {
+      issues.push({ path: 'deviceIds', message: 'At least one device is required' })
+    }
+
     task.steps.forEach((step, index) => {
       const stepPath = `steps.${index}`
       if (stepIds.has(step.id)) {
@@ -52,6 +59,21 @@ export class RpaTaskValidator {
       }
 
       const module = this.registry.require(step.moduleId)
+      if (step.moduleId === 'launch_app' && !['foreground_app', 'vlm_assert'].includes(step.verify?.type ?? '')) {
+        issues.push({
+          path: `${stepPath}.verify`,
+          message: 'launch_app requires foreground_app or vlm_assert verification'
+        })
+      }
+      if (
+        ['tap_by_vlm_target', 'swipe_until_vlm_target'].includes(step.moduleId) &&
+        step.verify?.type !== 'vlm_assert'
+      ) {
+        issues.push({
+          path: `${stepPath}.verify`,
+          message: `${step.moduleId} requires vlm_assert verification of the resulting screen state`
+        })
+      }
       if (module.metadata.riskLevel === 'high' && step.continueOnFailure) {
         issues.push({
           path: `${stepPath}.continueOnFailure`,
@@ -59,6 +81,16 @@ export class RpaTaskValidator {
         })
       }
     })
+
+    if (task.steps.some((step) => ['tap_by_vlm_target', 'swipe_until_vlm_target'].includes(step.moduleId))) {
+      const finalStep = task.steps.at(-1)
+      if (finalStep?.verify?.type !== 'vlm_assert') {
+        issues.push({
+          path: `steps.${task.steps.length - 1}.verify`,
+          message: 'Visual workflows require a final vlm_assert business outcome verification'
+        })
+      }
+    }
 
     return issues
   }

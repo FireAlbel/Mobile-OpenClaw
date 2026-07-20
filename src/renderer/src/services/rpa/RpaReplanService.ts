@@ -4,20 +4,29 @@ import * as z from 'zod'
 import { parseJsonFromText } from './RpaJsonUtils'
 import { DefaultRpaModelClient, type RpaModelClient } from './RpaModelClient'
 import type { RpaModuleRegistry } from './RpaModuleRegistry'
-import type { RpaDeviceObservation, RpaFailureContext, RpaStep, RpaValidationIssue } from './RpaTypes'
+import type {
+  RpaCorrectionAction,
+  RpaCorrectionDecision,
+  RpaDeviceObservation,
+  RpaFailureContext,
+  RpaStep,
+  RpaValidationIssue
+} from './RpaTypes'
 import { RpaStepSchema } from './RpaTypes'
 
 export interface RpaReplanInput {
   failureContext: RpaFailureContext
+  decision: RpaCorrectionDecision
   latestObservation?: RpaDeviceObservation
-  correctionAttempt: number
-  maxCorrectionAttempts?: number
+  correctionRound: number
   signal?: AbortSignal
 }
 
 export interface RpaReplanResult {
-  status: 'retry' | 'corrected' | 'needs_human'
+  status: 'actions' | 'steps' | 'human_required' | 'goal_achieved'
   steps: RpaStep[]
+  actions: RpaCorrectionAction[]
+  expectedOutcome?: string
   rawResponse?: string
   issues: RpaValidationIssue[]
   message: string
@@ -29,11 +38,9 @@ export interface RpaReplanServiceOptions {
   modelClient?: RpaModelClient
 }
 
-const RecoveryDecisionSchema = z.object({
-  decision: z.enum(['retry', 'insert_steps', 'needs_human']),
-  reason: z.string().min(1),
-  confidence: z.number().min(0).max(1),
-  steps: z.array(z.unknown()).max(3).default([])
+const ReplannedStepsSchema = z.object({
+  steps: z.array(z.unknown()).min(1).max(3),
+  expectedOutcome: z.string().min(1)
 })
 
 export class RpaReplanService {
@@ -44,14 +51,41 @@ export class RpaReplanService {
   }
 
   async replan(input: RpaReplanInput): Promise<RpaReplanResult> {
-    const maxAttempts = input.maxCorrectionAttempts ?? 2
-    if (input.correctionAttempt >= maxAttempts) {
+    const decision = input.decision
+    if (decision.decision === 'human_required') {
       return {
-        status: 'needs_human',
+        status: 'human_required',
         steps: [],
+        actions: [],
         issues: [],
-        message: `Correction attempts exceeded: ${input.correctionAttempt}/${maxAttempts}`,
-        confidence: 1
+        message: decision.reason,
+        confidence: decision.confidence
+      }
+    }
+
+    if (decision.decision === 'goal_achieved') {
+      return {
+        status: 'goal_achieved',
+        steps: [],
+        actions: [],
+        expectedOutcome: input.failureContext.task.goal,
+        issues: [],
+        message: decision.reason,
+        confidence: decision.confidence
+      }
+    }
+
+    if (decision.decision === 'execute_actions') {
+      return {
+        status: 'actions',
+        steps: decision.actions.map((action, index) =>
+          this.createTemporaryActionStep(action, input.correctionRound, index)
+        ),
+        actions: decision.actions,
+        expectedOutcome: decision.expectedOutcome,
+        issues: [],
+        message: decision.reason,
+        confidence: decision.confidence
       }
     }
 
@@ -60,55 +94,32 @@ export class RpaReplanService {
       model: input.failureContext.task.visionModel,
       signal: input.signal
     })
-    const parsedDecision = RecoveryDecisionSchema.safeParse(parseJsonFromText<unknown>(rawResponse))
-    if (!parsedDecision.success) {
+    const parsedPlan = ReplannedStepsSchema.safeParse(parseJsonFromText<unknown>(rawResponse))
+    if (!parsedPlan.success) {
       return {
-        status: 'needs_human',
+        status: 'human_required',
         steps: [],
+        actions: [],
         rawResponse,
-        issues: parsedDecision.error.issues.map((issue) => ({
+        issues: parsedPlan.error.issues.map((issue) => ({
           path: issue.path.join('.'),
           message: issue.message
         })),
-        message: 'VLM recovery decision failed validation',
-        confidence: 0
+        message: 'Temporary RPA plan failed validation',
+        confidence: decision.confidence
       }
     }
 
-    const response = parsedDecision.data
-    if (response.decision === 'needs_human' || response.confidence < 0.65) {
-      return {
-        status: 'needs_human',
-        steps: [],
-        rawResponse,
-        issues: [],
-        message:
-          response.confidence < 0.65
-            ? `Recovery confidence ${response.confidence} is below 0.65: ${response.reason}`
-            : response.reason,
-        confidence: response.confidence
-      }
-    }
-
-    if (response.decision === 'retry') {
-      return {
-        status: 'retry',
-        steps: [],
-        rawResponse,
-        issues: [],
-        message: response.reason,
-        confidence: response.confidence
-      }
-    }
-
-    const validation = this.validateSteps(response.steps)
+    const validation = this.validateSteps(parsedPlan.data.steps)
     return {
-      status: validation.issues.length ? 'needs_human' : 'corrected',
+      status: validation.issues.length ? 'human_required' : 'steps',
       steps: validation.steps,
+      actions: [],
+      expectedOutcome: parsedPlan.data.expectedOutcome,
       rawResponse,
       issues: validation.issues,
-      message: validation.issues.length ? 'Correction steps failed validation' : response.reason,
-      confidence: response.confidence
+      message: validation.issues.length ? 'Temporary RPA steps failed validation' : decision.reason,
+      confidence: decision.confidence
     }
   }
 
@@ -129,12 +140,9 @@ export class RpaReplanService {
       {
         role: 'system',
         content: [
-          'You diagnose Android RPA task execution failures from the failure context and current screenshot.',
-          'Choose exactly one decision: retry, insert_steps, or needs_human.',
-          'Return only JSON: {"decision":"retry|insert_steps|needs_human","reason":"...","confidence":0.0,"steps":[RpaStep...]}.',
-          'Use retry when the original step is likely to succeed without another action.',
-          'Use insert_steps for at most 3 temporary recovery actions, then the system retries the original step.',
-          'Use needs_human when the state is ambiguous, unsafe, authentication-related, or not recoverable.',
+          'You convert a validated VLM replan decision into temporary Android RPA steps.',
+          'Return only JSON: {"steps":[RpaStep...],"expectedOutcome":"observable state after all steps"}.',
+          'Return between 1 and 3 temporary steps.',
           'Use only available module ids. Do not return markdown.'
         ].join('\n')
       },
@@ -146,6 +154,7 @@ export class RpaReplanService {
             text: JSON.stringify(
               {
                 failureContext: input.failureContext,
+                decision: input.decision,
                 latestObservation: input.latestObservation
                   ? {
                       ...input.latestObservation,
@@ -153,7 +162,7 @@ export class RpaReplanService {
                       artifacts: undefined
                     }
                   : undefined,
-                correctionAttempt: input.correctionAttempt,
+                correctionRound: input.correctionRound,
                 availableModules: this.options.registry.listForPlanner()
               },
               null,
@@ -164,6 +173,19 @@ export class RpaReplanService {
         ]
       }
     ]
+  }
+
+  private createTemporaryActionStep(action: RpaCorrectionAction, round: number, index: number): RpaStep {
+    return {
+      id: `correction-${round}-action-${index + 1}-${action.id}`,
+      name: `Correction action: ${action.type}`,
+      moduleId: '__correction_action__',
+      params: { ...action },
+      timeoutMs: action.type === 'wait' ? Math.max(1_000, action.durationMs + 1_000) : 30_000,
+      retry: { maxAttempts: 1, backoffMs: 0, retryOn: ['failed', 'timeout'] },
+      verify: { type: 'module_result_success' },
+      continueOnFailure: false
+    }
   }
 
   private validateSteps(stepsInput: unknown[]): { steps: RpaStep[]; issues: RpaValidationIssue[] } {

@@ -1,8 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit'
 import type { Model } from '@renderer/types'
 import { WEB_SEARCH_SOURCE } from '@renderer/types'
-import type { MainTextMessageBlock } from '@renderer/types/newMessage'
-import { MessageBlockStatus, MessageBlockType } from '@renderer/types/newMessage'
+import type { MainTextMessageBlock, Message } from '@renderer/types/newMessage'
+import { AssistantMessageStatus, MessageBlockStatus, MessageBlockType } from '@renderer/types/newMessage'
 import { render, screen } from '@testing-library/react'
 import { Provider } from 'react-redux'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -88,6 +88,10 @@ vi.mock('@renderer/pages/home/Markdown/Markdown', () => ({
   }
 }))
 
+vi.mock('@renderer/pages/device/RpaInlineWorkflow', () => ({
+  default: () => <div data-testid="rpa-inline-workflow">RPA workflow</div>
+}))
+
 describe('MainTextBlock', () => {
   // Get references to mocked modules
   let mockGetModelUniqId: any
@@ -142,6 +146,7 @@ describe('MainTextBlock', () => {
     role: 'user' | 'assistant'
     mentions?: Model[]
     citationBlockId?: string
+    message?: Message
   }) => {
     return render(
       <Provider store={mockStore}>
@@ -156,6 +161,34 @@ describe('MainTextBlock', () => {
   const getMentionElements = () => screen.queryAllByText(/@/)
 
   describe('basic rendering', () => {
+    it('renders an editable RPA workflow stored in message block metadata', () => {
+      const block = createMainTextBlock({
+        metadata: {
+          rpaTask: {
+            id: 'task-1',
+            name: 'Open app',
+            goal: 'Open app',
+            deviceIds: ['device-1'],
+            steps: [],
+            metadata: {}
+          }
+        }
+      })
+      const message = {
+        id: 'test-message-1',
+        role: 'assistant',
+        assistantId: 'assistant-1',
+        topicId: 'topic-1',
+        createdAt: new Date().toISOString(),
+        status: AssistantMessageStatus.SUCCESS,
+        blocks: [block.id]
+      } satisfies Message
+
+      renderMainTextBlock({ block, role: 'assistant', message })
+
+      expect(screen.getByTestId('rpa-inline-workflow')).toBeInTheDocument()
+    })
+
     it('should render in markdown mode for assistant messages', () => {
       const block = createMainTextBlock({ content: 'Assistant response' })
       renderMainTextBlock({ block, role: 'assistant' })

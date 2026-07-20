@@ -108,6 +108,7 @@ export const swipeUntilVlmTargetModule: RpaActionModule<{
   target: string
   direction?: 'up' | 'down' | 'left' | 'right'
   maxAttempts?: number
+  maxSwipes?: number
 }> = {
   metadata: metadata(
     'swipe_until_vlm_target',
@@ -118,40 +119,72 @@ export const swipeUntilVlmTargetModule: RpaActionModule<{
   paramsSchema: z.object({
     target: z.string().min(1),
     direction: z.enum(['up', 'down', 'left', 'right']).default('up'),
-    maxAttempts: z.number().int().min(1).max(10).default(3)
+    maxAttempts: z.number().int().min(1).max(10).default(3),
+    maxSwipes: z.number().int().min(1).max(10).optional()
   }),
   async execute(context, params) {
     const startedAt = now()
-    let lastResult: Awaited<ReturnType<typeof context.runtime.visionInstruction>> | undefined
     const direction = params.direction ?? 'up'
-    const maxAttempts = params.maxAttempts ?? 3
+    const maxAttempts = params.maxSwipes ?? params.maxAttempts ?? 3
 
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-      lastResult = await context.runtime.visionInstruction(
+      const located = await context.runtime.locateVisualTarget(
         context.deviceId,
-        [
-          `Search for visual target: ${params.target}`,
-          `If it is not visible, swipe ${direction}.`,
-          'Return a swipe action only.'
-        ].join('\n'),
-        ['swipe'],
+        params.target,
         context.task.visionModel,
         context.signal
       )
-      if (!lastResult.success) {
-        return moduleResult(startedAt, lastResult)
+      if (!located.success) {
+        return moduleResult(startedAt, located)
+      }
+      if (located.data?.found) {
+        return {
+          success: true,
+          status: 'passed',
+          message: `Visual target found: ${params.target}`,
+          data: { ...located.data, attempts: attempt },
+          startedAt,
+          finishedAt: now()
+        }
+      }
+      if (attempt >= maxAttempts) break
+
+      const screenSize = await context.runtime.getScreenSize(context.deviceId)
+      if (!screenSize.success || !screenSize.data) {
+        return moduleResult(startedAt, screenSize)
+      }
+      const swipe = createSearchSwipe(screenSize.data, direction)
+      const swipeResult = await context.runtime.swipe(context.deviceId, swipe.x1, swipe.y1, swipe.x2, swipe.y2, 500)
+      if (!swipeResult.success) {
+        return moduleResult(startedAt, swipeResult)
       }
     }
 
-    return moduleResult(
+    return {
+      success: false,
+      status: 'failed',
+      message: `Visual target not found after ${maxAttempts} attempts: ${params.target}`,
+      data: { target: params.target, attempts: maxAttempts },
       startedAt,
-      lastResult ?? {
-        success: false,
-        message: 'VLM swipe search did not execute'
-      },
-      `Completed VLM swipe search for target: ${params.target}`
-    )
+      finishedAt: now()
+    }
   }
+}
+
+function createSearchSwipe(
+  screen: { width: number; height: number },
+  direction: 'up' | 'down' | 'left' | 'right'
+): { x1: number; y1: number; x2: number; y2: number } {
+  const centerX = Math.round(screen.width / 2)
+  const centerY = Math.round(screen.height / 2)
+  const horizontalStart = Math.round(screen.width * 0.8)
+  const horizontalEnd = Math.round(screen.width * 0.2)
+  const verticalStart = Math.round(screen.height * 0.8)
+  const verticalEnd = Math.round(screen.height * 0.3)
+  if (direction === 'up') return { x1: centerX, y1: verticalStart, x2: centerX, y2: verticalEnd }
+  if (direction === 'down') return { x1: centerX, y1: verticalEnd, x2: centerX, y2: verticalStart }
+  if (direction === 'left') return { x1: horizontalStart, y1: centerY, x2: horizontalEnd, y2: centerY }
+  return { x1: horizontalEnd, y1: centerY, x2: horizontalStart, y2: centerY }
 }
 
 export const p1RpaModules = [handlePopupModule, tapByVlmTargetModule, swipeUntilVlmTargetModule]

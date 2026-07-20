@@ -19,7 +19,9 @@ function runtime(): RpaDeviceRuntime {
       finishedAt: 2
     }),
     handlePermissionDialog: vi.fn(),
-    visionInstruction: vi.fn()
+    visionInstruction: vi.fn(),
+    locateVisualTarget: vi.fn(),
+    executeCorrectionAction: vi.fn()
   }
 }
 

@@ -71,6 +71,22 @@ function fakeClient(deviceId: string) {
   }
 }
 
+function endedClient() {
+  const reader = {
+    read: vi.fn().mockResolvedValue({ done: true }),
+    cancel: vi.fn().mockResolvedValue(undefined)
+  }
+  return {
+    videoStream: Promise.resolve({
+      metadata: { codec: 1748121140, width: 1080, height: 2400 },
+      width: 1080,
+      height: 2400,
+      stream: { getReader: () => reader }
+    }),
+    close: vi.fn().mockResolvedValue(undefined)
+  }
+}
+
 describe('ScrcpyFrameStreamService', () => {
   beforeEach(() => {
     pushServerMock.mockReset().mockResolvedValue(undefined)
@@ -115,5 +131,75 @@ describe('ScrcpyFrameStreamService', () => {
       status: 'error',
       error: 'protocol startup failed'
     })
+    await service.stopAll()
+  })
+
+  it('falls back from H.265 to H.264 for the same device', async () => {
+    const fallback = fakeClient('device-a')
+    startClientMock.mockImplementation(async (_adb, _path, options: { value: { videoCodec: string } }) => {
+      if (options.value.videoCodec === 'h265') throw new Error('H.265 encoder unavailable')
+      return fallback.client
+    })
+    const service = new ScrcpyFrameStreamService()
+
+    const health = await service.start('device-a', { codecPreference: 'h265' })
+
+    expect(health).toMatchObject({ status: 'running', codecName: 'h264' })
+    expect(startClientMock.mock.calls.map((call) => call[2].value.videoCodec)).toEqual(['h265', 'h264'])
+    await service.stopAll()
+  })
+
+  it('retries a transient startup failure once', async () => {
+    const recovered = fakeClient('device-a')
+    startClientMock.mockRejectedValueOnce(new Error('ADB transport busy')).mockResolvedValue(recovered.client)
+    const service = new ScrcpyFrameStreamService()
+
+    const health = await service.start('device-a', { codecPreference: 'h264' })
+
+    expect(health.status).toBe('running')
+    expect(startClientMock).toHaveBeenCalledTimes(2)
+    await service.stopAll()
+  })
+
+  it('reconnects an ended reader without restarting another device', async () => {
+    const recovered = fakeClient('device-a')
+    const other = fakeClient('device-b')
+    let deviceAStarts = 0
+    startClientMock.mockImplementation(async (adb: { serial: string }) => {
+      if (adb.serial === 'device-b') return other.client
+      deviceAStarts += 1
+      return deviceAStarts === 1 ? endedClient() : recovered.client
+    })
+    const service = new ScrcpyFrameStreamService()
+
+    await service.start('device-a')
+    await service.start('device-b')
+    await vi.waitFor(
+      () => expect(service.getHealth('device-a')).toMatchObject({ status: 'running', reconnectCount: 1 }),
+      { timeout: 2_000 }
+    )
+
+    expect(service.getHealth('device-a').reconnectCount).toBe(1)
+    expect(startClientMock.mock.calls.filter((call) => call[0].serial === 'device-a')).toHaveLength(2)
+    expect(startClientMock.mock.calls.filter((call) => call[0].serial === 'device-b')).toHaveLength(1)
+    await service.stopAll()
+  })
+
+  it('uses the packet watchdog to reconnect only the stale device', async () => {
+    vi.useFakeTimers()
+    const first = fakeClient('device-a')
+    const second = fakeClient('device-a')
+    startClientMock.mockResolvedValueOnce(first.client).mockResolvedValue(second.client)
+    const service = new ScrcpyFrameStreamService()
+    try {
+      await service.start('device-a')
+      await vi.advanceTimersByTimeAsync(3_000)
+
+      expect(startClientMock).toHaveBeenCalledTimes(2)
+      expect(service.getHealth('device-a')).toMatchObject({ status: 'running', reconnectCount: 1 })
+    } finally {
+      await service.stopAll()
+      vi.useRealTimers()
+    }
   })
 })

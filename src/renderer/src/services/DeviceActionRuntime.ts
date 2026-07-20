@@ -114,7 +114,7 @@ export class DeviceActionRuntime {
 
     switch (request.type) {
       case 'screenshot':
-        return await this.captureScreenshot(deviceId)
+        return await this.captureScreenshot(deviceId, params.requireScrcpy === true, toNumber(params.maxAgeMs, 1_000))
       case 'tap':
         await deviceServiceProxy.sendTap(deviceId, toNumber(params.x), toNumber(params.y))
         return undefined
@@ -193,10 +193,11 @@ export class DeviceActionRuntime {
     }
   }
 
-  private async captureScreenshot(deviceId: string) {
+  private async captureScreenshot(deviceId: string, requireScrcpy: boolean, maxAgeMs: number) {
     try {
-      return await scrcpyFrameService.getLatestFrame(deviceId)
+      return await scrcpyFrameService.getLatestFrame(deviceId, { maxAgeMs })
     } catch (error) {
+      if (requireScrcpy) throw error
       logger.warn('Scrcpy frame capture failed, falling back to ADB screenshot', { error, deviceId })
       return await deviceServiceProxy.getScreenshot(deviceId)
     }

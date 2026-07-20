@@ -1,7 +1,8 @@
 import { loggerService } from '@logger'
 
 import { ipcRpaRunStorage, type RpaBatchRunRecord, type RpaRunStorage } from './RpaRunStorage'
-import type { RpaRunResult, RpaRunStepEvent, RpaTask } from './RpaTypes'
+import { type RpaSafetyPolicyEngine, rpaSafetyPolicyEngine } from './RpaSafetyPolicyEngine'
+import type { RpaRunResult, RpaRunStepEvent, RpaSafetyApproval, RpaTask } from './RpaTypes'
 
 const logger = loggerService.withContext('RpaBatchRunner')
 
@@ -9,17 +10,22 @@ type Listener = () => void
 
 export interface RpaBatchRunnerOptions {
   storage?: RpaRunStorage
-  executorFactory?: (onEvent: (event: RpaRunStepEvent) => void) => RpaTaskExecutorLike
+  executorFactory?: (
+    onEvent: (event: RpaRunStepEvent) => void,
+    context: { safetyApproval?: RpaSafetyApproval }
+  ) => RpaTaskExecutorLike
   now?: () => number
+  safetyPolicyEngine?: RpaSafetyPolicyEngine
 }
 
 export interface RpaTaskExecutorLike {
-  run(input: unknown, deviceId: string): Promise<RpaRunResult>
+  run(input: unknown, deviceId: string, signal?: AbortSignal): Promise<RpaRunResult>
 }
 
 export interface StartRpaBatchRunInput {
   task: RpaTask
   deviceIds?: string[]
+  safetyApproval?: RpaSafetyApproval
 }
 
 function createId(prefix: string): string {
@@ -31,6 +37,8 @@ export class RpaBatchRunner {
   private readonly listeners = new Set<Listener>()
   private readonly pausedDeviceRuns = new Set<string>()
   private readonly cancelledDeviceRuns = new Set<string>()
+  private readonly controllers = new Map<string, AbortController>()
+  private readonly safetyApprovals = new Map<string, RpaSafetyApproval>()
   private persistenceQueue: Promise<void> = Promise.resolve()
   private loaded = false
 
@@ -80,6 +88,7 @@ export class RpaBatchRunner {
       }))
     }
     run.deviceRuns = run.deviceRuns.map((deviceRun) => ({ ...deviceRun, batchRunId: run.id }))
+    if (input.safetyApproval) this.safetyApprovals.set(run.id, input.safetyApproval)
 
     this.runs = [run, ...this.runs].slice(0, 100)
     await this.persistAndEmit()
@@ -104,12 +113,13 @@ export class RpaBatchRunner {
     return true
   }
 
-  async resumeDeviceRun(deviceRunId: string): Promise<boolean> {
+  async resumeDeviceRun(deviceRunId: string, safetyApproval?: RpaSafetyApproval): Promise<boolean> {
     await this.initialize()
     const run = this.findBatchRunByDeviceRunId(deviceRunId)
     const deviceRun = this.findDeviceRun(deviceRunId)
     if (!run || !deviceRun || (deviceRun.status !== 'paused' && deviceRun.status !== 'needs_human')) return false
 
+    if (safetyApproval) this.safetyApprovals.set(run.id, safetyApproval)
     this.pausedDeviceRuns.delete(deviceRunId)
     deviceRun.status = 'pending'
     deviceRun.error = undefined
@@ -127,6 +137,7 @@ export class RpaBatchRunner {
     if (!deviceRun || isTerminalStatus(deviceRun.status)) return false
 
     this.cancelledDeviceRuns.add(deviceRunId)
+    this.controllers.get(deviceRunId)?.abort(new Error('RPA device run cancelled'))
     deviceRun.status = 'cancelled'
     deviceRun.finishedAt = this.now()
     deviceRun.updatedAt = deviceRun.finishedAt
@@ -143,6 +154,7 @@ export class RpaBatchRunner {
     for (const deviceRun of run.deviceRuns) {
       if (!isTerminalStatus(deviceRun.status)) {
         this.cancelledDeviceRuns.add(deviceRun.id)
+        this.controllers.get(deviceRun.id)?.abort(new Error('RPA batch run cancelled'))
         deviceRun.status = 'cancelled'
         deviceRun.finishedAt = this.now()
         deviceRun.updatedAt = deviceRun.finishedAt
@@ -153,6 +165,31 @@ export class RpaBatchRunner {
     run.updatedAt = run.finishedAt
     await this.persistAndEmit()
     return true
+  }
+
+  async emergencyStop(): Promise<number> {
+    await this.initialize()
+    let cancelled = 0
+    const stoppedAt = this.now()
+    for (const run of this.runs) {
+      for (const deviceRun of run.deviceRuns) {
+        if (isTerminalStatus(deviceRun.status)) continue
+        cancelled += 1
+        this.cancelledDeviceRuns.add(deviceRun.id)
+        this.controllers.get(deviceRun.id)?.abort(new Error('RPA emergency stop'))
+        deviceRun.status = 'cancelled'
+        deviceRun.error = 'Stopped by emergency stop'
+        deviceRun.finishedAt = stoppedAt
+        deviceRun.updatedAt = stoppedAt
+      }
+      if (run.deviceRuns.some((deviceRun) => deviceRun.status === 'cancelled')) {
+        run.status = 'cancelled'
+        run.finishedAt = stoppedAt
+        run.updatedAt = stoppedAt
+      }
+    }
+    await this.persistAndEmit()
+    return cancelled
   }
 
   private async runDevice(batchRunId: string, deviceRunId: string): Promise<void> {
@@ -175,10 +212,12 @@ export class RpaBatchRunner {
         return
       }
 
+      const controller = new AbortController()
+      this.controllers.set(deviceRun.id, controller)
       const executor = await this.createExecutor((event) => {
         this.recordEvent(deviceRun.id, event)
-      })
-      const result = await executor.run(run.task, deviceRun.deviceId)
+      }, this.safetyApprovals.get(run.id))
+      const result = await executor.run(run.task, deviceRun.deviceId, controller.signal)
       this.applyRunResult(deviceRun, result)
     } catch (error) {
       logger.error('RPA device run failed', { error, batchRunId, deviceRunId, deviceId: deviceRun.deviceId })
@@ -187,6 +226,7 @@ export class RpaBatchRunner {
       deviceRun.finishedAt = this.now()
       deviceRun.updatedAt = deviceRun.finishedAt
     } finally {
+      this.controllers.delete(deviceRunId)
       await this.refreshParentStatus(batchRunId)
       await this.persistAndEmit()
     }
@@ -248,9 +288,12 @@ export class RpaBatchRunner {
     return this.findBatchRunByDeviceRunId(deviceRunId)?.deviceRuns.find((deviceRun) => deviceRun.id === deviceRunId)
   }
 
-  private async createExecutor(onEvent: (event: RpaRunStepEvent) => void): Promise<RpaTaskExecutorLike> {
+  private async createExecutor(
+    onEvent: (event: RpaRunStepEvent) => void,
+    safetyApproval?: RpaSafetyApproval
+  ): Promise<RpaTaskExecutorLike> {
     if (this.options.executorFactory) {
-      return this.options.executorFactory(onEvent)
+      return this.options.executorFactory(onEvent, { safetyApproval })
     }
 
     const [{ RpaTaskExecutor }, { defaultRpaModuleRegistry }, { rpaDeviceRuntime }] = await Promise.all([
@@ -262,6 +305,8 @@ export class RpaBatchRunner {
     return new RpaTaskExecutor({
       registry: defaultRpaModuleRegistry,
       runtime: rpaDeviceRuntime,
+      safetyPolicyEngine: this.options.safetyPolicyEngine ?? rpaSafetyPolicyEngine,
+      safetyApproval,
       onEvent
     })
   }

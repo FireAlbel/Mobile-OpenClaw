@@ -18,7 +18,11 @@ function runtime(overrides: Partial<RpaDeviceRuntime> = {}): RpaDeviceRuntime {
     key: vi.fn(),
     startApp: vi.fn(),
     getForegroundApp: vi.fn(),
-    getScreenSize: vi.fn(),
+    getScreenSize: vi.fn().mockResolvedValue({
+      success: true,
+      message: 'screen size',
+      data: { width: 1080, height: 2400 }
+    }),
     handlePermissionDialog: vi.fn().mockResolvedValue({
       success: true,
       message: 'handled',
@@ -28,6 +32,11 @@ function runtime(overrides: Partial<RpaDeviceRuntime> = {}): RpaDeviceRuntime {
       success: true,
       message: 'vision ok',
       data: { action: 'tap' }
+    }),
+    locateVisualTarget: vi.fn().mockResolvedValue({
+      success: true,
+      message: 'target found',
+      data: { found: true, confidence: 0.95, reason: 'visible' }
     }),
     ...overrides
   } as RpaDeviceRuntime
@@ -93,7 +102,22 @@ describe('RpaP1Modules', () => {
   })
 
   it('runs bounded VLM swipe attempts', async () => {
-    const testRuntime = runtime()
+    const locateVisualTarget = vi
+      .fn()
+      .mockResolvedValueOnce({
+        success: true,
+        message: 'not found',
+        data: { found: false, confidence: 0.9, reason: 'not visible' }
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        message: 'found',
+        data: { found: true, confidence: 0.95, reason: 'visible' }
+      })
+    const testRuntime = runtime({
+      locateVisualTarget,
+      swipe: vi.fn().mockResolvedValue({ success: true, message: 'swiped' })
+    })
 
     const result = await swipeUntilVlmTargetModule.execute(context(testRuntime), {
       target: 'task card',
@@ -102,7 +126,28 @@ describe('RpaP1Modules', () => {
     })
 
     expect(result.success).toBe(true)
-    expect(testRuntime.visionInstruction).toHaveBeenCalledTimes(2)
+    expect(locateVisualTarget).toHaveBeenCalledTimes(2)
+    expect(testRuntime.swipe).toHaveBeenCalledTimes(1)
+  })
+
+  it('fails when the target is still missing after bounded search', async () => {
+    const testRuntime = runtime({
+      locateVisualTarget: vi.fn().mockResolvedValue({
+        success: true,
+        message: 'not found',
+        data: { found: false, confidence: 0.9, reason: 'not visible' }
+      }),
+      swipe: vi.fn().mockResolvedValue({ success: true, message: 'swiped' })
+    })
+
+    const result = await swipeUntilVlmTargetModule.execute(context(testRuntime), {
+      target: 'task card',
+      direction: 'up',
+      maxAttempts: 2
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.message).toContain('not found after 2 attempts')
   })
 
   it('preserves vision requests that need human intervention', async () => {

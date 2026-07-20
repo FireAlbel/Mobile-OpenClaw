@@ -71,9 +71,19 @@ export const waitModule: RpaActionModule<{ durationMs: number }> = {
   paramsSchema: z.object({
     durationMs: z.number().int().min(0).max(60_000)
   }),
-  async execute(_context, params) {
+  async execute(context, params) {
     const startedAt = now()
-    await new Promise((resolve) => setTimeout(resolve, params.durationMs))
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        context.signal?.removeEventListener('abort', onAbort)
+        resolve()
+      }, params.durationMs)
+      const onAbort = () => {
+        clearTimeout(timeout)
+        reject(context.signal?.reason ?? new Error('Wait aborted'))
+      }
+      context.signal?.addEventListener('abort', onAbort, { once: true })
+    })
     return {
       success: true,
       status: 'passed',

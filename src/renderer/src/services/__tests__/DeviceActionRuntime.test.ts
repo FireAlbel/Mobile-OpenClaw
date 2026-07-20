@@ -79,7 +79,7 @@ describe('DeviceActionRuntime', () => {
 
     expect(result.success).toBe(true)
     expect(result.data).toMatchObject({ source: 'scrcpy_stream', imageBase64: 'stream' })
-    expect(getLatestFrameMock).toHaveBeenCalledWith('device-1')
+    expect(getLatestFrameMock).toHaveBeenCalledWith('device-1', { maxAgeMs: 1_000 })
     expect(getScreenshotMock).not.toHaveBeenCalled()
     expect(captureScrcpyWindowMock).not.toHaveBeenCalled()
   })
@@ -93,6 +93,21 @@ describe('DeviceActionRuntime', () => {
 
     expect(result.success).toBe(true)
     expect(result.data).toMatchObject({ source: 'adb', imageBase64: 'adb' })
+  })
+
+  it('does not fall back to ADB when scrcpy evidence is required', async () => {
+    getLatestFrameMock.mockRejectedValue(new Error('stream unavailable'))
+    const runtime = new DeviceActionRuntime()
+
+    const result = await runtime.execute('device-1', {
+      type: 'screenshot',
+      params: { requireScrcpy: true, maxAgeMs: 500 }
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.message).toContain('stream unavailable')
+    expect(getLatestFrameMock).toHaveBeenCalledWith('device-1', { maxAgeMs: 500 })
+    expect(getScreenshotMock).not.toHaveBeenCalled()
   })
 
   it('rejects invalid package names before app start', async () => {

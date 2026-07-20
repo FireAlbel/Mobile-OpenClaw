@@ -45,6 +45,14 @@ describe('RpaModuleRegistry', () => {
     expect(() => registry.register(testModule())).toThrow('Duplicate RPA module id')
   })
 
+  it('rejects modules without explicit safety risk metadata', () => {
+    const registry = new RpaModuleRegistry()
+    const unsafeMetadata = testModule()
+    unsafeMetadata.metadata.riskLevel = undefined as never
+
+    expect(() => registry.register(unsafeMetadata)).toThrow('must declare a valid risk level')
+  })
+
   it('validates module params', () => {
     const registry = new RpaModuleRegistry()
     registry.register(testModule())

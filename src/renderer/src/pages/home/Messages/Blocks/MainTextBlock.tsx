@@ -1,4 +1,5 @@
 import { useSettings } from '@renderer/hooks/useSettings'
+import RpaInlineWorkflow from '@renderer/pages/device/RpaInlineWorkflow'
 import { getModelUniqId } from '@renderer/services/ModelService'
 import type { RootState } from '@renderer/store'
 import { selectFormattedCitationsByBlockId } from '@renderer/store/messageBlock'
@@ -17,9 +18,10 @@ interface Props {
   citationBlockId?: string
   mentions?: Model[]
   role: Message['role']
+  message?: Message
 }
 
-const MainTextBlock: React.FC<Props> = ({ block, citationBlockId, role, mentions = [] }) => {
+const MainTextBlock: React.FC<Props> = ({ block, citationBlockId, role, message, mentions = [] }) => {
   // Use the passed citationBlockId directly in the selector
   const { renderInputMessageAsMarkdown } = useSettings()
 
@@ -57,6 +59,7 @@ const MainTextBlock: React.FC<Props> = ({ block, citationBlockId, role, mentions
       ) : (
         <Markdown block={block} postProcess={processContent} />
       )}
+      {block.metadata?.rpaTask && message && <RpaInlineWorkflow block={block} message={message} />}
     </>
   )
 }

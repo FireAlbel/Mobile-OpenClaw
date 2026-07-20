@@ -72,6 +72,7 @@ import powerMonitorService from './services/PowerMonitorService'
 import { proxyManager } from './services/ProxyManager'
 import { pythonService } from './services/PythonService'
 import { FileServiceManager } from './services/remotefile/FileServiceManager'
+import { rpaDebugExportService } from './services/RpaDebugExportService'
 import { rpaRunStorageService } from './services/RpaRunStorageService'
 import { searchService } from './services/SearchService'
 import { SelectionService } from './services/SelectionService'
@@ -1157,6 +1158,7 @@ export async function registerIpc(mainWindow: BrowserWindow, app: Electron.App) 
 
   ipcMain.handle(IpcChannel.Rpa_LoadRuns, () => rpaRunStorageService.loadRuns())
   ipcMain.handle(IpcChannel.Rpa_SaveRuns, (_, runs: unknown[]) => rpaRunStorageService.saveRuns(runs))
+  ipcMain.handle(IpcChannel.Rpa_ExportDebugBundle, (_, payload) => rpaDebugExportService.exportBundle(payload))
 
   ipcMain.handle(IpcChannel.APP_CrashRenderProcess, () => {
     mainWindow.webContents.forcefullyCrashRenderer()

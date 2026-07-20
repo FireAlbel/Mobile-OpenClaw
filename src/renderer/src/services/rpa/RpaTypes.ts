@@ -7,6 +7,122 @@ export type RpaVerificationStatus = 'passed' | 'failed' | 'uncertain' | 'skipped
 
 export type RpaRiskLevel = 'low' | 'medium' | 'high'
 
+export type RpaSafetyDecisionType = 'allow' | 'delay' | 'confirmation_required' | 'blocked'
+
+export interface RpaModuleSafetyMetadata {
+  requiresConfirmation?: boolean
+  rateLimitCategory?: string
+  textParamPaths?: string[]
+}
+
+export interface RpaSafetyDecision {
+  decision: RpaSafetyDecisionType
+  riskLevel: RpaRiskLevel
+  target: string
+  reason: string
+  evaluatedAt: number
+  delayMs?: number
+  rateLimit?: {
+    scope: 'device' | 'task'
+    limit: number
+    windowMs: number
+    current: number
+  }
+}
+
+export interface RpaSafetyApproval {
+  id: string
+  taskId: string
+  taskFingerprint: string
+  approvedTargets: string[]
+  deviceIds: string[]
+  grantedAt: number
+  expiresAt: number
+}
+
+export interface RpaTaskRiskSummary {
+  highestRisk: RpaRiskLevel
+  highRiskTargets: string[]
+  mediumRiskTargets: string[]
+}
+
+export const RpaCorrectionActionSchema = z.discriminatedUnion('type', [
+  z.object({
+    id: z.string().min(1),
+    type: z.literal('tap'),
+    x: z.number().int().min(0),
+    y: z.number().int().min(0)
+  }),
+  z.object({
+    id: z.string().min(1),
+    type: z.literal('swipe'),
+    x1: z.number().int().min(0),
+    y1: z.number().int().min(0),
+    x2: z.number().int().min(0),
+    y2: z.number().int().min(0),
+    durationMs: z.number().int().min(100).max(5_000).default(500)
+  }),
+  z.object({
+    id: z.string().min(1),
+    type: z.literal('key'),
+    key: z.enum(['back', 'home', 'enter', 'recent_apps'])
+  }),
+  z.object({
+    id: z.string().min(1),
+    type: z.literal('start_app'),
+    packageName: z.string().regex(/^[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+$/)
+  }),
+  z.object({
+    id: z.string().min(1),
+    type: z.literal('wait'),
+    durationMs: z.number().int().min(100).max(10_000)
+  }),
+  z.object({
+    id: z.string().min(1),
+    type: z.literal('permission_action'),
+    action: z.enum(['allow', 'deny', 'allow_once'])
+  })
+])
+
+const RpaCorrectionDecisionBaseSchema = z.object({
+  reason: z.string().min(1),
+  confidence: z.number().min(0).max(1)
+})
+
+export const RpaCorrectionDecisionSchema = z.discriminatedUnion('decision', [
+  RpaCorrectionDecisionBaseSchema.extend({
+    decision: z.literal('execute_actions'),
+    actions: z.array(RpaCorrectionActionSchema).min(1).max(5),
+    expectedOutcome: z.string().min(1)
+  }),
+  RpaCorrectionDecisionBaseSchema.extend({
+    decision: z.literal('replan'),
+    objective: z.string().min(1)
+  }),
+  RpaCorrectionDecisionBaseSchema.extend({
+    decision: z.literal('human_required'),
+    interventionCode: z.string().min(1)
+  }),
+  RpaCorrectionDecisionBaseSchema.extend({
+    decision: z.literal('goal_achieved'),
+    evidence: z.string().min(1)
+  })
+])
+
+export type RpaCorrectionAction = z.infer<typeof RpaCorrectionActionSchema>
+export type RpaCorrectionDecision = z.infer<typeof RpaCorrectionDecisionSchema>
+
+export type RpaRunEventPhase =
+  | 'original_step'
+  | 'original_failure'
+  | 'correction_observation'
+  | 'correction_decision'
+  | 'temporary_action'
+  | 'temporary_step'
+  | 'correction_verification'
+  | 'correction_terminal'
+  | 'safety_policy'
+
 export const RpaRetryPolicySchema = z.object({
   maxAttempts: z.number().int().min(1).max(10).default(1),
   backoffMs: z.number().int().min(0).max(60_000).default(0),
@@ -44,6 +160,12 @@ export const RpaVerificationSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('observation_has_screenshot')
+  }),
+  z.object({
+    type: z.literal('vlm_assert'),
+    expectation: z.string().min(1),
+    minConfidence: z.number().min(0).max(1).default(0.7),
+    settleMs: z.number().int().min(0).max(10_000).default(1200)
   })
 ])
 
@@ -76,7 +198,7 @@ export const RpaTaskSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   goal: z.string().min(1),
-  deviceIds: z.array(z.string().min(1)).min(1),
+  deviceIds: z.array(z.string().min(1)),
   steps: z.array(RpaStepSchema).min(1),
   retry: RpaRetryPolicySchema.optional(),
   timeout: RpaTimeoutPolicySchema.optional(),
@@ -109,6 +231,7 @@ export interface RpaModuleMetadata {
   defaultTimeoutMs: number
   defaultRetry: RpaRetryPolicy
   plannerHints?: string[]
+  safety?: RpaModuleSafetyMetadata
 }
 
 export interface RpaModuleExecutionContext {
@@ -192,6 +315,25 @@ export interface RpaDeviceRuntime {
     model?: Model,
     signal?: AbortSignal
   ): Promise<RpaDeviceRuntimeResult>
+  locateVisualTarget(
+    deviceId: string,
+    target: string,
+    model?: Model,
+    signal?: AbortSignal
+  ): Promise<
+    RpaDeviceRuntimeResult<{
+      found: boolean
+      confidence: number
+      reason: string
+      needsHuman?: boolean
+      rawResponse?: string
+    }>
+  >
+  executeCorrectionAction(
+    deviceId: string,
+    action: RpaCorrectionAction,
+    signal?: AbortSignal
+  ): Promise<RpaDeviceRuntimeResult<{ transport: string; action: RpaCorrectionAction; result?: unknown }>>
 }
 
 export interface RpaActionModule<TParams = unknown> {
@@ -209,6 +351,13 @@ export interface RpaRunStepEvent {
   attempt: number
   message: string
   timestamp: number
+  phase?: RpaRunEventPhase
+  recoveryRound?: number
+  parentStepId?: string
+  temporary?: boolean
+  action?: RpaCorrectionAction
+  verification?: RpaVerificationResult
+  safety?: RpaSafetyDecision
   data?: unknown
 }
 

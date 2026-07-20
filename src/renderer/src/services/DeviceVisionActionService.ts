@@ -1,4 +1,3 @@
-import { loggerService } from '@logger'
 import { isVisionModel } from '@renderer/config/models'
 import { fetchChatCompletion } from '@renderer/services/ApiService'
 import { getDefaultAssistant, getDefaultModel } from '@renderer/services/AssistantService'
@@ -11,7 +10,6 @@ import { type DeviceScreenshot, deviceServiceProxy } from './DeviceServiceProxy'
 import { parseFirstJsonValue } from './JsonExtraction'
 import { scrcpyFrameService } from './ScrcpyFrameService'
 
-const logger = loggerService.withContext('DeviceVisionActionService')
 type VisionActionKind = 'tap' | 'swipe'
 
 export interface VisionTapAction {
@@ -162,12 +160,7 @@ async function executeDeviceAction(deviceId: string, action: VisionAction): Prom
 }
 
 async function captureVisionScreen(deviceId: string): Promise<DeviceScreenshot> {
-  try {
-    return await scrcpyFrameService.getLatestFrame(deviceId, { maxAgeMs: 1_000 })
-  } catch (error) {
-    logger.warn('Scrcpy vision frame unavailable, falling back to ADB screenshot', { error, deviceId })
-    return await deviceServiceProxy.getScreenshot(deviceId)
-  }
+  return await scrcpyFrameService.getLatestFrame(deviceId, { maxAgeMs: 1_000 })
 }
 
 async function requestModelText(
@@ -232,7 +225,7 @@ function createRepairMessages(rawResponse: string, error: unknown, allowedAction
 
 function createVisionMessages(capture: DeviceScreenshot, instruction: string, takeoverReason?: string): ModelMessage[] {
   const systemPrompt = [
-    'You control one Android phone by looking at an ADB screenshot of its current screen.',
+    'You control one Android phone by looking at a fresh scrcpy video frame of its current screen.',
     'Return exactly one JSON object and no other text.',
     'Use screenshot pixel coordinates, with origin at the top-left of the screenshot.',
     'Allowed actions are tap and swipe.',

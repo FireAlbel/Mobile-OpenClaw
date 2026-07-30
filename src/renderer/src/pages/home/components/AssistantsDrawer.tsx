@@ -1,5 +1,4 @@
 import { TopView } from '@renderer/components/TopView'
-import { isMac } from '@renderer/config/constant'
 import { useTimer } from '@renderer/hooks/useTimer'
 import type { Assistant, Topic } from '@renderer/types'
 import { Drawer } from 'antd'
@@ -9,9 +8,9 @@ import HomeTabs from '../Tabs'
 
 interface ShowParams {
   activeAssistant: Assistant
-  setActiveAssistant: (assistant: Assistant) => void
   activeTopic: Topic
   setActiveTopic: (topic: Topic) => void
+  onOpenDeviceManagement: () => void
 }
 
 interface Props extends ShowParams {
@@ -20,9 +19,9 @@ interface Props extends ShowParams {
 
 const PopupContainer: React.FC<Props> = ({
   activeAssistant,
-  setActiveAssistant,
   activeTopic,
   setActiveTopic,
+  onOpenDeviceManagement,
   resolve
 }) => {
   const [open, setOpen] = useState(true)
@@ -38,37 +37,36 @@ const PopupContainer: React.FC<Props> = ({
   return (
     <Drawer
       title={null}
-      height="100vh"
       placement="left"
       open={open}
       onClose={onClose}
+      rootStyle={{ top: 'var(--navbar-height)', height: 'calc(100vh - var(--navbar-height))' }}
       style={{ width: 'var(--assistants-width)' }}
       styles={{
         header: { display: 'none' },
         body: {
           display: 'flex',
           padding: 0,
-          paddingTop: isMac ? 'var(--navbar-height)' : 0,
-          height: 'calc(100vh - var(--navbar-height))',
+          height: '100%',
           overflow: 'hidden',
           backgroundColor: 'var(--color-background-opacity)'
         },
         wrapper: {
-          width: 'var(--assistants-width)'
+          width: 'var(--assistants-width)',
+          height: '100%'
         }
       }}>
       <HomeTabs
         activeAssistant={activeAssistant}
         activeTopic={activeTopic}
-        setActiveAssistant={(assistant) => {
-          setActiveAssistant(assistant)
-          onClose()
-        }}
         setActiveTopic={(topic) => {
           setActiveTopic(topic)
           onClose()
         }}
-        position="left"
+        onOpenDeviceManagement={() => {
+          onOpenDeviceManagement()
+          onClose()
+        }}
       />
     </Drawer>
   )

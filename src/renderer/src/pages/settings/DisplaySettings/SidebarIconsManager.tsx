@@ -1,24 +1,17 @@
 import { CloseOutlined } from '@ant-design/icons'
 import type { DraggableProvided, DroppableProvided, DropResult } from '@hello-pangea/dnd'
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd'
+import {
+  normalizeRpaPrimarySidebarIcons,
+  REQUIRED_SIDEBAR_ICONS,
+  RPA_PRIMARY_SIDEBAR_ICONS
+} from '@renderer/config/sidebar'
 import { getSidebarIconLabel } from '@renderer/i18n/label'
 import { useAppDispatch } from '@renderer/store'
 import { setSidebarIcons } from '@renderer/store/settings'
 import type { SidebarIcon } from '@renderer/types/sidebar'
 import { message } from 'antd'
-import {
-  Bot,
-  Code,
-  FileSearch,
-  Folder,
-  Languages,
-  LayoutGrid,
-  MessageSquareQuote,
-  NotepadText,
-  Palette,
-  Sparkle,
-  Workflow
-} from 'lucide-react'
+import { LayoutGrid, MessageSquareQuote, Workflow } from 'lucide-react'
 import type { FC, ReactNode } from 'react'
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -32,14 +25,18 @@ interface SidebarIconsManagerProps {
 }
 
 const SidebarIconsManager: FC<SidebarIconsManagerProps> = ({
-  visibleIcons,
-  disabledIcons,
+  visibleIcons: configuredVisibleIcons,
+  disabledIcons: configuredDisabledIcons,
   setVisibleIcons,
   setDisabledIcons
 }) => {
   const { t } = useTranslation()
 
   const dispatch = useAppDispatch()
+  const visibleIcons = normalizeRpaPrimarySidebarIcons(configuredVisibleIcons)
+  const disabledIcons = configuredDisabledIcons.filter(
+    (icon) => RPA_PRIMARY_SIDEBAR_ICONS.has(icon) && !visibleIcons.includes(icon)
+  )
 
   const onDragEnd = useCallback(
     (result: DropResult) => {
@@ -49,7 +46,7 @@ const SidebarIconsManager: FC<SidebarIconsManagerProps> = ({
 
       // 如果是chat图标且目标是disabled区域,则不允许移动并提示
       const draggedItem = source.droppableId === 'visible' ? visibleIcons[source.index] : disabledIcons[source.index]
-      if (draggedItem === 'assistants' && destination.droppableId === 'disabled') {
+      if (REQUIRED_SIDEBAR_ICONS.includes(draggedItem) && destination.droppableId === 'disabled') {
         message.warning(t('settings.display.sidebar.chat.hiddenMessage'))
         return
       }
@@ -89,7 +86,7 @@ const SidebarIconsManager: FC<SidebarIconsManagerProps> = ({
   const onMoveIcon = useCallback(
     (icon: SidebarIcon, fromList: 'visible' | 'disabled') => {
       // 如果是chat图标且要移动到disabled列表,则不允许并提示
-      if (icon === 'assistants' && fromList === 'visible') {
+      if (REQUIRED_SIDEBAR_ICONS.includes(icon) && fromList === 'visible') {
         message.warning(t('settings.display.sidebar.chat.hiddenMessage'))
         return
       }
@@ -118,17 +115,9 @@ const SidebarIconsManager: FC<SidebarIconsManagerProps> = ({
     () =>
       ({
         assistants: <MessageSquareQuote size={16} />,
-        store: <Sparkle size={16} />,
-        paintings: <Palette size={16} />,
-        translate: <Languages size={16} />,
-        minapp: <LayoutGrid size={16} />,
-        knowledge: <FileSearch size={16} />,
-        files: <Folder size={16} />,
-        notes: <NotepadText size={16} />,
-        code_tools: <Code size={16} />,
-        openclaw: <Bot size={16} />,
-        taskflow: <Workflow size={16} />
-      }) satisfies Record<SidebarIcon, ReactNode>,
+        rpa_roles: <LayoutGrid size={16} />,
+        rpa_templates: <Workflow size={16} />
+      }) satisfies Partial<Record<SidebarIcon, ReactNode>>,
     []
   )
 
@@ -150,7 +139,7 @@ const SidebarIconsManager: FC<SidebarIconsManagerProps> = ({
                           {renderIcon(icon)}
                           <span>{getSidebarIconLabel(icon)}</span>
                         </IconContent>
-                        {icon !== 'assistants' && (
+                        {!REQUIRED_SIDEBAR_ICONS.includes(icon) && (
                           <CloseButton onClick={() => onMoveIcon(icon, 'visible')}>
                             <CloseOutlined />
                           </CloseButton>

@@ -1,4 +1,3 @@
-import { CLAUDE_SUPPORTED_PROVIDERS } from '@renderer/pages/code'
 import type { AzureOpenAIProvider, ProviderType, VertexProvider } from '@renderer/types'
 import { isSystemProvider, type Provider, type SystemProviderId, SystemProviderIds } from '@renderer/types'
 
@@ -209,3 +208,21 @@ export const isSupportAnthropicPromptCacheProvider = (provider: Provider) => {
     isAzureOpenAIProvider(provider)
   )
 }
+const CLAUDE_SUPPORTED_PROVIDERS = [
+  'aihubmix',
+  'dmxapi',
+  'new-api',
+  'cherryin',
+  '302ai',
+  'deepseek',
+  'moonshot',
+  'zhipu',
+  'dashscope',
+  'modelscope',
+  'minimax',
+  'longcat',
+  SystemProviderIds.qiniu,
+  SystemProviderIds.silicon,
+  SystemProviderIds.mimo,
+  SystemProviderIds.openrouter
+]

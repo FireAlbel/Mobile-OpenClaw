@@ -32,7 +32,9 @@ const OcrResponseSchema = z.object({
     ocrResults: z.array(
       z.object({
         prunedResult: z.object({
-          rec_texts: z.array(z.string())
+          rec_texts: z.array(z.string()),
+          rec_scores: z.array(z.number()).optional(),
+          rec_boxes: z.array(z.tuple([z.number(), z.number(), z.number(), z.number()])).optional()
         })
       })
     )
@@ -90,9 +92,23 @@ export class PpocrService extends OcrBaseService {
       const data = await response.json()
 
       const validatedResponse = OcrResponseSchema.parse(data)
-      const recTexts = validatedResponse.result.ocrResults[0].prunedResult.rec_texts
+      const prunedResult = validatedResponse.result.ocrResults[0].prunedResult
+      const recTexts = prunedResult.rec_texts
 
-      return { text: recTexts.join('\n') }
+      return {
+        text: recTexts.join('\n'),
+        blocks: prunedResult.rec_boxes?.flatMap((bounds, index) => {
+          const text = recTexts[index]?.trim()
+          if (!text) return []
+          return [
+            {
+              text,
+              confidence: prunedResult.rec_scores?.[index] ?? 0.5,
+              bounds: { left: bounds[0], top: bounds[1], right: bounds[2], bottom: bounds[3] }
+            }
+          ]
+        })
+      }
     } catch (error: any) {
       throw new Error(`OCR service error: ${error.message}`)
     }

@@ -10,7 +10,6 @@ import anthropicService from '@main/services/AnthropicService'
 import { getIpCountry } from '@main/utils/ipService'
 import {
   autoDiscoverGitBash,
-  checkGitAvailable,
   getBinaryPath,
   getGitBashPathInfo,
   isBinaryExists,
@@ -48,7 +47,6 @@ import appService from './services/AppService'
 import AppUpdater from './services/AppUpdater'
 import BackupManager from './services/BackupManager'
 import CherryINOAuthService from './services/CherryINOAuthService'
-import { codeToolsService } from './services/CodeToolsService'
 import { ConfigKeys, configManager } from './services/ConfigManager'
 import CopilotService from './services/CopilotService'
 import DxtService from './services/DxtService'
@@ -66,14 +64,27 @@ import NotificationService from './services/NotificationService'
 import * as NutstoreService from './services/NutstoreService'
 import ObsidianVaultService from './services/ObsidianVaultService'
 import { ocrService } from './services/ocr/OcrService'
-import { openClawService } from './services/OpenClawService'
 import { isOvmsSupported } from './services/OvmsManager'
 import powerMonitorService from './services/PowerMonitorService'
 import { proxyManager } from './services/ProxyManager'
 import { pythonService } from './services/PythonService'
 import { FileServiceManager } from './services/remotefile/FileServiceManager'
+import { rpaAppRoleStorageService } from './services/RpaAppRoleStorageService'
+import { rpaArtifactStorageService } from './services/RpaArtifactStorageService'
+import { rpaAssistantProfileStorageService } from './services/RpaAssistantProfileStorageService'
 import { rpaDebugExportService } from './services/RpaDebugExportService'
+import { rpaDslSessionStorageService } from './services/RpaDslSessionStorageService'
+import { rpaFailureFingerprintStorageService } from './services/RpaFailureFingerprintStorageService'
+import { rpaImprovementProposalStorageService } from './services/RpaImprovementProposalStorageService'
+import { rpaKnowledgeStorageService } from './services/RpaKnowledgeStorageService'
+import { rpaRolePromptStorageService } from './services/RpaRolePromptStorageService'
 import { rpaRunStorageService } from './services/RpaRunStorageService'
+import { rpaSecureHttpTransportService } from './services/RpaSecureHttpTransportService'
+import { rpaSessionSupplementStorageService } from './services/RpaSessionSupplementStorageService'
+import { rpaSkillStorageService } from './services/RpaSkillStorageService'
+import { rpaSupplementContextStorageService } from './services/RpaSupplementContextStorageService'
+import { rpaTaskFlowSchedulerService } from './services/RpaTaskFlowSchedulerService'
+import { rpaTemplateStorageService } from './services/RpaTemplateStorageService'
 import { searchService } from './services/SearchService'
 import { SelectionService } from './services/SelectionService'
 import { registerShortcuts, unregisterAllShortcuts } from './services/ShortcutService'
@@ -93,19 +104,10 @@ import {
 import storeSyncService from './services/StoreSyncService'
 import { themeService } from './services/ThemeService'
 import VertexAIService from './services/VertexAIService'
-import { setOpenLinkExternal } from './services/WebviewService'
 import { windowService } from './services/WindowService'
 import { calculateDirectorySize, getDataPath, getResourcePath } from './utils'
 import { decrypt, encrypt } from './utils/aes'
-import {
-  getCacheDir,
-  getConfigDir,
-  getFilesDir,
-  getNotesDir,
-  hasWritePermission,
-  isPathInside,
-  untildify
-} from './utils/file'
+import { getCacheDir, getConfigDir, getFilesDir, hasWritePermission, isPathInside, untildify } from './utils/file'
 import { updateAppDataConfig } from './utils/init'
 import { closeAllDataConnections } from './utils/lifecycle'
 import { getCpuName, getDeviceType, getHostname } from './utils/system'
@@ -162,7 +164,6 @@ export async function registerIpc(mainWindow: BrowserWindow, app: Electron.App) 
     isPackaged: app.isPackaged,
     appPath: app.getAppPath(),
     filesPath: getFilesDir(),
-    notesPath: getNotesDir(),
     configPath: getConfigDir(),
     appDataPath: app.getPath('userData'),
     resourcesPath: getResourcePath(),
@@ -654,9 +655,7 @@ export async function registerIpc(mainWindow: BrowserWindow, app: Electron.App) 
   ipcMain.handle(IpcChannel.File_IsTextFile, fileManager.isTextFile.bind(fileManager))
   ipcMain.handle(IpcChannel.File_IsDirectory, fileManager.isDirectory.bind(fileManager))
   ipcMain.handle(IpcChannel.File_ListDirectory, fileManager.listDirectory.bind(fileManager))
-  ipcMain.handle(IpcChannel.File_GetDirectoryStructure, fileManager.getDirectoryStructure.bind(fileManager))
   ipcMain.handle(IpcChannel.File_CheckFileName, fileManager.fileNameGuard.bind(fileManager))
-  ipcMain.handle(IpcChannel.File_ValidateNotesDirectory, fileManager.validateNotesDirectory.bind(fileManager))
   ipcMain.handle(IpcChannel.File_StartWatcher, fileManager.startFileWatcher.bind(fileManager))
   ipcMain.handle(IpcChannel.File_StopWatcher, fileManager.stopFileWatcher.bind(fileManager))
   ipcMain.handle(IpcChannel.File_PauseWatcher, fileManager.pauseFileWatcher.bind(fileManager))
@@ -906,27 +905,6 @@ export async function registerIpc(mainWindow: BrowserWindow, app: Electron.App) 
     return await searchService.openUrlInSearchWindow(uid, url)
   })
 
-  // webview
-  ipcMain.handle(IpcChannel.Webview_SetOpenLinkExternal, (_, webviewId: number, isExternal: boolean) =>
-    setOpenLinkExternal(webviewId, isExternal)
-  )
-  ipcMain.handle(IpcChannel.Webview_SetSpellCheckEnabled, (_, webviewId: number, isEnable: boolean) => {
-    const webview = webContents.fromId(webviewId)
-    if (!webview) return
-    webview.session.setSpellCheckerEnabled(isEnable)
-  })
-
-  // Webview print and save handlers
-  ipcMain.handle(IpcChannel.Webview_PrintToPDF, async (_, webviewId: number) => {
-    const { printWebviewToPDF } = await import('./services/WebviewService')
-    return await printWebviewToPDF(webviewId)
-  })
-
-  ipcMain.handle(IpcChannel.Webview_SaveAsHTML, async (_, webviewId: number) => {
-    const { saveWebviewAsHTML } = await import('./services/WebviewService')
-    return await saveWebviewAsHTML(webviewId)
-  })
-
   // store sync
   storeSyncService.registerIpcHandler()
 
@@ -998,19 +976,6 @@ export async function registerIpc(mainWindow: BrowserWindow, app: Electron.App) 
 
   // ExternalApps
   ipcMain.handle(IpcChannel.ExternalApps_DetectInstalled, () => externalAppsService.detectInstalledApps())
-
-  // CodeTools
-  ipcMain.handle(IpcChannel.CodeTools_Run, codeToolsService.run)
-  ipcMain.handle(IpcChannel.CodeTools_GetAvailableTerminals, () => codeToolsService.getAvailableTerminalsForPlatform())
-  ipcMain.handle(IpcChannel.CodeTools_SetCustomTerminalPath, (_, terminalId: string, path: string) =>
-    codeToolsService.setCustomTerminalPath(terminalId, path)
-  )
-  ipcMain.handle(IpcChannel.CodeTools_GetCustomTerminalPath, (_, terminalId: string) =>
-    codeToolsService.getCustomTerminalPath(terminalId)
-  )
-  ipcMain.handle(IpcChannel.CodeTools_RemoveCustomTerminalPath, (_, terminalId: string) =>
-    codeToolsService.removeCustomTerminalPath(terminalId)
-  )
 
   // OCR
   ipcMain.handle(IpcChannel.OCR_ocr, (_, file: SupportedOcrFile, provider: OcrProvider) =>
@@ -1158,28 +1123,66 @@ export async function registerIpc(mainWindow: BrowserWindow, app: Electron.App) 
 
   ipcMain.handle(IpcChannel.Rpa_LoadRuns, () => rpaRunStorageService.loadRuns())
   ipcMain.handle(IpcChannel.Rpa_SaveRuns, (_, runs: unknown[]) => rpaRunStorageService.saveRuns(runs))
+  ipcMain.handle(IpcChannel.Rpa_LoadAssistantProfiles, () => rpaAssistantProfileStorageService.loadProfiles())
+  ipcMain.handle(IpcChannel.Rpa_SaveAssistantProfiles, (_, profiles: unknown[]) =>
+    rpaAssistantProfileStorageService.saveProfiles(profiles)
+  )
+  ipcMain.handle(IpcChannel.Rpa_LoadAppRoles, () => rpaAppRoleStorageService.loadRoles())
+  ipcMain.handle(IpcChannel.Rpa_SaveAppRoles, (_, roles: unknown[]) => rpaAppRoleStorageService.saveRoles(roles))
+  ipcMain.handle(IpcChannel.Rpa_LoadRolePrompts, () => rpaRolePromptStorageService.loadPrompts())
+  ipcMain.handle(IpcChannel.Rpa_SaveRolePrompts, (_, prompts: unknown[]) =>
+    rpaRolePromptStorageService.savePrompts(prompts)
+  )
+  ipcMain.handle(IpcChannel.Rpa_SecureHttpFetch, (_, request) => rpaSecureHttpTransportService.fetch(request))
+  ipcMain.handle(IpcChannel.Rpa_LoadDslSessions, () => rpaDslSessionStorageService.loadSessions())
+  ipcMain.handle(IpcChannel.Rpa_SaveDslSessions, (_, sessions: unknown[]) =>
+    rpaDslSessionStorageService.saveSessions(sessions)
+  )
+  ipcMain.handle(IpcChannel.Rpa_LoadSessionSupplements, () => rpaSessionSupplementStorageService.loadRecords())
+  ipcMain.handle(IpcChannel.Rpa_SaveSessionSupplements, (_, records: unknown[]) =>
+    rpaSessionSupplementStorageService.saveRecords(records)
+  )
+  ipcMain.handle(IpcChannel.Rpa_LoadSupplementContext, () => rpaSupplementContextStorageService.loadState())
+  ipcMain.handle(IpcChannel.Rpa_SaveSupplementContext, (_, state: unknown) =>
+    rpaSupplementContextStorageService.saveState(state)
+  )
+  ipcMain.handle(IpcChannel.Rpa_LoadKnowledgeEntries, () => rpaKnowledgeStorageService.loadEntries())
+  ipcMain.handle(IpcChannel.Rpa_SaveKnowledgeEntries, (_, entries: unknown[]) =>
+    rpaKnowledgeStorageService.saveEntries(entries)
+  )
+  ipcMain.handle(IpcChannel.Rpa_LoadArtifacts, () => rpaArtifactStorageService.loadArtifacts())
+  ipcMain.handle(IpcChannel.Rpa_SaveArtifacts, (_, artifacts: unknown[]) =>
+    rpaArtifactStorageService.saveArtifacts(artifacts)
+  )
+  ipcMain.handle(IpcChannel.Rpa_LoadTemplates, () => rpaTemplateStorageService.loadTemplates())
+  ipcMain.handle(IpcChannel.Rpa_SaveTemplates, (_, templates: unknown[]) =>
+    rpaTemplateStorageService.saveTemplates(templates)
+  )
+  ipcMain.handle(IpcChannel.Rpa_LoadTaskFlowSchedules, () => rpaTaskFlowSchedulerService.getSchedules())
+  ipcMain.handle(IpcChannel.Rpa_SaveTaskFlowSchedules, (_, schedules: unknown[]) =>
+    rpaTaskFlowSchedulerService.saveSchedules(schedules)
+  )
+  ipcMain.handle(IpcChannel.Rpa_TriggerTaskFlowSchedule, (_, scheduleId: string) =>
+    rpaTaskFlowSchedulerService.triggerNow(scheduleId)
+  )
+  ipcMain.handle(IpcChannel.Rpa_CompleteTaskFlowTrigger, (_, result) =>
+    rpaTaskFlowSchedulerService.completeTrigger(result)
+  )
+  ipcMain.handle(IpcChannel.Rpa_LoadSkills, () => rpaSkillStorageService.loadSkills())
+  ipcMain.handle(IpcChannel.Rpa_SaveSkills, (_, skills: unknown[]) => rpaSkillStorageService.saveSkills(skills))
+  ipcMain.handle(IpcChannel.Rpa_LoadImprovementProposals, () => rpaImprovementProposalStorageService.loadProposals())
+  ipcMain.handle(IpcChannel.Rpa_SaveImprovementProposals, (_, proposals: unknown[]) =>
+    rpaImprovementProposalStorageService.saveProposals(proposals)
+  )
+  ipcMain.handle(IpcChannel.Rpa_LoadFailureFingerprints, () => rpaFailureFingerprintStorageService.loadFingerprints())
+  ipcMain.handle(IpcChannel.Rpa_SaveFailureFingerprints, (_, fingerprints: unknown[]) =>
+    rpaFailureFingerprintStorageService.saveFingerprints(fingerprints)
+  )
   ipcMain.handle(IpcChannel.Rpa_ExportDebugBundle, (_, payload) => rpaDebugExportService.exportBundle(payload))
 
   ipcMain.handle(IpcChannel.APP_CrashRenderProcess, () => {
     mainWindow.webContents.forcefullyCrashRenderer()
   })
-
-  // OpenClaw
-  ipcMain.handle(IpcChannel.OpenClaw_CheckInstalled, openClawService.checkInstalled)
-  ipcMain.handle(IpcChannel.OpenClaw_CheckNodeVersion, openClawService.checkNodeVersion)
-  ipcMain.handle(IpcChannel.OpenClaw_CheckGitAvailable, checkGitAvailable)
-  ipcMain.handle(IpcChannel.OpenClaw_GetNodeDownloadUrl, openClawService.getNodeDownloadUrl)
-  ipcMain.handle(IpcChannel.OpenClaw_GetGitDownloadUrl, openClawService.getGitDownloadUrl)
-  ipcMain.handle(IpcChannel.OpenClaw_Install, openClawService.install)
-  ipcMain.handle(IpcChannel.OpenClaw_Uninstall, openClawService.uninstall)
-  ipcMain.handle(IpcChannel.OpenClaw_StartGateway, openClawService.startGateway)
-  ipcMain.handle(IpcChannel.OpenClaw_StopGateway, openClawService.stopGateway)
-  ipcMain.handle(IpcChannel.OpenClaw_RestartGateway, openClawService.restartGateway)
-  ipcMain.handle(IpcChannel.OpenClaw_GetStatus, openClawService.getStatus)
-  ipcMain.handle(IpcChannel.OpenClaw_CheckHealth, openClawService.checkHealth)
-  ipcMain.handle(IpcChannel.OpenClaw_GetDashboardUrl, openClawService.getDashboardUrl)
-  ipcMain.handle(IpcChannel.OpenClaw_SyncConfig, openClawService.syncProviderConfig)
-  ipcMain.handle(IpcChannel.OpenClaw_GetChannels, openClawService.getChannelStatus)
 
   // Analytics
   ipcMain.handle(IpcChannel.Analytics_TrackTokenUsage, (_, data: TokenUsageData) =>

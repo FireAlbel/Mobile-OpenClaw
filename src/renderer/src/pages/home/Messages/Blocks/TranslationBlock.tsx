@@ -1,14 +1,18 @@
 import type { TranslationMessageBlock } from '@renderer/types/newMessage'
+import { Divider, Typography } from 'antd'
 import React from 'react'
-
-import MessageTranslate from '../MessageTranslate'
 
 interface Props {
   block: TranslationMessageBlock
 }
 
 const TranslationBlock: React.FC<Props> = ({ block }) => {
-  return <MessageTranslate block={block} />
+  return (
+    <section>
+      <Divider />
+      <Typography.Paragraph>{block.content}</Typography.Paragraph>
+    </section>
+  )
 }
 
 export default React.memo(TranslationBlock)

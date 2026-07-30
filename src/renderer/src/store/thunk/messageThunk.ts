@@ -37,7 +37,7 @@ import type {
 } from '@renderer/types/agent'
 import { ChunkType } from '@renderer/types/chunk'
 import type { FileMessageBlock, ImageMessageBlock, Message, MessageBlock } from '@renderer/types/newMessage'
-import { AssistantMessageStatus, MessageBlockStatus, MessageBlockType } from '@renderer/types/newMessage'
+import { AssistantMessageStatus, MessageBlockType } from '@renderer/types/newMessage'
 import { uuid } from '@renderer/utils'
 import { addAbortController } from '@renderer/utils/abortController'
 import {
@@ -45,11 +45,7 @@ import {
   extractAgentSessionIdFromTopicId,
   isAgentSessionTopicId
 } from '@renderer/utils/agentSession'
-import {
-  createAssistantMessage,
-  createTranslationBlock,
-  resetAssistantMessage
-} from '@renderer/utils/messageUtils/create'
+import { createAssistantMessage, resetAssistantMessage } from '@renderer/utils/messageUtils/create'
 import { getMainTextContent } from '@renderer/utils/messageUtils/find'
 import { getTopicQueue, waitForTopicQueue } from '@renderer/utils/queue'
 import { IpcChannel } from '@shared/IpcChannel'
@@ -61,7 +57,7 @@ import { LRUCache } from 'lru-cache'
 import { mutate } from 'swr'
 
 import type { AppDispatch, RootState } from '../index'
-import { removeManyBlocks, updateOneBlock, upsertManyBlocks, upsertOneBlock } from '../messageBlock'
+import { removeManyBlocks, updateOneBlock, upsertManyBlocks } from '../messageBlock'
 import { newMessagesActions, selectMessagesForTopic } from '../newMessage'
 // import {
 //   bulkAddBlocksV2,
@@ -772,9 +768,11 @@ const fetchAndProcessAssistantResponseImpl = async (
   assistantMessage: Message // Pass the prepared assistant message (new or reset)
 ) => {
   const topic = origAssistant.topics.find((t) => t.id === topicId)
-  const assistant = topic?.prompt
-    ? { ...origAssistant, prompt: `${origAssistant.prompt}\n${topic.prompt}` }
-    : origAssistant
+  const assistant = topic?.rpaRoleId
+    ? { ...origAssistant, prompt: topic.prompt || topic.rpaRoleDescription || '' }
+    : topic?.prompt
+      ? { ...origAssistant, prompt: `${origAssistant.prompt}\n${topic.prompt}` }
+      : origAssistant
   const assistantMsgId = assistantMessage.id
   let callbacks: StreamProcessorCallbacks = {}
   try {
@@ -1365,87 +1363,6 @@ export const regenerateAssistantResponseThunk =
       // dispatch(newMessagesActions.setTopicLoading({ topicId, loading: false }))
     } finally {
       finishTopicLoading(topicId)
-    }
-  }
-
-// --- Thunk to initiate translation and create the initial block ---
-export const initiateTranslationThunk =
-  (
-    messageId: string,
-    topicId: string,
-    targetLanguage: string,
-    sourceBlockId?: string, // Optional: If known
-    sourceLanguage?: string // Optional: If known
-  ) =>
-  async (dispatch: AppDispatch, getState: () => RootState): Promise<string | undefined> => {
-    // Return the new block ID
-    try {
-      const state = getState()
-      const originalMessage = state.messages.entities[messageId]
-
-      if (!originalMessage) {
-        logger.error(`[initiateTranslationThunk] Original message ${messageId} not found.`)
-        return undefined
-      }
-
-      // 1. Create the initial translation block (streaming state)
-      const newBlock = createTranslationBlock(
-        messageId,
-        '', // Start with empty content
-        targetLanguage,
-        {
-          status: MessageBlockStatus.STREAMING, // Set to STREAMING
-          sourceBlockId,
-          sourceLanguage
-        }
-      )
-
-      // 2. Update Redux State
-      const updatedBlockIds = [...(originalMessage.blocks || []), newBlock.id]
-      dispatch(upsertOneBlock(newBlock)) // Add the new block
-      dispatch(
-        newMessagesActions.updateMessage({
-          topicId,
-          messageId,
-          updates: { blocks: updatedBlockIds } // Update message's block list
-        })
-      )
-
-      // 3. Update Database
-      // Get the final message list from Redux state *after* updates
-      const finalMessagesToSave = selectMessagesForTopic(getState(), topicId)
-
-      await db.transaction('rw', db.topics, db.message_blocks, async () => {
-        await db.message_blocks.put(newBlock) // Save the initial block
-        await db.topics.update(topicId, { messages: finalMessagesToSave }) // Save updated message list
-      })
-      return newBlock.id // Return the ID
-    } catch (error) {
-      logger.error(`[initiateTranslationThunk] Failed for message ${messageId}:`, error as Error)
-      return undefined
-      // Optional: Dispatch an error action or show notification
-    }
-  }
-
-// --- Thunk to update the translation block with new content ---
-export const updateTranslationBlockThunk =
-  (blockId: string, accumulatedText: string, isComplete: boolean = false) =>
-  async (dispatch: AppDispatch) => {
-    // Logger.log(`[updateTranslationBlockThunk] 更新翻译块 ${blockId}, isComplete: ${isComplete}`)
-    try {
-      const status = isComplete ? MessageBlockStatus.SUCCESS : MessageBlockStatus.STREAMING
-      const changes: Partial<MessageBlock> = {
-        content: accumulatedText,
-        status: status
-      }
-
-      // 更新Redux状态
-      dispatch(updateOneBlock({ id: blockId, changes }))
-
-      await updateSingleBlock(blockId, changes)
-      // Logger.log(`[updateTranslationBlockThunk] Successfully updated translation block ${blockId}.`)
-    } catch (error) {
-      logger.error(`[updateTranslationBlockThunk] Failed to update translation block ${blockId}:`, error as Error)
     }
   }
 

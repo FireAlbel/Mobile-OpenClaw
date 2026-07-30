@@ -18,7 +18,6 @@ export interface InputbarToolsState {
   selectedKnowledgeBases: KnowledgeBase[]
   /** Whether the inputbar is expanded */
   isExpanded: boolean
-
   /** Whether image files can be added (derived state) */
   couldAddImageFile: boolean
   /** Whether non-vision models can be mentioned (derived state) */
@@ -79,10 +78,11 @@ export interface InputbarToolsDispatch {
   setMentionedModels: React.Dispatch<React.SetStateAction<Model[]>>
   setSelectedKnowledgeBases: React.Dispatch<React.SetStateAction<KnowledgeBase[]>>
   setIsExpanded: React.Dispatch<React.SetStateAction<boolean>>
-
   /** Parent component actions */
   resizeTextArea: () => void
   addNewTopic: () => void
+  duplicateRpaTask: () => void
+  endRpaTask: () => void
   clearTopic: () => void
   onNewContext: () => void
   toggleExpanded: (nextState?: boolean) => void
@@ -153,6 +153,8 @@ interface InputbarToolsProviderProps {
   actions: {
     resizeTextArea: () => void
     addNewTopic: () => void
+    duplicateRpaTask: () => void
+    endRpaTask: () => void
     clearTopic: () => void
     onNewContext: () => void
     onTextChange: (updater: string | ((prev: string) => string)) => void
@@ -168,7 +170,6 @@ export const InputbarToolsProvider: React.FC<InputbarToolsProviderProps> = ({ ch
     initialState?.selectedKnowledgeBases || []
   )
   const [isExpanded, setIsExpanded] = useState(initialState?.isExpanded || false)
-
   // Derived state (internal management)
   const [couldAddImageFile, setCouldAddImageFile] = useState(initialState?.couldAddImageFile || false)
   const [extensions, setExtensions] = useState<string[]>(initialState?.extensions || [])
@@ -234,6 +235,8 @@ export const InputbarToolsProvider: React.FC<InputbarToolsProviderProps> = ({ ch
     () => ({
       resizeTextArea: () => actionsRef.current.resizeTextArea(),
       addNewTopic: () => actionsRef.current.addNewTopic(),
+      duplicateRpaTask: () => actionsRef.current.duplicateRpaTask(),
+      endRpaTask: () => actionsRef.current.endRpaTask(),
       clearTopic: () => actionsRef.current.clearTopic(),
       onNewContext: () => actionsRef.current.onNewContext(),
       onTextChange: (updater: string | ((prev: string) => string)) => actionsRef.current.onTextChange(updater),
@@ -290,7 +293,6 @@ export const InputbarToolsProvider: React.FC<InputbarToolsProviderProps> = ({ ch
       setMentionedModels,
       setSelectedKnowledgeBases,
       setIsExpanded,
-
       // Stable actions
       ...stableActions,
 

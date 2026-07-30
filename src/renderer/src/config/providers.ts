@@ -708,16 +708,6 @@ export const SYSTEM_PROVIDERS_CONFIG: Record<SystemProviderId, SystemProvider> =
     models: SYSTEM_MODELS.mimo,
     isSystem: true,
     enabled: false
-  },
-  openclaw: {
-    id: 'openclaw',
-    name: 'OpenClaw',
-    type: 'openclaw',
-    apiKey: '',
-    apiHost: 'https://api.openclaw.com',
-    models: [],
-    isSystem: true,
-    enabled: false
   }
 } as const
 
@@ -787,8 +777,7 @@ export const PROVIDER_LOGO_MAP: AtLeast<SystemProviderId, string> = {
   sophnet: SophnetProviderLogo,
   gateway: AIGatewayProviderLogo,
   cerebras: CerebrasProviderLogo,
-  mimo: MiMoProviderLogo,
-  openclaw: OpenAiProviderLogo
+  mimo: MiMoProviderLogo
 } as const
 
 export function getProviderLogo(providerId: string) {
@@ -1469,17 +1458,6 @@ export const PROVIDER_URLS: Record<SystemProviderId, ProviderUrls> = {
       apiKey: 'https://platform.xiaomimimo.com/#/console/usage',
       docs: 'https://platform.xiaomimimo.com/#/docs/welcome',
       models: 'https://platform.xiaomimimo.com/'
-    }
-  },
-  openclaw: {
-    api: {
-      url: 'https://api.openclaw.com'
-    },
-    websites: {
-      official: 'https://openclaw.com',
-      apiKey: 'https://openclaw.com/api-keys',
-      docs: 'https://docs.openclaw.com',
-      models: 'https://openclaw.com/models'
     }
   }
 }

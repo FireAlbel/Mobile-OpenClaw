@@ -2,8 +2,9 @@ import { rpaBatchRunner } from '@renderer/services/rpa/RpaBatchRunner'
 import { rpaReplayService } from '@renderer/services/rpa/RpaReplayService'
 import type { RpaBatchRunRecord } from '@renderer/services/rpa/RpaRunStorage'
 import { rpaSafetyPolicyEngine } from '@renderer/services/rpa/RpaSafetyPolicyEngine'
-import { Alert, Button, Modal, Progress, Select, Space, Tag, Typography } from 'antd'
-import { ImageOff, OctagonX } from 'lucide-react'
+import { Alert, Button, Modal, Progress, Space, Table, Tag, Tooltip, Typography } from 'antd'
+import type { TFunction } from 'i18next'
+import { Eye, ImageOff, OctagonX, Pause, Play } from 'lucide-react'
 import type { FC } from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -14,55 +15,50 @@ interface Props {
   historicalRun?: RpaBatchRunRecord
   open: boolean
   onClose: () => void
+  onReplan?: (run: RpaBatchRunRecord) => void
 }
 
-const RpaExecutionProgressModal: FC<Props> = ({ runId, historicalRun, open, onClose }) => {
+const RpaExecutionProgressModal: FC<Props> = ({ runId, historicalRun, open, onClose, onReplan }) => {
   const { t } = useTranslation()
   const [run, setRun] = useState<RpaBatchRunRecord>()
-  const [deviceFilter, setDeviceFilter] = useState<string>('all')
-  const [phaseFilter, setPhaseFilter] = useState<string>('all')
+  const [selectedDeviceRunId, setSelectedDeviceRunId] = useState<string>()
+  const [detectedDevices, setDetectedDevices] = useState(() => rpaBatchRunner.getDetectedDevices())
+  const [deviceStatusReady, setDeviceStatusReady] = useState(() => rpaBatchRunner.hasDeviceStatusSnapshot())
 
   const refresh = useCallback(() => {
     setRun(historicalRun ?? (runId ? rpaBatchRunner.getRuns().find((item) => item.id === runId) : undefined))
+    setDetectedDevices(rpaBatchRunner.getDetectedDevices())
+    setDeviceStatusReady(rpaBatchRunner.hasDeviceStatusSnapshot())
   }, [historicalRun, runId])
 
   useEffect(() => {
     if (!open) return
-    setDeviceFilter('all')
-    setPhaseFilter('all')
-    if (historicalRun) {
-      refresh()
-      return
-    }
-    void rpaBatchRunner.initialize().then(refresh)
-    return rpaBatchRunner.subscribe(refresh)
+    const unsubscribe = rpaBatchRunner.subscribe(refresh)
+    const initialize = historicalRun ? Promise.resolve() : rpaBatchRunner.initialize()
+    void initialize.then(() => rpaBatchRunner.refreshDeviceStatuses()).then(refresh)
+    refresh()
+    return unsubscribe
   }, [historicalRun, open, refresh])
 
   const replay = useMemo(() => (run ? rpaReplayService.load(run) : undefined), [run])
-  const visibleDeviceRuns = useMemo(
-    () => run?.deviceRuns.filter((deviceRun) => deviceFilter === 'all' || deviceRun.deviceId === deviceFilter) ?? [],
-    [deviceFilter, run]
+  const selectedDeviceRun = useMemo(
+    () => run?.deviceRuns.find((deviceRun) => deviceRun.id === selectedDeviceRunId),
+    [run, selectedDeviceRunId]
   )
-
-  const completedSteps = useMemo(
-    () =>
-      run?.deviceRuns.reduce(
-        (sum, deviceRun) =>
-          sum +
-          run.task.steps.filter((step) =>
-            deviceRun.events.some((event) => event.stepId === step.id && event.status === 'passed')
-          ).length,
-        0
-      ) ?? 0,
-    [run]
+  const detectedDeviceById = useMemo(
+    () => new Map(detectedDevices.map((device) => [device.id, device])),
+    [detectedDevices]
   )
-  const totalSteps = (run?.task.steps.length ?? 0) * (run?.deviceRuns.length ?? 0)
-  const percent = totalSteps ? Math.min(100, Math.round((completedSteps / totalSteps) * 100)) : 0
   const canEmergencyStop = run?.deviceRuns.some(
     (deviceRun) => !['completed', 'failed', 'cancelled'].includes(deviceRun.status)
   )
+  const canReplan =
+    !historicalRun &&
+    Boolean(run) &&
+    (run?.status === 'failed' || run?.deviceRuns.some((deviceRun) => deviceRun.status === 'needs_human'))
 
-  const confirmEmergencyStop = useCallback(() => {
+  const confirmCurrentRunStop = useCallback(() => {
+    if (!run) return
     Modal.confirm({
       title: t('device.rpa.emergency_stop_confirm'),
       content: t('device.rpa.emergency_stop_detail'),
@@ -70,11 +66,11 @@ const RpaExecutionProgressModal: FC<Props> = ({ runId, historicalRun, open, onCl
       okButtonProps: { danger: true },
       cancelText: t('common.cancel'),
       onOk: async () => {
-        await rpaBatchRunner.emergencyStop()
+        await rpaBatchRunner.cancelBatchRun(run.id)
         refresh()
       }
     })
-  }, [refresh, t])
+  }, [refresh, run, t])
 
   const resumeDeviceRun = useCallback(
     async (deviceRun: RpaBatchRunRecord['deviceRuns'][number]) => {
@@ -107,53 +103,20 @@ const RpaExecutionProgressModal: FC<Props> = ({ runId, historicalRun, open, onCl
   )
 
   return (
-    <Modal
-      title={
-        historicalRun
-          ? t('device.rpa.run_replay', { defaultValue: 'RPA run replay' })
-          : t('device.rpa.execution_progress', { defaultValue: 'RPA execution progress' })
-      }
-      open={open}
-      onCancel={onClose}
-      width={900}
-      footer={
-        <Space>
-          {!historicalRun && (
-            <Button danger icon={<OctagonX size={16} />} disabled={!canEmergencyStop} onClick={confirmEmergencyStop}>
-              {t('device.rpa.emergency_stop')}
-            </Button>
-          )}
-          <Button onClick={onClose}>{t('common.close')}</Button>
-        </Space>
-      }>
-      {!run ? (
-        <Typography.Text type="secondary">
-          {t('device.rpa.run_loading', { defaultValue: 'Loading execution record...' })}
-        </Typography.Text>
-      ) : (
-        <ModalBody>
-          <Progress percent={percent} status={run.status === 'failed' ? 'exception' : undefined} />
-          <RunSummary>
-            <strong>{run.task.name}</strong>
-            <StatusTag status={run.status} />
-          </RunSummary>
-          <ReplayFilters>
-            <Select
-              value={deviceFilter}
-              onChange={setDeviceFilter}
-              options={[
-                { value: 'all', label: t('device.rpa.all_devices', { defaultValue: 'All devices' }) },
-                ...run.deviceRuns.map((deviceRun) => ({ value: deviceRun.deviceId, label: deviceRun.deviceId }))
-              ]}
-            />
-            <Select
-              value={phaseFilter}
-              onChange={setPhaseFilter}
-              options={[
-                { value: 'all', label: t('device.rpa.all_phases', { defaultValue: 'All phases' }) },
-                ...(replay?.phases.map((phase) => ({ value: phase, label: phase })) ?? [])
-              ]}
-            />
+    <>
+      <Modal
+        title={t('device.rpa.execution_progress', { defaultValue: 'RPA execution details' })}
+        open={open && Boolean(selectedDeviceRun)}
+        onCancel={() => setSelectedDeviceRunId(undefined)}
+        destroyOnHidden
+        width={900}
+        footer={<Button onClick={() => setSelectedDeviceRunId(undefined)}>{t('common.close')}</Button>}>
+        {!run ? (
+          <Typography.Text type="secondary">
+            {t('device.rpa.run_loading', { defaultValue: 'Loading execution record...' })}
+          </Typography.Text>
+        ) : (
+          <ModalBody>
             {historicalRun && replay && replay.missingArtifactCount > 0 && (
               <Typography.Text type="secondary">
                 {t('device.rpa.missing_artifact_count', {
@@ -162,231 +125,375 @@ const RpaExecutionProgressModal: FC<Props> = ({ runId, historicalRun, open, onCl
                 })}
               </Typography.Text>
             )}
-          </ReplayFilters>
-          {visibleDeviceRuns.map((deviceRun) => {
-            const screenshot = findLatestScreenshot(deviceRun.events)
-            const currentEvent = deviceRun.events.at(-1)
-            const visibleEvents = deviceRun.events.filter(
-              (event) => phaseFilter === 'all' || (event.phase ?? findEventPhase(event.data)) === phaseFilter
-            )
-            return (
-              <DeviceRun key={deviceRun.id}>
-                <RunSummary>
-                  <strong>{deviceRun.deviceId}</strong>
-                  <StatusTag status={deviceRun.status} />
-                </RunSummary>
-                {currentEvent && (
-                  <CurrentStep>
-                    <Typography.Text type="secondary">{t('device.rpa.current_step')}</Typography.Text>
-                    <strong>{currentEvent.stepName}</strong>
-                    <StatusTag status={currentEvent.status} />
-                  </CurrentStep>
-                )}
-                {deviceRun.error && <Typography.Text type="danger">{deviceRun.error}</Typography.Text>}
-                <StepOverview>
-                  {run.task.steps.map((step, index) => {
-                    const events = deviceRun.events.filter((event) => event.stepId === step.id)
-                    const latestEvent = events.at(-1)
-                    return (
-                      <PlannedStep key={step.id}>
-                        <StepNumber>{index + 1}</StepNumber>
-                        <StepDescription>
-                          <strong>{step.name}</strong>
-                          <Typography.Text type="secondary">
-                            {latestEvent?.message || t('device.rpa.waiting_to_execute')}
-                          </Typography.Text>
-                        </StepDescription>
-                        <StatusTag status={latestEvent?.status || 'pending'} />
-                      </PlannedStep>
-                    )
-                  })}
-                </StepOverview>
-                <Typography.Text strong>{t('device.rpa.realtime_events')}</Typography.Text>
-                <EventList>
-                  {visibleEvents.map((event, index) => {
-                    const decision = findRecoveryDecision(event.data)
-                    const intervention = findVisionIntervention(event.data)
-                    const phase = event.phase ?? findEventPhase(event.data)
-                    return (
-                      <EventRow key={`${event.stepId}-${event.timestamp}-${index}`}>
-                        <EventMarker $status={event.status} />
-                        <EventContent>
-                          <RunSummary>
-                            <span>
-                              {event.stepName} · {t('device.rpa.attempt', { attempt: event.attempt })}
-                            </span>
-                            <Space size={4}>
-                              {event.recoveryRound && (
-                                <Tag>{t('device.rpa.correction_round', { round: event.recoveryRound })}</Tag>
+            {selectedDeviceRun &&
+              [selectedDeviceRun].map((deviceRun) => {
+                const screenshot = findLatestScreenshot(deviceRun.events)
+                return (
+                  <DeviceRun key={deviceRun.id}>
+                    <StepOverview>
+                      {run.task.steps.map((step, index) => {
+                        const events = deviceRun.events.filter((event) => event.stepId === step.id)
+                        const latestEvent = events.at(-1)
+                        return (
+                          <PlannedStep key={step.id}>
+                            <StepNumber>{index + 1}</StepNumber>
+                            <StepDescription>
+                              <strong>{step.name}</strong>
+                              <Typography.Text type="secondary">
+                                {latestEvent?.message || t('device.rpa.waiting_to_execute')}
+                              </Typography.Text>
+                            </StepDescription>
+                            <StatusTag status={latestEvent?.status || 'pending'} />
+                          </PlannedStep>
+                        )
+                      })}
+                    </StepOverview>
+                    <Typography.Text strong>{t('device.rpa.realtime_events')}</Typography.Text>
+                    <EventList>
+                      {deviceRun.events.map((event, index) => {
+                        const decision = findRecoveryDecision(event.data)
+                        const intervention = findVisionIntervention(event.data)
+                        const phase = event.phase ?? findEventPhase(event.data)
+                        return (
+                          <EventRow key={`${event.stepId}-${event.timestamp}-${index}`}>
+                            <EventMarker $status={event.status} />
+                            <EventContent>
+                              <RunSummary>
+                                <span>
+                                  {event.stepName} · {t('device.rpa.attempt', { attempt: event.attempt })}
+                                </span>
+                                <Space size={4}>
+                                  {event.recoveryRound && (
+                                    <Tag>{t('device.rpa.correction_round', { round: event.recoveryRound })}</Tag>
+                                  )}
+                                  {event.temporary && <Tag>{t('device.rpa.temporary_action')}</Tag>}
+                                  {phase && <Tag>{phase}</Tag>}
+                                  <StatusTag status={event.status} />
+                                </Space>
+                              </RunSummary>
+                              <Typography.Text type="secondary">{event.message}</Typography.Text>
+                              {event.safety && (
+                                <EvidenceDetails>
+                                  <summary>{t('device.rpa.safety_decision')}</summary>
+                                  <EvidenceGrid>
+                                    <Typography.Text type="secondary">{t('device.rpa.decision')}</Typography.Text>
+                                    <span>{event.safety.decision}</span>
+                                    <Typography.Text type="secondary">{t('device.rpa.risk_level')}</Typography.Text>
+                                    <span>{event.safety.riskLevel}</span>
+                                    <Typography.Text type="secondary">{t('device.rpa.safety_target')}</Typography.Text>
+                                    <span>{event.safety.target}</span>
+                                    <Typography.Text type="secondary">{t('device.rpa.reason')}</Typography.Text>
+                                    <span>{event.safety.reason}</span>
+                                    {event.safety.delayMs !== undefined && (
+                                      <>
+                                        <Typography.Text type="secondary">
+                                          {t('device.rpa.rate_limit_delay')}
+                                        </Typography.Text>
+                                        <span>{event.safety.delayMs} ms</span>
+                                      </>
+                                    )}
+                                  </EvidenceGrid>
+                                </EvidenceDetails>
                               )}
-                              {event.temporary && <Tag>{t('device.rpa.temporary_action')}</Tag>}
-                              {phase && <Tag>{phase}</Tag>}
-                              <StatusTag status={event.status} />
-                            </Space>
-                          </RunSummary>
-                          <Typography.Text type="secondary">{event.message}</Typography.Text>
-                          {event.safety && (
-                            <EvidenceDetails>
-                              <summary>{t('device.rpa.safety_decision')}</summary>
-                              <EvidenceGrid>
-                                <Typography.Text type="secondary">{t('device.rpa.decision')}</Typography.Text>
-                                <span>{event.safety.decision}</span>
-                                <Typography.Text type="secondary">{t('device.rpa.risk_level')}</Typography.Text>
-                                <span>{event.safety.riskLevel}</span>
-                                <Typography.Text type="secondary">{t('device.rpa.safety_target')}</Typography.Text>
-                                <span>{event.safety.target}</span>
-                                <Typography.Text type="secondary">{t('device.rpa.reason')}</Typography.Text>
-                                <span>{event.safety.reason}</span>
-                                {event.safety.delayMs !== undefined && (
-                                  <>
-                                    <Typography.Text type="secondary">
-                                      {t('device.rpa.rate_limit_delay')}
-                                    </Typography.Text>
-                                    <span>{event.safety.delayMs} ms</span>
-                                  </>
-                                )}
-                              </EvidenceGrid>
-                            </EvidenceDetails>
-                          )}
-                          {decision && (
-                            <EvidenceDetails>
-                              <summary>{t('device.rpa.recovery_decision')}</summary>
-                              <EvidenceGrid>
-                                <Typography.Text type="secondary">{t('device.rpa.decision')}</Typography.Text>
-                                <span>{decision.status}</span>
-                                <Typography.Text type="secondary">{t('device.rpa.reason')}</Typography.Text>
-                                <span>{decision.message}</span>
-                                <Typography.Text type="secondary">{t('device.rpa.confidence')}</Typography.Text>
-                                <span>{decision.confidence.toFixed(2)}</span>
-                              </EvidenceGrid>
-                              {decision.steps.length > 0 && (
-                                <EvidenceCode>
-                                  {t('device.rpa.temporary_steps')}
-                                  {'\n'}
-                                  {JSON.stringify(decision.steps, null, 2)}
-                                </EvidenceCode>
+                              {decision && (
+                                <EvidenceDetails>
+                                  <summary>{t('device.rpa.recovery_decision')}</summary>
+                                  <EvidenceGrid>
+                                    <Typography.Text type="secondary">{t('device.rpa.decision')}</Typography.Text>
+                                    <span>{decision.status}</span>
+                                    <Typography.Text type="secondary">{t('device.rpa.reason')}</Typography.Text>
+                                    <span>{decision.message}</span>
+                                    <Typography.Text type="secondary">{t('device.rpa.confidence')}</Typography.Text>
+                                    <span>{decision.confidence.toFixed(2)}</span>
+                                  </EvidenceGrid>
+                                  {decision.steps.length > 0 && (
+                                    <EvidenceCode>
+                                      {t('device.rpa.temporary_steps')}
+                                      {'\n'}
+                                      {JSON.stringify(decision.steps, null, 2)}
+                                    </EvidenceCode>
+                                  )}
+                                </EvidenceDetails>
                               )}
-                            </EvidenceDetails>
-                          )}
-                          {event.action && (
-                            <EvidenceDetails>
-                              <summary>{t('device.rpa.executable_action')}</summary>
-                              <EvidenceCode>{JSON.stringify(event.action, null, 2)}</EvidenceCode>
-                            </EvidenceDetails>
-                          )}
-                          {event.verification && (
-                            <EvidenceDetails>
-                              <summary>{t('device.rpa.verification_result')}</summary>
-                              <EvidenceGrid>
-                                <Typography.Text type="secondary">Status</Typography.Text>
-                                <span>{event.verification.status}</span>
-                                <Typography.Text type="secondary">{t('device.rpa.confidence')}</Typography.Text>
-                                <span>{event.verification.confidence.toFixed(2)}</span>
-                                <Typography.Text type="secondary">{t('device.rpa.reason')}</Typography.Text>
-                                <span>{event.verification.message}</span>
-                              </EvidenceGrid>
-                            </EvidenceDetails>
-                          )}
-                          {intervention && (
-                            <EvidenceDetails>
-                              <summary>{t('device.rpa.correction_evidence')}</summary>
-                              <EvidenceCode>{intervention.rawResponse}</EvidenceCode>
-                              {intervention.repairResponse && (
-                                <EvidenceCode>{intervention.repairResponse}</EvidenceCode>
+                              {event.action && (
+                                <EvidenceDetails>
+                                  <summary>{t('device.rpa.executable_action')}</summary>
+                                  <EvidenceCode>{JSON.stringify(event.action, null, 2)}</EvidenceCode>
+                                </EvidenceDetails>
                               )}
-                              {intervention.takeoverResponse && (
-                                <EvidenceCode>{intervention.takeoverResponse}</EvidenceCode>
+                              {event.verification && (
+                                <EvidenceDetails>
+                                  <summary>{t('device.rpa.verification_result')}</summary>
+                                  <EvidenceGrid>
+                                    <Typography.Text type="secondary">Status</Typography.Text>
+                                    <span>{event.verification.status}</span>
+                                    <Typography.Text type="secondary">{t('device.rpa.confidence')}</Typography.Text>
+                                    <span>{event.verification.confidence.toFixed(2)}</span>
+                                    <Typography.Text type="secondary">{t('device.rpa.reason')}</Typography.Text>
+                                    <span>{event.verification.message}</span>
+                                  </EvidenceGrid>
+                                </EvidenceDetails>
                               )}
-                            </EvidenceDetails>
+                              {intervention && (
+                                <EvidenceDetails>
+                                  <summary>{t('device.rpa.correction_evidence')}</summary>
+                                  <EvidenceCode>{intervention.rawResponse}</EvidenceCode>
+                                  {intervention.repairResponse && (
+                                    <EvidenceCode>{intervention.repairResponse}</EvidenceCode>
+                                  )}
+                                  {intervention.takeoverResponse && (
+                                    <EvidenceCode>{intervention.takeoverResponse}</EvidenceCode>
+                                  )}
+                                </EvidenceDetails>
+                              )}
+                            </EventContent>
+                          </EventRow>
+                        )
+                      })}
+                    </EventList>
+                    {screenshot ? (
+                      <EvidenceDetails>
+                        <summary>{t('device.rpa.latest_screenshot')}</summary>
+                        <EvidenceGrid>
+                          <Typography.Text type="secondary">{t('device.rpa.frame_source')}</Typography.Text>
+                          <span>{screenshot.source}</span>
+                          {screenshot.sequence !== undefined && (
+                            <>
+                              <Typography.Text type="secondary">{t('device.rpa.frame_sequence')}</Typography.Text>
+                              <span>{screenshot.sequence}</span>
+                            </>
                           )}
-                        </EventContent>
-                      </EventRow>
-                    )
-                  })}
-                </EventList>
-                {screenshot ? (
-                  <EvidenceDetails>
-                    <summary>{t('device.rpa.latest_screenshot')}</summary>
-                    <EvidenceGrid>
-                      <Typography.Text type="secondary">{t('device.rpa.frame_source')}</Typography.Text>
-                      <span>{screenshot.source}</span>
-                      {screenshot.sequence !== undefined && (
-                        <>
-                          <Typography.Text type="secondary">{t('device.rpa.frame_sequence')}</Typography.Text>
-                          <span>{screenshot.sequence}</span>
-                        </>
+                          {screenshot.capturedAt !== undefined && (
+                            <>
+                              <Typography.Text type="secondary">{t('device.rpa.frame_captured_at')}</Typography.Text>
+                              <span>{new Date(screenshot.capturedAt).toLocaleString()}</span>
+                            </>
+                          )}
+                          {screenshot.width !== undefined && screenshot.height !== undefined && (
+                            <>
+                              <Typography.Text type="secondary">{t('device.rpa.frame_dimensions')}</Typography.Text>
+                              <span>
+                                {screenshot.width} x {screenshot.height}
+                              </span>
+                            </>
+                          )}
+                          {screenshot.codecName && (
+                            <>
+                              <Typography.Text type="secondary">{t('device.rpa.frame_codec')}</Typography.Text>
+                              <span>{screenshot.codecName.toUpperCase()}</span>
+                            </>
+                          )}
+                          {screenshot.reconnectCount !== undefined && (
+                            <>
+                              <Typography.Text type="secondary">{t('device.rpa.frame_reconnects')}</Typography.Text>
+                              <span>{screenshot.reconnectCount}</span>
+                            </>
+                          )}
+                        </EvidenceGrid>
+                        <ScreenshotPreview src={screenshot.src} alt={t('device.rpa.latest_screenshot')} />
+                      </EvidenceDetails>
+                    ) : (
+                      <Alert
+                        type="info"
+                        showIcon
+                        icon={<ImageOff size={16} />}
+                        message={t('device.rpa.missing_screenshot', {
+                          defaultValue: 'Screenshot evidence is unavailable.'
+                        })}
+                      />
+                    )}
+                  </DeviceRun>
+                )
+              })}
+          </ModalBody>
+        )}
+      </Modal>
+      <Modal
+        title={t('device.rpa.execution_devices')}
+        open={open}
+        onCancel={onClose}
+        width={900}
+        footer={
+          <Space>
+            {canReplan && run && onReplan && (
+              <Button
+                onClick={() => {
+                  onReplan(run)
+                  onClose()
+                }}>
+                {t('device.rpa.replan.action', { defaultValue: 'Replan' })}
+              </Button>
+            )}
+            {!historicalRun && (
+              <Button danger icon={<OctagonX size={16} />} disabled={!canEmergencyStop} onClick={confirmCurrentRunStop}>
+                {t('device.rpa.emergency_stop')}
+              </Button>
+            )}
+            <Button onClick={onClose}>{t('common.close')}</Button>
+          </Space>
+        }>
+        {!run ? (
+          <Typography.Text type="secondary">
+            {t('device.rpa.run_loading', { defaultValue: 'Loading execution record...' })}
+          </Typography.Text>
+        ) : (
+          <Table<RpaBatchRunRecord['deviceRuns'][number]>
+            rowKey="id"
+            pagination={false}
+            dataSource={run.deviceRuns}
+            columns={[
+              {
+                title: t('device.rpa.device_name'),
+                key: 'device',
+                render: (_, deviceRun) => {
+                  const device = detectedDeviceById.get(deviceRun.deviceId)
+                  return (
+                    <DeviceIdentity>
+                      <strong>{device?.name || device?.model || deviceRun.deviceId}</strong>
+                      {(device?.name || device?.model) && (
+                        <Typography.Text type="secondary">{deviceRun.deviceId}</Typography.Text>
                       )}
-                      {screenshot.capturedAt !== undefined && (
-                        <>
-                          <Typography.Text type="secondary">{t('device.rpa.frame_captured_at')}</Typography.Text>
-                          <span>{new Date(screenshot.capturedAt).toLocaleString()}</span>
-                        </>
+                    </DeviceIdentity>
+                  )
+                }
+              },
+              {
+                title: t('device.rpa.device_execution_progress'),
+                key: 'progress',
+                width: 250,
+                render: (_, deviceRun) => {
+                  const progress = getDeviceProgress(run, deviceRun)
+                  return (
+                    <DeviceProgressValue>
+                      <Progress
+                        percent={progress.percent}
+                        size="small"
+                        status={deviceRun.status === 'failed' ? 'exception' : undefined}
+                      />
+                      <Typography.Text type="secondary">
+                        {t('device.rpa.device_completed_steps', {
+                          completed: progress.completed,
+                          total: progress.total
+                        })}
+                      </Typography.Text>
+                    </DeviceProgressValue>
+                  )
+                }
+              },
+              {
+                title: t('device.rpa.execution_status'),
+                key: 'status',
+                width: 140,
+                render: (_, deviceRun) => {
+                  const device = detectedDeviceById.get(deviceRun.deviceId)
+                  const liveStatus = device?.status ?? (deviceStatusReady ? 'offline' : undefined)
+                  const presentation = getDeviceStatusPresentation(run, deviceRun, liveStatus)
+                  const reason = getDeviceStatusReason(deviceRun, presentation.status, t)
+                  const tag = <StatusTag status={presentation.status} />
+                  return reason ? (
+                    <Tooltip title={reason}>
+                      <StatusTooltipTarget title={reason}>{tag}</StatusTooltipTarget>
+                    </Tooltip>
+                  ) : (
+                    tag
+                  )
+                }
+              },
+              {
+                title: t('device.rpa.operations'),
+                key: 'operations',
+                width: 210,
+                render: (_, deviceRun) => {
+                  const device = detectedDeviceById.get(deviceRun.deviceId)
+                  const unavailable = deviceStatusReady && device?.status !== 'online'
+                  const canStop = deviceRun.status === 'pending' || deviceRun.status === 'running'
+                  const canContinue = deviceRun.status === 'paused' || deviceRun.status === 'needs_human'
+                  return (
+                    <Space size={4}>
+                      <Button
+                        type="link"
+                        size="small"
+                        icon={<Eye size={15} />}
+                        onClick={() => setSelectedDeviceRunId(deviceRun.id)}>
+                        {t('device.rpa.view_details')}
+                      </Button>
+                      {canStop && !historicalRun && (
+                        <Button
+                          type="link"
+                          size="small"
+                          icon={<Pause size={15} />}
+                          onClick={() => void rpaBatchRunner.pauseDeviceRun(deviceRun.id)}>
+                          {t('device.rpa.stop_device')}
+                        </Button>
                       )}
-                      {screenshot.width !== undefined && screenshot.height !== undefined && (
-                        <>
-                          <Typography.Text type="secondary">{t('device.rpa.frame_dimensions')}</Typography.Text>
-                          <span>
-                            {screenshot.width} x {screenshot.height}
-                          </span>
-                        </>
+                      {canContinue && !historicalRun && (
+                        <Tooltip title={unavailable ? t('device.rpa.device_offline_cannot_continue') : undefined}>
+                          <Button
+                            type="link"
+                            size="small"
+                            icon={<Play size={15} />}
+                            disabled={unavailable}
+                            onClick={() => void resumeDeviceRun(deviceRun)}>
+                            {t('device.rpa.continue_device')}
+                          </Button>
+                        </Tooltip>
                       )}
-                      {screenshot.codecName && (
-                        <>
-                          <Typography.Text type="secondary">{t('device.rpa.frame_codec')}</Typography.Text>
-                          <span>{screenshot.codecName.toUpperCase()}</span>
-                        </>
-                      )}
-                      {screenshot.reconnectCount !== undefined && (
-                        <>
-                          <Typography.Text type="secondary">{t('device.rpa.frame_reconnects')}</Typography.Text>
-                          <span>{screenshot.reconnectCount}</span>
-                        </>
-                      )}
-                    </EvidenceGrid>
-                    <ScreenshotPreview src={screenshot.src} alt={t('device.rpa.latest_screenshot')} />
-                  </EvidenceDetails>
-                ) : (
-                  <Alert
-                    type="info"
-                    showIcon
-                    icon={<ImageOff size={16} />}
-                    message={t('device.rpa.missing_screenshot', {
-                      defaultValue: 'Screenshot evidence is unavailable.'
-                    })}
-                  />
-                )}
-                {!historicalRun && (
-                  <Space>
-                    <Button
-                      size="small"
-                      disabled={deviceRun.status !== 'running' && deviceRun.status !== 'pending'}
-                      onClick={() => void rpaBatchRunner.pauseDeviceRun(deviceRun.id)}>
-                      {t('device.rpa.pause', { defaultValue: 'Pause' })}
-                    </Button>
-                    <Button
-                      size="small"
-                      disabled={deviceRun.status !== 'paused' && deviceRun.status !== 'needs_human'}
-                      onClick={() => void resumeDeviceRun(deviceRun)}>
-                      {deviceRun.status === 'needs_human'
-                        ? t('device.rpa.retry_after_human', { defaultValue: 'Retry after manual handling' })
-                        : t('device.rpa.resume', { defaultValue: 'Resume' })}
-                    </Button>
-                    <Button
-                      size="small"
-                      danger
-                      disabled={['completed', 'failed', 'cancelled'].includes(deviceRun.status)}
-                      onClick={() => void rpaBatchRunner.cancelDeviceRun(deviceRun.id)}>
-                      {t('common.cancel')}
-                    </Button>
-                  </Space>
-                )}
-              </DeviceRun>
-            )
-          })}
-        </ModalBody>
-      )}
-    </Modal>
+                    </Space>
+                  )
+                }
+              }
+            ]}
+          />
+        )}
+      </Modal>
+    </>
   )
+}
+
+function getDeviceProgress(
+  run: RpaBatchRunRecord,
+  deviceRun: RpaBatchRunRecord['deviceRuns'][number]
+): { completed: number; total: number; percent: number } {
+  const completed = run.task.steps.filter((step) =>
+    deviceRun.events.some((event) => event.stepId === step.id && event.status === 'passed')
+  ).length
+  const total = run.task.steps.length
+  return {
+    completed,
+    total,
+    percent: total ? Math.min(100, Math.round((completed / total) * 100)) : 0
+  }
+}
+
+function getDeviceStatusPresentation(
+  run: RpaBatchRunRecord,
+  deviceRun: RpaBatchRunRecord['deviceRuns'][number],
+  liveStatus?: 'online' | 'offline' | 'unauthorized'
+): { status: string } {
+  if (liveStatus && liveStatus !== 'online' && !['completed', 'failed', 'cancelled'].includes(deviceRun.status)) {
+    return { status: liveStatus }
+  }
+  if (deviceRun.status !== 'running') return { status: deviceRun.status }
+  const plannedStepIds = new Set(run.task.steps.map((step) => step.id))
+  const currentEvent = [...deviceRun.events]
+    .reverse()
+    .find((event) => plannedStepIds.has(event.stepId) && !event.temporary)
+  return { status: currentEvent?.status ?? 'running' }
+}
+
+function getDeviceStatusReason(
+  deviceRun: RpaBatchRunRecord['deviceRuns'][number],
+  status: string,
+  t: TFunction
+): string | undefined {
+  if (status === 'offline') {
+    return t('device.rpa.device_offline_reason', { device: deviceRun.deviceId })
+  }
+  if (status === 'unauthorized') {
+    return t('device.rpa.device_unauthorized_reason', { device: deviceRun.deviceId })
+  }
+  if (!['failed', 'timeout', 'needs_human'].includes(status)) return undefined
+  return deviceRun.error || deviceRun.events.at(-1)?.message
 }
 
 const StatusTag: FC<{ status: string }> = ({ status }) => {
@@ -394,11 +501,13 @@ const StatusTag: FC<{ status: string }> = ({ status }) => {
   const color =
     status === 'completed' || status === 'passed'
       ? 'green'
-      : status === 'failed'
+      : status === 'failed' || status === 'offline'
         ? 'red'
         : status === 'running'
           ? 'blue'
-          : 'default'
+          : status === 'unauthorized' || status === 'needs_human' || status === 'timeout'
+            ? 'orange'
+            : 'default'
   const label =
     status === 'cancelled'
       ? t('device.rpa.status.cancelled')
@@ -418,7 +527,11 @@ const StatusTag: FC<{ status: string }> = ({ status }) => {
                     ? t('device.rpa.status.running')
                     : status === 'timeout'
                       ? t('device.rpa.status.timeout')
-                      : status
+                      : status === 'offline'
+                        ? t('device.status.offline')
+                        : status === 'unauthorized'
+                          ? t('device.status.unauthorized')
+                          : status
   return <Tag color={color}>{label}</Tag>
 }
 
@@ -558,33 +671,35 @@ const RunSummary = styled.div`
   gap: 12px;
 `
 
-const ReplayFilters = styled.div`
-  display: grid;
-  grid-template-columns: minmax(160px, 240px) minmax(160px, 240px) minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
+const StatusTooltipTarget = styled.span`
+  display: inline-flex;
+`
 
-  @media (max-width: 700px) {
-    grid-template-columns: 1fr;
+const DeviceIdentity = styled.div`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  strong,
+  .ant-typography {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 `
 
+const DeviceProgressValue = styled.div`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`
+
 const DeviceRun = styled.section`
-  border-top: 1px solid var(--color-border);
-  padding-top: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-`
-
-const CurrentStep = styled.div`
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-left: 3px solid var(--color-primary);
-  background: var(--color-background-soft);
 `
 
 const StepOverview = styled.div`

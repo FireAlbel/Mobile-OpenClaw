@@ -1,5 +1,5 @@
-import { UNKNOWN } from '@renderer/config/translate'
-import useTranslate from '@renderer/hooks/useTranslate'
+import { UNKNOWN } from '@renderer/config/languages'
+import useLanguages from '@renderer/hooks/useLanguages'
 import type { TranslateLanguage, TranslateLanguageCode } from '@renderer/types'
 import type { SelectProps } from 'antd'
 import { Select, Space } from 'antd'
@@ -18,7 +18,7 @@ type Props = {
 } & Omit<SelectProps, 'labelRender' | 'options'>
 
 const LanguageSelect = (props: Props) => {
-  const { translateLanguages } = useTranslate()
+  const { languages } = useLanguages()
   const { extraOptionsAfter, extraOptionsBefore, languageRenderer, ...restProps } = props
 
   const defaultLanguageRenderer = useCallback((lang: TranslateLanguage) => {
@@ -46,12 +46,12 @@ const LanguageSelect = (props: Props) => {
   const displayedOptions = useMemo(() => {
     const before = extraOptionsBefore ?? []
     const after = extraOptionsAfter ?? []
-    const options = translateLanguages.map((lang) => ({
+    const options = languages.map((lang) => ({
       value: lang.langCode,
       label: languageRenderer ? languageRenderer(lang) : defaultLanguageRenderer(lang)
     }))
     return [...before, ...options, ...after]
-  }, [defaultLanguageRenderer, extraOptionsAfter, extraOptionsBefore, languageRenderer, translateLanguages])
+  }, [defaultLanguageRenderer, extraOptionsAfter, extraOptionsBefore, languageRenderer, languages])
 
   return (
     <Select

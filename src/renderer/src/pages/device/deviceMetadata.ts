@@ -9,6 +9,9 @@ export interface DeviceGroup {
   name: string
 }
 
+export const DEVICE_GROUPS_CONFIG_KEY = 'device.groups'
+export const DEVICE_INFO_CONFIG_KEY = 'device.info'
+
 export const isDeviceGroup = (item: unknown): item is DeviceGroup => {
   return Boolean(
     item &&
@@ -17,6 +20,16 @@ export const isDeviceGroup = (item: unknown): item is DeviceGroup => {
       typeof (item as DeviceGroup).name === 'string' &&
       (item as DeviceGroup).name.trim()
   )
+}
+
+export const sanitizeDeviceGroups = (value: unknown): DeviceGroup[] => {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .filter(isDeviceGroup)
+    .map((item) => ({ id: item.id.trim(), name: item.name.trim() }))
+    .filter((item) => item.id && item.name)
+    .filter((item, index, list) => list.findIndex((other) => other.id === item.id) === index)
 }
 
 export const sanitizeDeviceMetadataMap = (value: unknown): Record<string, DeviceMetadata> => {

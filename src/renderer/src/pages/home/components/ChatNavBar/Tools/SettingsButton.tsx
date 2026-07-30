@@ -1,10 +1,11 @@
 import { useRuntime } from '@renderer/hooks/useRuntime'
+import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import type { Assistant } from '@renderer/types'
 import { Drawer, Tooltip } from 'antd'
 import { t } from 'i18next'
 import { Settings2 } from 'lucide-react'
 import type { FC } from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import NavbarIcon from '../../../../../components/NavbarIcon'
 import { AgentSettingsTab, AssistantSettingsTab } from './SettingsTab'
@@ -19,6 +20,8 @@ const SettingsButton: FC<Props> = ({ assistant }) => {
 
   const isTopicSettings = chat.activeTopicOrSession === 'topic'
   const isAgentSettings = chat.activeTopicOrSession === 'session'
+
+  useEffect(() => EventEmitter.on(EVENT_NAMES.OPEN_ASSISTANT_SETTINGS, () => setSettingsOpen(true)), [])
 
   return (
     <>

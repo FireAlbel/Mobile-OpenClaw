@@ -61,6 +61,7 @@ export interface ToolContext {
   scope: InputbarScope
   assistant: Assistant
   model: Model
+  rpaTask?: { topicId: string; roleId: string }
   // Session data for Agent Session scope (only available when scope is TopicType.Session)
   session?: {
     agentId?: string

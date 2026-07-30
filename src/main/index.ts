@@ -23,7 +23,6 @@ import { configManager } from './services/ConfigManager'
 import { lanTransferClientService } from './services/lanTransfer'
 import mcpService from './services/MCPService'
 import { localTransferService } from './services/LocalTransferService'
-import { openClawService } from './services/OpenClawService'
 import { scrcpyFrameStreamService } from './services/ScrcpyFrameStreamService'
 import { nodeTraceService } from './services/NodeTraceService'
 import powerMonitorService from './services/PowerMonitorService'
@@ -38,7 +37,6 @@ import { registerShortcuts } from './services/ShortcutService'
 import { TrayService } from './services/TrayService'
 import { versionService } from './services/VersionService'
 import { windowService } from './services/WindowService'
-import { initWebviewHotkeys } from './services/WebviewService'
 import { runAsyncFunction } from './utils'
 import { isOvmsSupported } from './services/OvmsManager'
 
@@ -140,7 +138,6 @@ if (!app.requestSingleInstanceLock()) {
     // A preparation for v2 data refactoring
     versionService.recordCurrentVersion()
 
-    initWebviewHotkeys()
     // Set app user model id for windows
     electronApp.setAppUserModelId(import.meta.env.VITE_MAIN_BUNDLE_ID || 'com.kangfenmao.CherryStudio')
 
@@ -275,7 +272,6 @@ if (!app.requestSingleInstanceLock()) {
 
     try {
       await analyticsService.destroy()
-      await openClawService.stopGateway()
       await scrcpyFrameStreamService.stopAll()
       await mcpService.cleanup()
       await apiServerService.stop()

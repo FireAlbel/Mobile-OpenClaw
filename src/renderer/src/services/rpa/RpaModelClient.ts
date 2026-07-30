@@ -1,4 +1,4 @@
-import type { Model } from '@renderer/types'
+import type { Assistant, Model } from '@renderer/types'
 import type { Chunk } from '@renderer/types/chunk'
 import type { ModelMessage } from 'ai'
 
@@ -6,6 +6,7 @@ import { createAiCompletionError } from '../AiCompletionError'
 
 export interface RpaModelClientRequest {
   messages: ModelMessage[]
+  assistant?: Assistant
   allowedTools?: string[]
   model?: Model
   signal?: AbortSignal
@@ -47,7 +48,7 @@ export class DefaultRpaModelClient implements RpaModelClient {
     ])
     const model = request.model ?? getDefaultModel()
     if (!model) throw new Error('No model is configured for RPA reasoning')
-    const defaultAssistant = getDefaultAssistant()
+    const defaultAssistant = request.assistant ?? getDefaultAssistant()
     const assistant = {
       ...defaultAssistant,
       model,
@@ -80,7 +81,7 @@ export class DefaultRpaModelClient implements RpaModelClient {
           }
         },
         uiMessages: [],
-        allowedTools: request.allowedTools ?? []
+        allowedTools: request.allowedTools
       })
     } catch (error) {
       throw createAiCompletionError(`RPA model request (${model.name || model.id})`, streamError, error)

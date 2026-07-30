@@ -157,7 +157,7 @@ vi.mock('../../prepareParams/header', () => ({
 const ensureWindowApi = () => {
   const globalWindow = window as any
   globalWindow.api = globalWindow.api || {}
-  globalWindow.api.getAppInfo = globalWindow.api.getAppInfo || vi.fn(async () => ({ notesPath: '' }))
+  globalWindow.api.getAppInfo = globalWindow.api.getAppInfo || vi.fn(async () => ({}))
 }
 
 ensureWindowApi()

@@ -65,7 +65,7 @@ vi.mock('@renderer/config/models', () => ({
   getModelSupportedVerbosity: vi.fn(() => [])
 }))
 
-vi.mock('@renderer/config/translate', () => ({
+vi.mock('@renderer/config/languages', () => ({
   mapLanguageToQwenMTModel: vi.fn()
 }))
 

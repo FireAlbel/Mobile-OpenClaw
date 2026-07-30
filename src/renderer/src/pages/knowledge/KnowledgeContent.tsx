@@ -6,7 +6,7 @@ import { useKnowledge } from '@renderer/hooks/useKnowledge'
 import { getProviderName } from '@renderer/services/ProviderService'
 import type { KnowledgeBase } from '@renderer/types'
 import { Button, Empty, Tabs, Tag, Tooltip } from 'antd'
-import { Book, Folder, Globe, Link, Notebook, Search, Settings, Video } from 'lucide-react'
+import { Book, Folder, Globe, Link, Notebook, Search, Settings, Video, Workflow } from 'lucide-react'
 import type { FC } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -21,6 +21,7 @@ import KnowledgeNotes from './items/KnowledgeNotes'
 import KnowledgeSitemaps from './items/KnowledgeSitemaps'
 import KnowledgeUrls from './items/KnowledgeUrls'
 import KnowledgeVideos from './items/KnowledgeVideos'
+import RpaKnowledgeLibrary from './RpaKnowledgeLibrary'
 
 const logger = loggerService.withContext('KnowledgeContent')
 interface KnowledgeContentProps {
@@ -32,7 +33,8 @@ const KnowledgeContent: FC<KnowledgeContentProps> = ({ selectedBase }) => {
   const { base, urlItems, fileItems, directoryItems, noteItems, sitemapItems, videoItems } = useKnowledge(
     selectedBase.id || ''
   )
-  const [activeKey, setActiveKey] = useState('files')
+  const [activeKey, setActiveKey] = useState('rpa')
+  const [rpaKnowledgeCount, setRpaKnowledgeCount] = useState(0)
   const [progressMap, setProgressMap] = useState<Map<string, number>>(new Map())
   const [preprocessMap, setPreprocessMap] = useState<Map<string, boolean>>(new Map())
 
@@ -63,6 +65,14 @@ const KnowledgeContent: FC<KnowledgeContentProps> = ({ selectedBase }) => {
     }
   }, [])
   const knowledgeItems = [
+    {
+      key: 'rpa',
+      title: t('knowledge.rpa.title', { defaultValue: 'RPA SOP / Experience' }),
+      icon: activeKey === 'rpa' ? <Workflow size={16} color="var(--color-primary)" /> : <Workflow size={16} />,
+      items: Array.from({ length: rpaKnowledgeCount }),
+      content: <RpaKnowledgeLibrary selectedBase={selectedBase} onCountChange={setRpaKnowledgeCount} />,
+      show: true
+    },
     {
       key: 'files',
       title: t('files.title'),

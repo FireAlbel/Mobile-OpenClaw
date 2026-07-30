@@ -1,6 +1,18 @@
 import { loggerService } from '@logger'
+import { type DeviceInfo, deviceServiceProxy } from '@renderer/services/DeviceServiceProxy'
 
-import { ipcRpaRunStorage, type RpaBatchRunRecord, type RpaRunStorage } from './RpaRunStorage'
+import type { RpaExecutionTargetSelection } from './RpaExecutionTarget'
+import {
+  type RpaRunContextSnapshot,
+  sanitizeRpaRunContextSnapshot,
+  trySanitizeRpaRunContextSnapshot
+} from './RpaRunContextSnapshot'
+import {
+  ipcRpaRunStorage,
+  type RpaBatchRunRecord,
+  type RpaRunStorage,
+  type RpaTraceAnalysisRecord
+} from './RpaRunStorage'
 import { type RpaSafetyPolicyEngine, rpaSafetyPolicyEngine } from './RpaSafetyPolicyEngine'
 import type { RpaRunResult, RpaRunStepEvent, RpaSafetyApproval, RpaTask } from './RpaTypes'
 
@@ -16,16 +28,25 @@ export interface RpaBatchRunnerOptions {
   ) => RpaTaskExecutorLike
   now?: () => number
   safetyPolicyEngine?: RpaSafetyPolicyEngine
+  traceLearningService?: RpaTraceLearningServiceLike
+  deviceScanner?: () => Promise<DeviceInfo[]>
+  deviceMonitorIntervalMs?: number
 }
 
 export interface RpaTaskExecutorLike {
   run(input: unknown, deviceId: string, signal?: AbortSignal): Promise<RpaRunResult>
 }
 
+export interface RpaTraceLearningServiceLike {
+  analyzeDeviceRun(run: RpaBatchRunRecord, deviceRunId: string): Promise<RpaTraceAnalysisRecord>
+}
+
 export interface StartRpaBatchRunInput {
   task: RpaTask
   deviceIds?: string[]
   safetyApproval?: RpaSafetyApproval
+  targetSelection?: RpaExecutionTargetSelection
+  contextSnapshot?: RpaRunContextSnapshot
 }
 
 function createId(prefix: string): string {
@@ -39,6 +60,10 @@ export class RpaBatchRunner {
   private readonly cancelledDeviceRuns = new Set<string>()
   private readonly controllers = new Map<string, AbortController>()
   private readonly safetyApprovals = new Map<string, RpaSafetyApproval>()
+  private detectedDevices: DeviceInfo[] = []
+  private deviceStatusSnapshotReady = false
+  private deviceMonitorTimer?: ReturnType<typeof setInterval>
+  private deviceRefreshPromise?: Promise<DeviceInfo[]>
   private persistenceQueue: Promise<void> = Promise.resolve()
   private loaded = false
 
@@ -58,6 +83,22 @@ export class RpaBatchRunner {
 
   getRuns(): RpaBatchRunRecord[] {
     return snapshotRuns(this.runs).sort((a, b) => b.createdAt - a.createdAt)
+  }
+
+  getDetectedDevices(): DeviceInfo[] {
+    return this.detectedDevices.map((device) => ({ ...device }))
+  }
+
+  hasDeviceStatusSnapshot(): boolean {
+    return this.deviceStatusSnapshotReady
+  }
+
+  async refreshDeviceStatuses(): Promise<DeviceInfo[]> {
+    if (this.deviceRefreshPromise) return this.deviceRefreshPromise
+    this.deviceRefreshPromise = this.performDeviceStatusRefresh().finally(() => {
+      this.deviceRefreshPromise = undefined
+    })
+    return this.deviceRefreshPromise
   }
 
   async start(input: StartRpaBatchRunInput): Promise<RpaBatchRunRecord> {
@@ -85,13 +126,16 @@ export class RpaBatchRunner {
         events: [],
         createdAt: now,
         updatedAt: now
-      }))
+      })),
+      targetSelection: input.targetSelection ? cloneTargetSelection(input.targetSelection) : undefined,
+      contextSnapshot: input.contextSnapshot ? sanitizeRpaRunContextSnapshot(input.contextSnapshot) : undefined
     }
     run.deviceRuns = run.deviceRuns.map((deviceRun) => ({ ...deviceRun, batchRunId: run.id }))
     if (input.safetyApproval) this.safetyApprovals.set(run.id, input.safetyApproval)
 
     this.runs = [run, ...this.runs].slice(0, 100)
     await this.persistAndEmit()
+    this.ensureDeviceMonitor()
 
     for (const deviceRun of run.deviceRuns) {
       void this.runDevice(run.id, deviceRun.id)
@@ -100,16 +144,20 @@ export class RpaBatchRunner {
     return run
   }
 
-  async pauseDeviceRun(deviceRunId: string): Promise<boolean> {
+  async pauseDeviceRun(deviceRunId: string, reason?: string): Promise<boolean> {
     await this.initialize()
     const deviceRun = this.findDeviceRun(deviceRunId)
     if (!deviceRun || isTerminalStatus(deviceRun.status)) return false
 
     this.pausedDeviceRuns.add(deviceRunId)
+    this.controllers.get(deviceRunId)?.abort(new Error(reason ?? 'RPA device run paused'))
     deviceRun.status = 'paused'
+    deviceRun.error = reason
+    deviceRun.finishedAt = undefined
     deviceRun.updatedAt = this.now()
     await this.refreshParentStatus(deviceRun.batchRunId)
     await this.persistAndEmit()
+    this.reconcileDeviceMonitor()
     return true
   }
 
@@ -127,6 +175,7 @@ export class RpaBatchRunner {
     deviceRun.updatedAt = this.now()
     await this.refreshParentStatus(run.id)
     await this.persistAndEmit()
+    this.ensureDeviceMonitor()
     void this.runDevice(run.id, deviceRunId)
     return true
   }
@@ -143,6 +192,7 @@ export class RpaBatchRunner {
     deviceRun.updatedAt = deviceRun.finishedAt
     await this.refreshParentStatus(deviceRun.batchRunId)
     await this.persistAndEmit()
+    this.reconcileDeviceMonitor()
     return true
   }
 
@@ -164,7 +214,22 @@ export class RpaBatchRunner {
     run.finishedAt = this.now()
     run.updatedAt = run.finishedAt
     await this.persistAndEmit()
+    this.reconcileDeviceMonitor()
     return true
+  }
+
+  async retryBatchRun(batchRunId: string): Promise<RpaBatchRunRecord | undefined> {
+    await this.initialize()
+    const run = this.runs.find((item) => item.id === batchRunId)
+    if (!run || (run.status !== 'failed' && run.status !== 'cancelled')) return undefined
+
+    return this.start({
+      task: run.task,
+      deviceIds: run.deviceIds,
+      safetyApproval: this.safetyApprovals.get(run.id),
+      targetSelection: run.targetSelection,
+      contextSnapshot: run.contextSnapshot
+    })
   }
 
   async emergencyStop(): Promise<number> {
@@ -220,15 +285,24 @@ export class RpaBatchRunner {
       const result = await executor.run(run.task, deviceRun.deviceId, controller.signal)
       this.applyRunResult(deviceRun, result)
     } catch (error) {
-      logger.error('RPA device run failed', { error, batchRunId, deviceRunId, deviceId: deviceRun.deviceId })
-      deviceRun.status = 'failed'
-      deviceRun.error = error instanceof Error ? error.message : String(error)
-      deviceRun.finishedAt = this.now()
-      deviceRun.updatedAt = deviceRun.finishedAt
+      if (this.cancelledDeviceRuns.has(deviceRun.id)) {
+        deviceRun.status = 'cancelled'
+      } else if (this.pausedDeviceRuns.has(deviceRun.id)) {
+        deviceRun.status = 'paused'
+        deviceRun.finishedAt = undefined
+      } else {
+        logger.error('RPA device run failed', { error, batchRunId, deviceRunId, deviceId: deviceRun.deviceId })
+        deviceRun.status = 'failed'
+        deviceRun.error = error instanceof Error ? error.message : String(error)
+        deviceRun.finishedAt = this.now()
+      }
+      deviceRun.updatedAt = this.now()
     } finally {
       this.controllers.delete(deviceRunId)
       await this.refreshParentStatus(batchRunId)
+      await this.analyzeDeviceRun(run, deviceRun)
       await this.persistAndEmit()
+      this.reconcileDeviceMonitor()
     }
   }
 
@@ -247,6 +321,10 @@ export class RpaBatchRunner {
       deviceRun.status = 'cancelled'
     } else if (this.pausedDeviceRuns.has(deviceRun.id)) {
       deviceRun.status = 'paused'
+      deviceRun.events = result.events
+      deviceRun.finishedAt = undefined
+      deviceRun.updatedAt = this.now()
+      return
     } else {
       deviceRun.status = result.status
     }
@@ -311,6 +389,68 @@ export class RpaBatchRunner {
     })
   }
 
+  private async analyzeDeviceRun(
+    run: RpaBatchRunRecord,
+    deviceRun: RpaBatchRunRecord['deviceRuns'][number]
+  ): Promise<void> {
+    if (!['completed', 'failed', 'needs_human'].includes(deviceRun.status)) return
+    try {
+      const service =
+        this.options.traceLearningService ?? (await import('./RpaTraceLearningService')).rpaTraceLearningService
+      deviceRun.traceAnalysis = await service.analyzeDeviceRun(snapshotRuns([run])[0], deviceRun.id)
+      deviceRun.updatedAt = this.now()
+    } catch (error) {
+      logger.warn('RPA trace learning failed without affecting the run result', {
+        error,
+        runId: run.id,
+        deviceRunId: deviceRun.id
+      })
+    }
+  }
+
+  private ensureDeviceMonitor(): void {
+    if (this.deviceMonitorTimer || (this.options.executorFactory && !this.options.deviceScanner)) return
+    void this.refreshDeviceStatuses()
+    const intervalMs = this.options.deviceMonitorIntervalMs ?? 3000
+    if (intervalMs <= 0) return
+    this.deviceMonitorTimer = setInterval(() => void this.refreshDeviceStatuses(), intervalMs)
+  }
+
+  private reconcileDeviceMonitor(): void {
+    const hasActiveDeviceRuns = this.runs.some((run) =>
+      run.deviceRuns.some((deviceRun) => deviceRun.status === 'pending' || deviceRun.status === 'running')
+    )
+    if (hasActiveDeviceRuns || !this.deviceMonitorTimer) return
+    clearInterval(this.deviceMonitorTimer)
+    this.deviceMonitorTimer = undefined
+  }
+
+  private async performDeviceStatusRefresh(): Promise<DeviceInfo[]> {
+    try {
+      const devices = await (this.options.deviceScanner ?? (() => deviceServiceProxy.scanDevices()))()
+      this.detectedDevices = devices.map((device) => ({ ...device }))
+      this.deviceStatusSnapshotReady = true
+      const deviceById = new Map(devices.map((device) => [device.id, device]))
+      const activeDeviceRuns = this.runs.flatMap((run) =>
+        run.deviceRuns.filter((deviceRun) => deviceRun.status === 'pending' || deviceRun.status === 'running')
+      )
+      for (const deviceRun of activeDeviceRuns) {
+        const device = deviceById.get(deviceRun.deviceId)
+        if (device?.status === 'online') continue
+        const reason =
+          device?.status === 'unauthorized'
+            ? `Device unauthorized during RPA execution: ${deviceRun.deviceId}`
+            : `Device offline during RPA execution: ${deviceRun.deviceId}`
+        await this.pauseDeviceRun(deviceRun.id, reason)
+      }
+      this.emit()
+      return this.getDetectedDevices()
+    } catch (error) {
+      logger.warn('Failed to refresh RPA device statuses', { error })
+      return this.getDetectedDevices()
+    }
+  }
+
   private async persistAndEmit(): Promise<void> {
     this.emit()
     const snapshot = snapshotRuns(this.runs)
@@ -347,9 +487,42 @@ function snapshotRuns(runs: RpaBatchRunRecord[]): RpaBatchRunRecord[] {
     deviceIds: [...run.deviceIds],
     deviceRuns: run.deviceRuns.map((deviceRun) => ({
       ...deviceRun,
-      events: [...deviceRun.events]
-    }))
+      events: [...deviceRun.events],
+      traceAnalysis: deviceRun.traceAnalysis
+        ? {
+            ...deviceRun.traceAnalysis,
+            stateIds: [...deviceRun.traceAnalysis.stateIds],
+            transitions: [...deviceRun.traceAnalysis.transitions],
+            locatorHints: [...deviceRun.traceAnalysis.locatorHints],
+            assertionHints: [...deviceRun.traceAnalysis.assertionHints],
+            evidenceArtifactIds: [...deviceRun.traceAnalysis.evidenceArtifactIds],
+            taskFlowLearning: deviceRun.traceAnalysis.taskFlowLearning
+              ? {
+                  ...deviceRun.traceAnalysis.taskFlowLearning,
+                  validationIssues: [...(deviceRun.traceAnalysis.taskFlowLearning.validationIssues ?? [])]
+                }
+              : undefined,
+            improvementProposalIds: [...deviceRun.traceAnalysis.improvementProposalIds],
+            redactions: [...deviceRun.traceAnalysis.redactions]
+          }
+        : undefined
+    })),
+    targetSelection: run.targetSelection ? cloneTargetSelection(run.targetSelection) : undefined,
+    contextSnapshot: trySanitizeRpaRunContextSnapshot(run.contextSnapshot)
   }))
+}
+
+function cloneTargetSelection(selection: RpaExecutionTargetSelection): RpaExecutionTargetSelection {
+  return {
+    ...selection,
+    groupIds: [...selection.groupIds],
+    includedDeviceIds: [...selection.includedDeviceIds],
+    excludedDeviceIds: [...selection.excludedDeviceIds],
+    deviceIds: [...selection.deviceIds],
+    unavailableDeviceIds: [...selection.unavailableDeviceIds],
+    partialGroupIds: [...selection.partialGroupIds],
+    emptyGroupIds: [...selection.emptyGroupIds]
+  }
 }
 
 function isTerminalStatus(status: RpaBatchRunRecord['deviceRuns'][number]['status']): boolean {

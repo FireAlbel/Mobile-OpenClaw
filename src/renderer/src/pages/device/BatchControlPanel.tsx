@@ -140,7 +140,7 @@ const BatchControlPanel: React.FC<BatchControlPanelProps> = ({ onClose }) => {
 
   const handleBatchReboot = async () => {
     // 暂时禁用重启功能
-    await executeBatchAction(t('device.batch_control.reboot'), async (_serial) => {
+    await executeBatchAction(t('device.batch_control.reboot'), async () => {
       // 暂时禁用重启功能
       return false
     })

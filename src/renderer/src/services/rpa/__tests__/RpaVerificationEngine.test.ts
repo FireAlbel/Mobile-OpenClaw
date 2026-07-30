@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import type { RpaModelClient } from '../RpaModelClient'
+import { buildRpaModelContext, createEmbeddedRpaModelContext } from '../RpaModelContextBuilder'
 import type { RpaDeviceRuntime, RpaModuleResult } from '../RpaTypes'
 import { RpaVerificationEngine } from '../RpaVerificationEngine'
 
@@ -53,7 +54,7 @@ describe('RpaVerificationEngine', () => {
     const engine = new RpaVerificationEngine({ runtime: runtime() })
 
     const result = await engine.verify(
-      { type: 'foreground_app', packageName: 'com.example.app' },
+      { type: 'foreground_app', packageName: 'com.example.app', settleMs: 0 },
       successResult,
       'device-1'
     )
@@ -73,13 +74,62 @@ describe('RpaVerificationEngine', () => {
     })
 
     const result = await engine.verify(
-      { type: 'foreground_app', packageName: 'com.example.app' },
+      {
+        type: 'foreground_app',
+        packageName: 'com.example.app',
+        settleMs: 0,
+        timeoutMs: 100,
+        pollIntervalMs: 50
+      },
       successResult,
       'device-1'
     )
 
     expect(result.status).toBe('uncertain')
     expect(result.message).toContain('Unable to parse foreground app')
+  })
+
+  it('waits through an OEM launcher redirect before passing foreground verification', async () => {
+    const getForegroundApp = vi
+      .fn()
+      .mockResolvedValueOnce({
+        success: true,
+        message: 'foreground ok',
+        data: { packageName: 'com.oplus.multiapp', activity: '.ui.settings.ActivitySettingsActivity' }
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        message: 'foreground ok',
+        data: { packageName: 'com.oplus.multiapp', activity: '.ui.entry.ActivityMainActivity' }
+      })
+      .mockResolvedValue({
+        success: true,
+        message: 'foreground ok',
+        data: { packageName: 'com.android.settings', activity: '.Settings' }
+      })
+    const engine = new RpaVerificationEngine({ runtime: runtime({ getForegroundApp }) })
+
+    const result = await engine.verify(
+      {
+        type: 'foreground_app',
+        packageName: 'com.android.settings',
+        settleMs: 0,
+        timeoutMs: 500,
+        pollIntervalMs: 50
+      },
+      successResult,
+      'device-1'
+    )
+
+    expect(result.status).toBe('passed')
+    expect(getForegroundApp).toHaveBeenCalledTimes(3)
+    expect(result.evidence).toMatchObject({
+      observations: [
+        { packageName: 'com.oplus.multiapp' },
+        { packageName: 'com.oplus.multiapp' },
+        { packageName: 'com.android.settings' }
+      ]
+    })
   })
 
   it('marks missing observation screenshot as uncertain', async () => {
@@ -133,6 +183,95 @@ describe('RpaVerificationEngine', () => {
     )
 
     expect(result.status).toBe('uncertain')
+  })
+
+  it('repairs a prose-only assertion once and applies only verification Role prompts', async () => {
+    const complete = vi
+      .fn()
+      .mockResolvedValueOnce('The screen looks correct.')
+      .mockResolvedValueOnce(JSON.stringify({ passed: true, confidence: 0.91, reason: 'Task result is visible' }))
+    const modelContext = createEmbeddedRpaModelContext(
+      buildRpaModelContext({
+        callType: 'planner',
+        rolePrompts: [
+          {
+            schemaVersion: 1,
+            id: 'verify-prompt',
+            roleId: 'role-1',
+            version: '1',
+            kind: 'verification',
+            content: 'Check the final business state, not the previous action.',
+            priority: 1,
+            status: 'enabled',
+            createdAt: 1,
+            updatedAt: 1
+          },
+          {
+            schemaVersion: 1,
+            id: 'recovery-prompt',
+            roleId: 'role-1',
+            version: '1',
+            kind: 'recovery',
+            content: 'Recovery-only guidance.',
+            priority: 0,
+            status: 'enabled',
+            createdAt: 1,
+            updatedAt: 1
+          },
+          {
+            schemaVersion: 1,
+            id: 'home-capability',
+            roleId: 'role-1',
+            version: '1',
+            kind: 'capability',
+            capability: 'android.home',
+            content: 'Recognize the launcher as a valid Home state.',
+            priority: 0,
+            status: 'enabled',
+            createdAt: 1,
+            updatedAt: 1
+          }
+        ],
+        systemCapabilities: ['android.home']
+      })
+    )
+    const engine = new RpaVerificationEngine({ runtime: runtime(), modelClient: { complete } as RpaModelClient })
+
+    const result = await engine.verify(
+      { type: 'vlm_assert', expectation: 'The task is complete', minConfidence: 0.7, settleMs: 0 },
+      successResult,
+      'device-1',
+      undefined,
+      undefined,
+      modelContext
+    )
+
+    expect(result.status).toBe('passed')
+    expect(complete).toHaveBeenCalledTimes(2)
+    const messages = JSON.stringify(complete.mock.calls)
+    expect(messages).toContain('Check the final business state, not the previous action.')
+    expect(messages).toContain('Recognize the launcher as a valid Home state.')
+    expect(messages).not.toContain('Recovery-only guidance.')
+  })
+
+  it('verifies text through the UI tree without invoking VLM', async () => {
+    const testRuntime = runtime({
+      getUiTree: vi.fn().mockResolvedValue({
+        success: true,
+        message: 'ui tree ok',
+        data: '<hierarchy><node text="任务列表" content-desc="" resource-id="task-list" class="android.widget.TextView" package="app" clickable="false" enabled="true" bounds="[0,0][500,100]" /></hierarchy>'
+      })
+    })
+    const engine = new RpaVerificationEngine({ runtime: testRuntime })
+
+    const result = await engine.verify(
+      { type: 'text_present', text: '任务列表', source: 'ui_tree', exact: true, minConfidence: 0.5 },
+      successResult,
+      'device-1'
+    )
+
+    expect(result.status).toBe('passed')
+    expect(testRuntime.getUiTree).toHaveBeenCalledOnce()
   })
 
   it('converts a VLM request error into an uncertain verification result', async () => {

@@ -2,8 +2,8 @@
 import { SuccessTag } from '@renderer/components/Tags/SuccessTag'
 import { InfoTooltip } from '@renderer/components/TooltipIcons'
 import { isMac, isWin } from '@renderer/config/constant'
+import useLanguages from '@renderer/hooks/useLanguages'
 import { useOcrProvider } from '@renderer/hooks/useOcrProvider'
-import useTranslate from '@renderer/hooks/useTranslate'
 import type { TranslateLanguageCode } from '@renderer/types'
 import { BuiltinOcrProviderIds, isOcrSystemProvider } from '@renderer/types'
 import { Flex, Select } from 'antd'
@@ -17,7 +17,7 @@ import { SettingRow, SettingRowTitle } from '..'
 export const OcrSystemSettings = () => {
   const { t } = useTranslation()
   // 和翻译自定义语言耦合了，应该还ok
-  const { translateLanguages } = useTranslate()
+  const { languages } = useLanguages()
   const { provider, updateConfig } = useOcrProvider(BuiltinOcrProviderIds.system)
 
   if (!isOcrSystemProvider(provider)) {
@@ -33,11 +33,11 @@ export const OcrSystemSettings = () => {
   // currently static
   const options = useMemo(
     () =>
-      translateLanguages.map((lang) => ({
+      languages.map((lang) => ({
         value: lang.langCode,
         label: lang.emoji + ' ' + lang.label()
       })),
-    [translateLanguages]
+    [languages]
   )
 
   const onChange = useCallback((value: TranslateLanguageCode[]) => {

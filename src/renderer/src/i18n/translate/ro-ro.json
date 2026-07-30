@@ -860,7 +860,6 @@
         "expand": "Extinde"
       },
       "topics": " Subiecte ",
-      "translate": "Tradu în {{target_language}}",
       "translating": "Se traduce...",
       "upload": {
         "attachment": "Încarcă atașament",
@@ -1107,7 +1106,6 @@
           "label": "Exportă ca markdown",
           "reason": "Exportă ca Markdown (cu raționament)"
         },
-        "notes": "Exportă în Note",
         "notion": "Exportă în Notion",
         "obsidian": "Exportă în Obsidian",
         "obsidian_atributes": "Configurează atributele notiței",
@@ -1189,47 +1187,11 @@
       "title": "Subiecte",
       "unpin": "Detașează subiectul"
     },
-    "translate": "Tradu",
     "web_search": {
       "warning": {
         "openai": "Efortul minim de raționament al modelului GPT-5 nu acceptă căutarea web."
       }
     }
-  },
-  "code": {
-    "auto_update_to_latest": "Actualizează automat la cea mai recentă versiune",
-    "bun_required_message": "Mediul Bun este necesar pentru a rula instrumente CLI",
-    "cli_tool": "Instrument CLI",
-    "cli_tool_placeholder": "Selectează instrumentul CLI de utilizat",
-    "custom_path": "Cale personalizată",
-    "custom_path_error": "Nu s-a putut seta calea personalizată a terminalului",
-    "custom_path_required": "Calea personalizată este necesară pentru acest terminal",
-    "custom_path_set": "Calea personalizată a terminalului a fost setată cu succes",
-    "description": "Lansează rapid mai multe instrumente CLI de cod pentru a îmbunătăți eficiența dezvoltării",
-    "env_vars_help": "Introdu variabile de mediu personalizate (una pe rând, format: CHEIE=valoare)",
-    "environment_variables": "Variabile de mediu",
-    "folder_placeholder": "Selectează directorul de lucru",
-    "install_bun": "Instalează Bun",
-    "installing_bun": "Se instalează...",
-    "launch": {
-      "bun_required": "Te rugăm să instalezi mai întâi mediul Bun înainte de a lansa instrumentele CLI",
-      "error": "Lansarea a eșuat, te rugăm să încerci din nou",
-      "label": "Lansează",
-      "success": "Lansare reușită",
-      "validation_error": "Te rugăm să completezi toate câmpurile obligatorii: instrument CLI, model și director de lucru"
-    },
-    "launching": "Se lansează...",
-    "model": "Model",
-    "model_placeholder": "Selectează modelul de utilizat",
-    "model_required": "Te rugăm să selectezi un model",
-    "select_folder": "Selectează dosarul",
-    "set_custom_path": "Setează calea personalizată a terminalului",
-    "supported_providers": "Furnizori acceptați",
-    "terminal": "Terminal",
-    "terminal_placeholder": "Selectează aplicația terminal",
-    "title": "Instrumente de cod",
-    "update_options": "Opțiuni de actualizare",
-    "working_directory": "Director de lucru"
   },
   "code_block": {
     "collapse": "Restrânge",
@@ -1394,7 +1356,6 @@
     "swap": "Schimbă",
     "topics": "Subiecte",
     "total": "[to be translated]:Total",
-    "translate_text": "Traduceți textul",
     "unknown": "Necunoscut",
     "unnamed": "Fără nume",
     "unsubscribe": "Dezabonează-te",
@@ -1549,26 +1510,46 @@
       "update_success": "[to be translated]:Group updated successfully"
     },
     "last_refresh": "[to be translated]:Last refresh time",
+    "management_title": "[to be translated]:Device management",
     "model": "[to be translated]:Model",
     "no_devices": "[to be translated]:No devices connected",
     "port": "[to be translated]:Port",
     "refresh": "[to be translated]:Refresh",
     "remark": "[to be translated]:Remark",
     "rpa": {
+      "active_runs": "[to be translated]:Active RPA tasks",
       "add_step": "[to be translated]:Add step",
+      "adjust_context": "[to be translated]:Adjust",
       "advanced_dsl": "[to be translated]:Advanced DSL editor",
+      "advanced_model_overrides": "[to be translated]:Advanced model overrides",
       "all_devices": "[to be translated]:All devices",
       "all_phases": "[to be translated]:All phases",
+      "any_compatible_version": "[to be translated]:Any compatible version",
       "approve_and_retry": "[to be translated]:Approve and retry",
+      "asset_status_empty": "[to be translated]:Empty",
+      "asset_status_error": "[to be translated]:Error",
+      "asset_status_legacy": "[to be translated]:Legacy",
+      "asset_status_missing": "[to be translated]:Missing",
+      "asset_status_ready": "[to be translated]:Ready",
+      "asset_status_running": "[to be translated]:Processing",
+      "assistant_profile_version": "[to be translated]:Assistant Profile",
       "attempt": "[to be translated]:Attempt {{attempt}}",
+      "automation_settings": "[to be translated]:Automation",
+      "binding_priority": "[to be translated]:Binding priority",
       "chat_placeholder": "[to be translated]:Describe the task to perform on the selected devices. Press Enter to generate the workflow.",
+      "chat_topics": "[to be translated]:Chat Topics",
+      "clear_topic_overrides": "[to be translated]:Clear overrides",
+      "compiled_skills": "[to be translated]:Compiled Skills",
       "confidence": "[to be translated]:Confidence",
       "confirm_and_execute": "[to be translated]:Confirm and execute",
       "confirm_execution": "[to be translated]:Confirm RPA execution",
       "confirm_execution_detail": "[to be translated]:This workflow will execute {{steps}} steps on {{devices}} device(s).",
       "confirm_high_risk_execution": "[to be translated]:Confirm high-risk RPA execution",
+      "confirm_partial_group": "[to be translated]:Review unavailable group devices and confirm execution with the online subset.",
       "confirm_safety_target": "[to be translated]:Approve this action for the selected device: {{target}}",
+      "continue_device": "[to be translated]:Continue",
       "continue_on_failure": "[to be translated]:Continue after failure",
+      "continue_with_online_subset": "[to be translated]:Continue with the available online devices",
       "correction_evidence": "[to be translated]:Correction evidence",
       "correction_round": "[to be translated]:Correction round {{round}}",
       "create_template": "[to be translated]:Create template",
@@ -1576,49 +1557,116 @@
       "debug_export_failed": "[to be translated]:Failed to export the debug bundle.",
       "debug_exported": "[to be translated]:Debug bundle exported.",
       "decision": "[to be translated]:Decision",
+      "default_model": "[to be translated]:Default model",
+      "degraded_generation_warning": "[to be translated]:Degraded generation warnings",
+      "device_completed_steps": "[to be translated]:{{completed}} of {{total}} steps completed",
+      "device_execution_progress": "[to be translated]:Device execution progress",
+      "device_name": "[to be translated]:Device",
+      "device_offline_cannot_continue": "[to be translated]:Reconnect the device before continuing.",
+      "device_offline_reason": "[to be translated]:Device {{device}} went offline. Execution was stopped automatically.",
+      "device_unauthorized_reason": "[to be translated]:USB debugging authorization for device {{device}} is unavailable. Execution was stopped automatically.",
       "devices": "[to be translated]:Devices",
       "draft_saved": "[to be translated]:RPA workflow draft saved.",
       "dsl": "[to be translated]:Task DSL",
+      "dsl_provenance": "[to be translated]:DSL provenance",
+      "dsl_validation_failed": "[to be translated]:DSL validation failed.",
       "emergency_stop": "[to be translated]:Stop all tasks",
       "emergency_stop_confirm": "[to be translated]:Stop all RPA tasks?",
       "emergency_stop_detail": "[to be translated]:All running and pending device tasks will be cancelled immediately.",
+      "empty_groups_selected": "[to be translated]:The following groups contain no devices: {{groups}}",
+      "enabled_skills": "[to be translated]:Enabled Skills",
       "executable_action": "[to be translated]:Executable action",
       "execute": "[to be translated]:Execute",
       "execution_details": "[to be translated]:Execution details ({{count}})",
-      "execution_progress": "[to be translated]:RPA execution progress",
+      "execution_devices": "[to be translated]:RPA execution devices",
+      "execution_failed": "[to be translated]:Failed to start RPA execution.",
+      "execution_progress": "[to be translated]:RPA execution details",
+      "execution_status": "[to be translated]:Execution status",
+      "execution_target_summary": "[to be translated]:Execution target: {{devices}} device(s) from {{groups}} group(s)",
       "export_debug_bundle": "[to be translated]:Export debug bundle",
       "fix_validation_errors": "[to be translated]:Fix validation errors before continuing.",
+      "follow_latest_version": "[to be translated]:Follow latest",
+      "format_json": "[to be translated]:Format JSON",
       "frame_captured_at": "[to be translated]:Captured at",
       "frame_codec": "[to be translated]:Codec",
       "frame_dimensions": "[to be translated]:Dimensions",
       "frame_reconnects": "[to be translated]:Reconnects",
       "frame_sequence": "[to be translated]:Frame sequence",
       "frame_source": "[to be translated]:Frame source",
+      "group_devices_unavailable": "[to be translated]:Unavailable devices in the selected groups: {{devices}}",
       "high_risk_targets": "[to be translated]:Requires explicit confirmation: {{targets}}",
+      "knowledge_sources": "[to be translated]:Knowledge sources",
       "latest_screenshot": "[to be translated]:Latest screenshot",
+      "lifecycle": {
+        "discard_changes": "[to be translated]:Discard changes",
+        "duplicate_task": "[to be translated]:Duplicate task",
+        "end_task": "[to be translated]:End task",
+        "end_task_failed": "[to be translated]:Unable to end task",
+        "new_task": "[to be translated]:New task",
+        "no_task_to_duplicate": "[to be translated]:Generate a task before duplicating it.",
+        "save_and_continue": "[to be translated]:Save and continue",
+        "task_actions": "[to be translated]:Task actions",
+        "task_duplicated": "[to be translated]:The RPA task was duplicated as an independent draft.",
+        "task_ended": "[to be translated]:Task ended",
+        "task_ended_detail": "[to be translated]:This task is now read-only. Create or duplicate a task to continue.",
+        "unsaved_detail": "[to be translated]:Save or discard the current DSL changes before continuing.",
+        "unsaved_title": "[to be translated]:Unsaved RPA task changes"
+      },
       "missing_artifact_count": "[to be translated]:{{count}} timeline events have no screenshot evidence.",
       "missing_screenshot": "[to be translated]:Screenshot evidence is unavailable.",
+      "model_not_configured": "[to be translated]:Not configured",
       "model_required": "[to be translated]:Select a chat model before planning.",
       "module": "[to be translated]:Module",
       "move_down": "[to be translated]:Move down",
       "move_up": "[to be translated]:Move up",
+      "no_active_runs": "[to be translated]:No RPA tasks are currently running.",
+      "no_device_groups": "[to be translated]:No device groups are configured.",
       "no_online_devices": "[to be translated]:No online devices are available.",
       "no_runs": "[to be translated]:No RPA runs yet.",
+      "no_source_template": "[to be translated]:Free-form planning",
+      "online_devices": "[to be translated]:Online devices",
+      "open_evidence": "[to be translated]:Open evidence",
+      "open_knowledge": "[to be translated]:Open Knowledge",
+      "open_templates": "[to be translated]:Open Templates",
+      "operations": "[to be translated]:Operations",
       "params": "[to be translated]:Parameters (JSON)",
       "pause": "[to be translated]:Pause",
+      "pinned_version": "[to be translated]:Pinned version",
       "plan_generated": "[to be translated]:The RPA workflow has been generated. Review and edit the timeline before running it.",
+      "planner_model": "[to be translated]:Planner model",
+      "preserve_topic_overrides": "[to be translated]:Preserve overrides",
+      "profile_assets_missing": "[to be translated]:{{count}} bound automation assets are missing.",
+      "profile_load_failed": "[to be translated]:Failed to load the automation profile.",
+      "profile_save_failed": "[to be translated]:Failed to save the automation profile.",
+      "profile_saved": "[to be translated]:Automation profile saved.",
       "rate_limit_delay": "[to be translated]:Rate-limit delay",
       "raw_vlm_response": "[to be translated]:Raw VLM response",
       "realtime_events": "[to be translated]:Real-time execution events",
       "reason": "[to be translated]:Reason",
+      "recommended_templates": "[to be translated]:Recommended Templates",
       "recovery_decision": "[to be translated]:VLM recovery decision",
+      "recovery_model": "[to be translated]:Recovery model",
+      "remap_topic_overrides": "[to be translated]:Remap compatible assets",
       "repair_response": "[to be translated]:Repair response",
+      "replan": {
+        "action": "[to be translated]:Replan",
+        "completed": "[to be translated]:A new Replan revision was created.",
+        "create_revision": "[to be translated]:Create Replan revision",
+        "execution_evidence": "[to be translated]:The failed run, recent events, and manual-intervention evidence will be included.",
+        "execution_objective": "[to be translated]:Repair the workflow using the failed execution state and continue toward the original goal.",
+        "title": "[to be translated]:Contextual Replan",
+        "validation_evidence": "[to be translated]:The active DSL and its validation errors will be included.",
+        "validation_objective": "[to be translated]:Repair the DSL validation errors while preserving the original task goal."
+      },
       "replay": "[to be translated]:Replay",
+      "required_skill_dependencies_missing": "[to be translated]:{{count}} required Skill dependency issue(s) must be resolved before this Template can execute.",
       "reset_sample": "[to be translated]:Sample",
       "resume": "[to be translated]:Resume",
+      "retrieved_knowledge": "[to be translated]:Retrieved Knowledge",
       "retry_after_human": "[to be translated]:Retry after manual handling",
       "risk_level": "[to be translated]:Risk level",
       "risk_summary": "[to be translated]:Risk level: {{risk}}",
+      "run_devices_summary": "[to be translated]:{{completed}}/{{total}} devices completed",
       "run_history": "[to be translated]:Run history",
       "run_history_hint": "[to be translated]:Replay evidence or export a sanitized debug bundle.",
       "run_loading": "[to be translated]:Loading execution record...",
@@ -1627,7 +1675,13 @@
       "safety_decision": "[to be translated]:Safety decision",
       "safety_target": "[to be translated]:Policy target",
       "select_device": "[to be translated]:Select at least one online device.",
+      "select_device_groups": "[to be translated]:Device groups",
+      "select_execution_targets": "[to be translated]:Select execution devices",
+      "select_knowledge_sources": "[to be translated]:Select Knowledge sources",
+      "select_templates": "[to be translated]:Select Templates",
       "select_vision_model": "[to be translated]:Select a model that supports image input.",
+      "skill_repository_unavailable": "[to be translated]:Skill repository is not available yet",
+      "source_template": "[to be translated]:Source Template",
       "start": "[to be translated]:Start",
       "started": "[to be translated]:RPA batch run started.",
       "status": {
@@ -1643,18 +1697,43 @@
       },
       "step_name": "[to be translated]:Step name",
       "step_number": "[to be translated]:Step {{number}}",
+      "stop_device": "[to be translated]:Stop",
       "takeover_response": "[to be translated]:VLM takeover response",
+      "target_mode_all_online": "[to be translated]:All online",
+      "target_mode_groups": "[to be translated]:By group",
+      "target_mode_manual": "[to be translated]:Manual",
+      "target_scan_failed": "[to be translated]:Failed to scan devices. Keep this dialog open and try again.",
+      "target_selection_changed": "[to be translated]:Device status changed. Added: {{added}}; removed: {{removed}}. Review and confirm again.",
+      "target_status_missing": "[to be translated]:Missing",
+      "task_flow_learning": {
+        "already_applied": "[to be translated]:Task flow learning already applied at v{{version}}",
+        "created": "[to be translated]:Verified task flow created at v{{version}}",
+        "skipped_validation_failed": "[to be translated]:Task flow update skipped because validation failed",
+        "skipped_version_conflict": "[to be translated]:Task flow update skipped because a newer version exists",
+        "versioned": "[to be translated]:Task flow automatically updated to v{{version}}"
+      },
       "template_created": "[to be translated]:Reusable workflow template created.",
       "template_requires_success": "[to be translated]:Only a fully successful run can become a template.",
       "temporary_action": "[to be translated]:Temporary action",
       "temporary_steps": "[to be translated]:Temporary steps",
       "timeout": "[to be translated]:Timeout (ms)",
       "title": "[to be translated]:RPA Runner",
+      "topic_override_assistant_changed": "[to be translated]:Assistant changed",
+      "topic_override_assistant_changed_detail": "[to be translated]:This topic has temporary RPA overrides from another assistant. Choose whether to preserve them, remap compatible assets, or clear them.",
+      "topic_override_switch_cancelled": "[to be translated]:Assistant switch decision was cancelled.",
       "validation_failed": "[to be translated]:The workflow contains validation errors.",
+      "verification_model": "[to be translated]:Verification model",
       "verification_result": "[to be translated]:Verification result",
+      "version_range": "[to be translated]:Version range",
+      "view_context": "[to be translated]:Details",
+      "view_details": "[to be translated]:View details",
+      "view_device_execution_progress": "[to be translated]:View device execution progress",
       "vision_model": "[to be translated]:Vision model",
       "vision_model_required": "[to be translated]:The current default model cannot process phone screenshots. Select a vision model.",
+      "visual_model": "[to be translated]:Visual model",
+      "visual_model_required": "[to be translated]:Configure a vision-capable model for screenshot-based actions.",
       "waiting_to_execute": "[to be translated]:Waiting to execute",
+      "workspace": "[to be translated]:RPA workspace",
       "workspace_hint": "[to be translated]:Describe the mobile task in the chat box. The current chat model will generate an editable workflow.",
       "workspace_title": "[to be translated]:RPA workflow planner"
     },
@@ -1843,9 +1922,6 @@
       "content": "Ștergerea unui fișier va șterge referința acestuia din toate mesajele. Ești sigur că vrei să ștergi acest fișier?",
       "db_error": "Ștergerea a eșuat",
       "label": "Șterge",
-      "paintings": {
-        "warning": "Imaginea conține acest fișier, ștergerea nu este posibilă"
-      },
       "title": "Șterge fișier"
     },
     "document": "Document",
@@ -1860,6 +1936,45 @@
     "preview": {
       "error": "Nu s-a putut deschide fișierul"
     },
+    "rpa": {
+      "add": "[to be translated]:Add RPA asset",
+      "add_failed": "[to be translated]:Failed to add RPA assets.",
+      "all_categories": "[to be translated]:All categories",
+      "asset": "[to be translated]:RPA asset",
+      "asset_count": "[to be translated]:{{count}} asset(s)",
+      "categories": {
+        "app_reference_image": "[to be translated]:App reference",
+        "debug_bundle": "[to be translated]:Debug bundle",
+        "exported_dsl": "[to be translated]:RPA DSL",
+        "ocr_capture": "[to be translated]:OCR",
+        "other": "[to be translated]:Other",
+        "run_log": "[to be translated]:Run log",
+        "screenshot": "[to be translated]:Screenshot",
+        "sop_import": "[to be translated]:SOP",
+        "ui_tree": "[to be translated]:UI tree"
+      },
+      "category": "[to be translated]:Category",
+      "empty": "[to be translated]:No RPA assets.",
+      "filtered_run": "[to be translated]:Evidence linked to run {{runId}}",
+      "hint": "[to be translated]:Files are referenced, categorized, redacted, and retained without duplicate persistence.",
+      "import": "[to be translated]:Import",
+      "import_sop": "[to be translated]:Import SOP into Knowledge",
+      "import_sop_hint": "[to be translated]:The imported entry remains a draft until a human reviews it.",
+      "knowledge_draft_created": "[to be translated]:Knowledge draft created.",
+      "link": "[to be translated]:Link",
+      "link_asset": "[to be translated]:Link RPA asset",
+      "link_failed": "[to be translated]:Failed to link RPA asset.",
+      "links": "[to be translated]:Links",
+      "load_failed": "[to be translated]:Failed to load RPA assets.",
+      "open_failed": "[to be translated]:Failed to open RPA asset.",
+      "policy": "[to be translated]:Policy",
+      "redaction_required": "[to be translated]:Some sensitive evidence requires redaction before sharing.",
+      "remove_metadata_confirm": "[to be translated]:Remove this asset record? The underlying file will not be deleted.",
+      "rpa_template_draft_ready": "[to be translated]:Validated RPA template draft created.",
+      "select_knowledge": "[to be translated]:Select Knowledge base",
+      "title": "[to be translated]:RPA evidence and assets"
+    },
+    "rpa_artifacts": "[to be translated]:RPA Evidence & Assets",
     "size": "Dimensiune",
     "text": "Text",
     "title": "Fișiere",
@@ -2087,10 +2202,6 @@
     "urdu": "Urdu",
     "vietnamese": "Vietnameză"
   },
-  "launchpad": {
-    "apps": "Aplicații",
-    "minapps": "Mini-aplicații"
-  },
   "lmstudio": {
     "keep_alive_time": {
       "description": "Timpul în minute pentru a menține conexiunea activă; implicit este 5 minute.",
@@ -2312,9 +2423,6 @@
           "specified": "Nu s-a putut exporta fișierul Markdown"
         }
       },
-      "notes": {
-        "export": "Nu s-au putut exporta notele"
-      },
       "notion": {
         "export": "Nu s-a putut exporta în Notion. Te rugăm să verifici starea conexiunii și configurarea conform documentației",
         "no_api_key": "ApiKey-ul Notion sau DatabaseID-ul Notion nu sunt configurate",
@@ -2425,9 +2533,6 @@
           "preconf": "Fișierul Markdown a fost exportat cu succes în calea preconfigurată",
           "specified": "Fișierul Markdown a fost exportat cu succes"
         }
-      },
-      "notes": {
-        "export": "Exportat cu succes în note"
       },
       "notion": {
         "export": "Exportat cu succes în Notion"
@@ -2540,61 +2645,6 @@
       "rag_failed": "RAG a eșuat, se returnează rezultate goale..."
     }
   },
-  "minapp": {
-    "add_to_launchpad": "Adaugă în Launchpad",
-    "add_to_sidebar": "Adaugă în bara laterală",
-    "popup": {
-      "close": "Închide MinApp",
-      "devtools": "Instrumente dezvoltator",
-      "goBack": "Mergi înapoi",
-      "goForward": "Mergi înainte",
-      "minimize": "Minimizează MinApp",
-      "openExternal": "Deschide în browser",
-      "open_link_external_off": "Curent: Deschide linkurile în fereastra implicită",
-      "open_link_external_on": "Curent: Deschide linkurile în browser",
-      "refresh": "Reîmprospătează",
-      "rightclick_copyurl": "Clic dreapta pentru a copia URL-ul"
-    },
-    "remove_from_launchpad": "Elimină din Launchpad",
-    "remove_from_sidebar": "Elimină din bara laterală",
-    "sidebar": {
-      "close": {
-        "title": "Închide"
-      },
-      "closeall": {
-        "title": "Închide tot"
-      },
-      "hide": {
-        "title": "Ascunde"
-      },
-      "remove_custom": {
-        "title": "Șterge aplicația personalizată"
-      }
-    },
-    "title": "MinApp"
-  },
-  "minapps": {
-    "ant-ling": "Ant Ling",
-    "baichuan": "Baichuan",
-    "baidu-ai-search": "Baidu AI Search",
-    "chatglm": "ChatGLM",
-    "dangbei": "Dangbei",
-    "doubao": "Doubao",
-    "hailuo": "MINIMAX",
-    "metaso": "Metaso",
-    "nami-ai": "Nami AI",
-    "nami-ai-search": "Nami AI Search",
-    "qwen": "Qwen",
-    "sensechat": "SenseChat",
-    "stepfun": "Stepfun",
-    "tencent-yuanbao": "Yuanbao",
-    "tiangong-ai": "Skywork",
-    "wanzhi": "Wanzhi",
-    "wenxin": "ERNIE",
-    "wps-copilot": "WPS Copilot",
-    "xiaoyi": "Xiaoyi",
-    "zhihu": "Zhihu"
-  },
   "miniwindow": {
     "alert": {
       "google_login": "Sfat: Dacă vezi un mesaj 'browser not trusted' când te conectezi la Google, te rugăm să te conectezi mai întâi prin mini-aplicația Google din lista de mini-aplicații, apoi să folosești autentificarea Google în alte mini-aplicații"
@@ -2605,8 +2655,7 @@
     "feature": {
       "chat": "Răspunde la această întrebare",
       "explanation": "Explicație",
-      "summary": "Rezumat conținut",
-      "translate": "Traducere text"
+      "summary": "Rezumat conținut"
     },
     "footer": {
       "backspace_clear": "Backspace pentru a șterge",
@@ -2700,122 +2749,6 @@
   "navigate": {
     "provider_settings": "Mergi la setările furnizorului"
   },
-  "notes": {
-    "auto_rename": {
-      "empty_note": "Notița este goală, nu se poate genera numele",
-      "failed": "Generarea numelui notiței a eșuat",
-      "label": "Generează nume notiță",
-      "success": "Numele notiței a fost generat cu succes"
-    },
-    "characters": "Caractere",
-    "collapse": "Restrânge",
-    "content_placeholder": "Introdu conținutul notiței...",
-    "copyContent": "Copiază conținutul",
-    "crossPlatformRestoreWarning": "Configurația multi-platformă a fost restaurată, dar directorul de notițe este gol. Te rugăm să copiezi fișierele notițelor în: {{path}}",
-    "delete": "Șterge",
-    "delete_confirm": "Ești sigur că vrei să ștergi acest {{type}}?",
-    "delete_folder_confirm": "Ești sigur că vrei să ștergi dosarul \"{{name}}\" și tot conținutul său?",
-    "delete_note_confirm": "Ești sigur că vrei să ștergi notița \"{{name}}\"?",
-    "drop_markdown_hint": "Trage fișiere sau dosare .md aici pentru a importa",
-    "empty": "Încă nu există notițe disponibile",
-    "expand": "Extinde",
-    "exportToWord": "Exportă în Word",
-    "export_failed": "Exportul în baza de cunoștințe a eșuat",
-    "export_knowledge": "Exportă notițele în baza de cunoștințe",
-    "export_success": "Exportat cu succes în baza de cunoștințe",
-    "export_to_word_failed": "Exportul în Word a eșuat",
-    "folder": "Dosar",
-    "new_folder": "Dosar nou",
-    "new_note": "Creează o notiță nouă",
-    "no_content_to_copy": "Niciun conținut de copiat",
-    "no_content_to_export": "Niciun conținut de exportat",
-    "no_file_selected": "Te rugăm să selectezi fișierul de încărcat",
-    "no_note_selected": "Te rog selectează mai întâi o notă",
-    "no_valid_files": "Nu a fost încărcat niciun fișier valid",
-    "open_folder": "Deschide un dosar extern",
-    "open_outside": "Deschide extern",
-    "rename": "Redenumește",
-    "rename_changed": "Din cauza politicilor de securitate, numele fișierului a fost schimbat din {{original}} în {{final}}",
-    "save": "Salvează în Notițe",
-    "search": {
-      "both": "Nume+Conținut",
-      "content": "Conținut",
-      "found_results": "S-au găsit {{count}} rezultate (Nume: {{nameCount}}, Conținut: {{contentCount}})",
-      "more_matches": "mai multe potriviri",
-      "searching": "Se caută...",
-      "show_less": "Afișează mai puțin"
-    },
-    "settings": {
-      "data": {
-        "apply": "Aplică",
-        "apply_path_failed": "Nu s-a putut aplica calea",
-        "current_work_directory": "Director de lucru curent",
-        "invalid_directory": "Directorul selectat este invalid sau accesul este refuzat",
-        "path_required": "Te rugăm să selectezi un director de lucru",
-        "path_updated": "Directorul de lucru a fost actualizat cu succes",
-        "reset_failed": "Resetarea a eșuat",
-        "reset_to_default": "Resetează la implicit",
-        "select": "Selectează",
-        "select_directory_failed": "Nu s-a putut selecta directorul",
-        "title": "Setări date",
-        "work_directory_description": "Directorul de lucru este locul unde sunt stocate toate fișierele notițelor. Schimbarea directorului de lucru nu va muta fișierele existente; te rugăm să migrezi fișierele manual.",
-        "work_directory_placeholder": "Selectează directorul de lucru pentru notițe"
-      },
-      "display": {
-        "compress_content": "Compresie conținut",
-        "compress_content_description": "Când este activat, va limita numărul de caractere pe linie, reducând conținutul afișat pe ecran, dar făcând paragrafele lungi mai ușor de citit.",
-        "default_font": "Font implicit",
-        "font_size": "Dimensiune font",
-        "font_size_description": "Ajustează dimensiunea fontului pentru o experiență de citire mai bună (10-30px)",
-        "font_size_large": "Mare",
-        "font_size_medium": "Mediu",
-        "font_size_small": "Mic",
-        "font_title": "Setări font",
-        "serif_font": "Font cu serife",
-        "show_table_of_contents": "Afișează cuprinsul",
-        "show_table_of_contents_description": "Afișează o bară laterală cu cuprinsul pentru o navigare ușoară în documente",
-        "title": "Setări afișare"
-      },
-      "editor": {
-        "edit_mode": {
-          "description": "În Vizualizarea Editare, modul de editare implicit pentru notițe noi",
-          "preview_mode": "Previzualizare live",
-          "source_mode": "Mod cod sursă",
-          "title": "Vizualizare editare implicită"
-        },
-        "title": "Setări editor",
-        "view_mode": {
-          "description": "Mod vizualizare implicit notițe noi",
-          "edit_mode": "Mod editare",
-          "read_mode": "Mod citire",
-          "title": "Vizualizare implicită"
-        },
-        "view_mode_description": "Setează modul de vizualizare implicit pentru pagina filă nouă."
-      },
-      "title": "Notițe"
-    },
-    "show_starred": "Afișează notițele favorite",
-    "sort_a2z": "Nume fișier (A-Z)",
-    "sort_created_asc": "Ora creării (cele mai vechi întâi)",
-    "sort_created_desc": "Ora creării (cele mai noi întâi)",
-    "sort_updated_asc": "Ora actualizării (cele mai vechi întâi)",
-    "sort_updated_desc": "Ora actualizării (cele mai noi întâi)",
-    "sort_z2a": "Nume fișier (Z-A)",
-    "spell_check": "Verificare ortografică",
-    "spell_check_tooltip": "Activează/Dezactivează verificarea ortografică",
-    "star": "Notiță favorită",
-    "starred_notes": "Notițe colectate",
-    "title": "Notițe",
-    "unsaved_changes": "Ai conținut nesalvat, ești sigur că vrei să pleci?",
-    "unstar": "Elimină de la favorite",
-    "untitled_folder": "Dosar nou",
-    "untitled_note": "Notiță fără titlu",
-    "upload_failed": "Încărcarea notiței a eșuat",
-    "upload_files": "Încarcă fișiere",
-    "upload_folder": "Încarcă dosar",
-    "upload_success": "Notiță încărcată cu succes",
-    "uploading_files": "Se încarcă {{count}} fișiere..."
-  },
   "notification": {
     "assistant": "Răspuns asistent",
     "knowledge": {
@@ -2855,91 +2788,6 @@
       "title": "Timp menținere conexiune"
     },
     "title": "Ollama"
-  },
-  "openclaw": {
-    "checking_installation": "Verificare instalare OpenClaw...",
-    "description": "Integrează furnizorii Cherry Studio cu Gateway-ul OpenClaw pentru a permite agenților de codificare AI precum Claude Code, Qwen-Coder și alții.",
-    "error": {
-      "select_provider_model": "Vă rugăm să selectați mai întâi un furnizor și un model"
-    },
-    "gateway": {
-      "port": "Port",
-      "restart": "Repornire",
-      "start": "Pornește Gateway",
-      "status": "Stare",
-      "stop": "Oprește",
-      "version": "Versiune"
-    },
-    "git_missing": {
-      "description": "OpenClaw necesită Git pentru a instala unele dependențe. Te rugăm să instalezi mai întâi Git, apoi apasă din nou pe Instalare.",
-      "download_button": "Descarcă Git",
-      "hint": "macOS: brew install git | Windows: Descarcă de pe git-scm.com (asigură-te că adaugi Git la PATH în timpul instalării)",
-      "title": "Git Necesar"
-    },
-    "install_progress": "Progresul instalării",
-    "installed_at": "OpenClaw instalat la",
-    "model_config": {
-      "auth_token": "Token de autentificare",
-      "auth_token_hint": "Token pentru autentificarea gateway-ului. Lăsați gol pentru a dezactiva autentificarea.",
-      "auth_token_placeholder": "Introduceți sau generați un token",
-      "generate_token": "Generează",
-      "model": "Model",
-      "provider": "Furnizor",
-      "select_model": "Selectați un model",
-      "select_provider": "Selectați un furnizor",
-      "sync_hint": "Furnizorul și modelul selectate vor fi sincronizate în fișierul de configurare OpenClaw.",
-      "title": "Configurare model"
-    },
-    "node_missing": {
-      "description": "OpenClaw necesită Node.js 22+. Te rugăm să instalezi mai întâi Node.js, apoi apasă din nou pe Instalare.",
-      "download_button": "Descarcă Node.js",
-      "hint": "macOS: brew install node | Windows: Descarcă versiunea LTS de pe nodejs.org",
-      "title": "Node.js necesar"
-    },
-    "node_version_low": {
-      "description": "OpenClaw necesită Node.js 22.0 sau o versiune superioară. Versiunea ta actuală este v{{version}}. Te rugăm să actualizezi mai întâi Node.js.",
-      "hint": "nvm: nvm install 22 && nvm use 22 | mise: mise use node@22",
-      "title": "Versiunea Node.js este prea mică"
-    },
-    "not_installed": {
-      "description": "OpenClaw nu este instalat pe sistemul dvs. Vă rugăm să-l instalați mai întâi pentru a utiliza această funcție.",
-      "install_button": "Instalează OpenClaw",
-      "install_guide_title": "Ghid de instalare",
-      "macos_linux_title": "macOS / Linux",
-      "refresh": "Reîmprospătare",
-      "step2_hint": "După instalare, faceți clic pe butonul „Reîmprospătare” de mai sus pentru a detecta OpenClaw",
-      "step2_title": "Pasul 2: Verifică instalarea",
-      "title": "OpenClaw Nu Este Instalat",
-      "windows_title": "Windows"
-    },
-    "quick_actions": {
-      "open_dashboard": "Deschide Tabloul de Bord",
-      "title": "Acțiuni rapide",
-      "uninstall": "Dezinstalare",
-      "view_docs": "Vizualizați documentația"
-    },
-    "status": {
-      "error": "Eroare",
-      "running": "Alergare",
-      "starting": "Pornind",
-      "stopped": "Oprit"
-    },
-    "tips": {
-      "permissions": "OpenClaw are permisiuni de sistem ridicate. Utilizați doar în medii de încredere",
-      "title": "Sfaturi",
-      "token_usage": "Modul agent AI poate consuma mai multe tokenuri. Vă rugăm să monitorizați utilizarea"
-    },
-    "title": "OpenClaw",
-    "uninstall_confirm": "Sigur doriți să dezinstalați OpenClaw? Apăsați OK pentru a confirma.",
-    "uninstall_progress": "Progresul dezinstalării",
-    "uninstalled": {
-      "description": "OpenClaw a fost dezinstalat cu succes.",
-      "title": "Dezinstalare completă"
-    },
-    "uninstalling": {
-      "description": "Vă rugăm să așteptați în timp ce OpenClaw este dezinstalat...",
-      "title": "Dezinstalarea OpenClaw"
-    }
   },
   "ovms": {
     "action": {
@@ -2993,238 +2841,6 @@
       "unknown": "Stare OVMS necunoscută"
     },
     "title": "Intel OVMS"
-  },
-  "paintings": {
-    "aspect_ratio": "Raport de aspect",
-    "aspect_ratios": {
-      "landscape": "Peisaj",
-      "portrait": "Portret",
-      "square": "Pătrat"
-    },
-    "auto_create_paint": "Creează automat imagine",
-    "auto_create_paint_tip": "După ce imaginea este generată, o nouă imagine va fi creată automat.",
-    "background": "Fundal",
-    "background_options": {
-      "auto": "Auto",
-      "opaque": "Opac",
-      "transparent": "Transparent"
-    },
-    "button": {
-      "delete": {
-        "image": {
-          "confirm": "Ești sigur că vrei să ștergi această imagine?",
-          "label": "Șterge imaginea"
-        }
-      },
-      "new": {
-        "image": "Imagine nouă"
-      }
-    },
-    "custom_size": "Dimensiune personalizată",
-    "dmxapi": {
-      "generating_tip": "Generarea cu modelul oficial, timpul estimat de așteptare este de 2-5 minute pentru cele mai bune rezultate. Te rugăm să verifici logurile backend DMXAPI pentru costul acestei operațiuni.",
-      "style": ", Stil:",
-      "style_types": {
-        "25d_animation": "Animație 2.5D",
-        "3d_cartoon": "Desen animat 3D",
-        "american_retro": "Retro American",
-        "baroque": "Baroc",
-        "cartoon_illustration": "Ilustrație de desen animat",
-        "chinese_gongbi": "Gongbi chinezesc",
-        "clay": "Argilă",
-        "cyberpunk": "Cyberpunk",
-        "felt": "Filț",
-        "flat": "Plat",
-        "fresh_anime": "Anime Proaspăt",
-        "ghibli": "Ghibli",
-        "japanese_anime": "Anime japonez",
-        "little_people_book": "Cartea Oamenilor Mici",
-        "monet_garden": "Grădina Monet",
-        "oil_painting": "Pictură în ulei",
-        "pixar": "Pixar",
-        "pixel_art": "Artă pixelată",
-        "poetic_ancient": "Poetic Antic",
-        "psychedelic": "Psichedelic",
-        "sketch": "Schiță",
-        "street_art": "Artă stradală",
-        "texture": "Textură",
-        "ukiyo_e": "Ukiyo-e",
-        "watercolor": "Acuarelă",
-        "wood_carving": "Sculptură în lemn",
-        "yarn_doll": "Păpușă din fire de lână"
-      }
-    },
-    "edit": {
-      "image_file": "Imagine editată",
-      "image_required": "Vă rugăm să încărcați mai întâi o imagine pentru editare"
-    },
-    "generate": {
-      "height": "Înălțime",
-      "magic_prompt_option_tip": "Îmbunătățește inteligent prompturile pentru rezultate mai bune",
-      "model_tip": "Versiune model: V3 este cea mai recentă versiune, V2 este modelul anterior, V2A este modelul rapid, V_1 este modelul de prima generație, _TURBO este versiunea accelerată",
-      "negative_prompt_tip": "Descrie elementele nedorite, doar pentru V_1, V_1_TURBO, V_2 și V_2_TURBO",
-      "number_images_tip": "Numărul de imagini de generat",
-      "person_generation": "Generare persoană",
-      "person_generation_tip": "Permite modelului să genereze imagini cu persoane",
-      "rendering_speed_tip": "Controlează compromisul dintre viteza de randare și calitate, disponibil doar pentru V_3",
-      "safety_tolerance": "Toleranță de siguranță",
-      "safety_tolerance_tip": "Controlează toleranța de siguranță pentru generarea imaginilor, disponibil doar pentru FLUX.1-Kontext-pro",
-      "seed_tip": "Controlează aleatoriul generării imaginii pentru rezultate reproductibile",
-      "style_type_tip": "Stil generare imagine pentru V_2 și versiuni ulterioare",
-      "width": "Lățime"
-    },
-    "generate_failed": "Nu s-a putut genera imaginea",
-    "generated_image": "Imagine generată",
-    "go_to_settings": "Mergi la Setări",
-    "guidance_scale": "Scară de ghidare",
-    "guidance_scale_tip": "Classifier Free Guidance. Cât de fidel vrei să respecte modelul promptul tău când caută o imagine similară să-ți arate",
-    "image": {
-      "size": "Dimensiune imagine"
-    },
-    "image_file_required": "Te rugăm să încarci mai întâi o imagine",
-    "image_file_retry": "Te rugăm să reîncarci mai întâi o imagine",
-    "image_handle_required": "Te rugăm să încarci mai întâi o imagine.",
-    "image_mix_failed": "Nu s-au putut combina imaginile",
-    "image_placeholder": "Nicio imagine disponibilă",
-    "image_retry": "Reîncearcă",
-    "image_size_options": {
-      "auto": "Auto"
-    },
-    "inference_steps": "Pași de inferență",
-    "inference_steps_tip": "Numărul de pași de inferență de efectuat. Mai mulți pași produc o calitate mai mare, dar durează mai mult",
-    "input_image": "Imagine de intrare",
-    "input_parameters": "Parametri de intrare",
-    "invalid_image_url": "Formatul URL-ului imaginii este invalid",
-    "learn_more": "Află mai multe",
-    "magic_prompt_option": "Prompt magic",
-    "mode": {
-      "edit": "Editează",
-      "generate": "Desenează",
-      "merge": "Îmbină",
-      "remix": "Remix",
-      "upscale": "Upscale"
-    },
-    "model": "Model",
-    "model_and_pricing": "Model și prețuri",
-    "moderation": "Moderare",
-    "moderation_options": {
-      "auto": "Auto",
-      "low": "Scăzut"
-    },
-    "negative_prompt": "Prompt negativ",
-    "negative_prompt_tip": "Descrie ce nu vrei să fie inclus în imagine",
-    "no_image_generation_model": "Niciun model de generare imagini disponibil, te rugăm să adaugi un model și să setezi tipul endpoint-ului la {{endpoint_type}}",
-    "number_images": "Număr imagini",
-    "number_images_tip": "Numărul de imagini de generat (1-4)",
-    "operation_failed": "Operațiunea a eșuat, vă rugăm să încercați din nou mai târziu",
-    "paint_course": "tutorial",
-    "per_image": "pe imagine",
-    "per_images": "pe imagini",
-    "person_generation_options": {
-      "allow_adult": "Permite adulți",
-      "allow_all": "Permite tot",
-      "allow_none": "Nepermis"
-    },
-    "ppio": {
-      "edit_prompt_tip": "Specifică obiectul sau zona de eliminat din imagine, ex: 'câine' sau 'pălărie'",
-      "mask_image": "Imagine mască",
-      "mask_image_tip": "Indică zona de șters. Zonele de șters trebuie să fie albe, zonele de păstrat negre",
-      "output_format": "Format ieșire",
-      "resolution": "Rezoluție țintă",
-      "seed_tip": "Sămânță aleatorie, aceeași sămânță și parametri produc imagini similare, -1 înseamnă aleatoriu",
-      "use_pre_llm_tip": "Activează expansiunea textului pentru optimizarea promptului. Recomandat pentru prompturi scurte, dezactivați pentru cele lungi",
-      "watermark_tip": "Dacă se adaugă filigran la imaginile generate, dezactivat implicit"
-    },
-    "pricing": "Prețuri",
-    "prompt_enhancement": "Îmbunătățire prompt",
-    "prompt_enhancement_tip": "Rescrie prompturile în versiuni detaliate, optimizate pentru model, când este activat",
-    "prompt_placeholder": "Descrie imaginea pe care vrei să o creezi, de ex. Un lac senin la apus cu munți în fundal",
-    "prompt_placeholder_edit": "Introdu descrierea imaginii, desenarea textului folosește \"ghilimele duble\" pentru încadrare",
-    "prompt_placeholder_en": "Introdu descrierea imaginii, momentan acceptă doar prompturi în engleză",
-    "proxy_required": "Deschide proxy-ul și activează \"Modul TUN\" pentru a vizualiza imaginile generate sau copiază-le în browser pentru deschidere. În viitor, conexiunea directă internă va fi acceptată",
-    "quality": "Calitate",
-    "quality_options": {
-      "auto": "Auto",
-      "high": "Înaltă",
-      "low": "Scăzută",
-      "medium": "Medie"
-    },
-    "regenerate": {
-      "confirm": "Aceasta va înlocui imaginile generate existente. Vrei să continui?"
-    },
-    "remix": {
-      "image_file": "Imagine de referință",
-      "image_weight": "Pondere imagine de referință",
-      "image_weight_tip": "Ajustează influența imaginii de referință",
-      "magic_prompt_option_tip": "Îmbunătățește inteligent prompturile de remix",
-      "model_tip": "Selectează versiunea modelului AI pentru remixare",
-      "negative_prompt_tip": "Descrie elementele nedorite în rezultatele remix",
-      "number_images_tip": "Numărul de rezultate remix de generat",
-      "rendering_speed_tip": "Controlează compromisul dintre viteza de randare și calitate, disponibil doar pentru V_3",
-      "seed_tip": "Controlează aleatoriul rezultatului combinat",
-      "style_type_tip": "Stil pentru imaginea remixată, doar pentru V_2 și versiuni ulterioare"
-    },
-    "rendering_speed": "Viteză de randare",
-    "rendering_speeds": {
-      "default": "Implicit",
-      "quality": "Calitate",
-      "turbo": "Turbo"
-    },
-    "req_error_model": "Nu s-a putut prelua modelul",
-    "req_error_no_balance": "Te rugăm să verifici validitatea tokenului",
-    "req_error_text": "Serverul este ocupat sau promptul conține termeni \"protejați prin drepturi de autor\" sau \"sensibili\". Te rugăm să încerci din nou.",
-    "req_error_token": "Te rugăm să verifici validitatea tokenului",
-    "required_field": "Câmp obligatoriu",
-    "seed": "Seed",
-    "seed_desc_tip": "Același seed și prompt pot genera imagini similare; setarea -1 va genera rezultate diferite de fiecare dată",
-    "seed_random": "Aleatoriu",
-    "seed_tip": "Același seed și prompt pot produce imagini similare",
-    "select_model": "Selectează modelul",
-    "style_type": "Stil",
-    "style_types": {
-      "3d": "3D",
-      "anime": "Anime",
-      "auto": "Auto",
-      "design": "Design",
-      "general": "General",
-      "realistic": "Realist"
-    },
-    "text_desc_required": "Te rugăm să introduci mai întâi descrierea imaginii",
-    "title": "Imagini",
-    "top_up": "Reîncarcă ",
-    "translating": "Se traduce...",
-    "uploaded_input": "Intrare încărcată",
-    "upscale": {
-      "detail": "Detaliu",
-      "detail_tip": "Controlează nivelul de îmbunătățire a detaliilor",
-      "image_file": "Imagine de scalat",
-      "magic_prompt_option_tip": "Îmbunătățește inteligent prompturile de upscaling",
-      "number_images_tip": "Numărul de rezultate scalate de generat",
-      "resemblance": "Similaritate",
-      "resemblance_tip": "Controlează similaritatea cu imaginea originală",
-      "seed_tip": "Controlează aleatoriul scalării"
-    },
-    "watermark": "Adaugă filigran",
-    "zhipu": {
-      "custom_size_divisible": "Dimensiunea personalizată trebuie să fie divizibilă cu 16",
-      "custom_size_hint": "Lățimea și înălțimea trebuie să fie între 512px-2048px, divizibile cu 16, iar numărul total de pixeli nu poate depăși 2^21px",
-      "custom_size_pixels": "Numărul total de pixeli ai dimensiunii personalizate nu poate depăși 2.097.152",
-      "custom_size_range": "Dimensiunea personalizată trebuie să fie între 512px și 2048px.",
-      "custom_size_required": "Vă rugăm să setați lățimea și înălțimea personalizate",
-      "image_sizes": {
-        "1024x1024_default": "1024x1024 (Implicit)",
-        "1152x864": "1152x864",
-        "1344x768": "1344x768",
-        "1440x720": "1440x720",
-        "720x1440": "720x1440",
-        "768x1344": "768x1344",
-        "864x1152": "864x1152"
-      },
-      "quality_options": {
-        "hd": "HD",
-        "standard_default": "Standard (Implicit)"
-      }
-    }
   },
   "plugins": {
     "actions": "Acțiuni",
@@ -3349,7 +2965,6 @@
     "ocoolai": "ocoolAI",
     "ollama": "Ollama",
     "openai": "OpenAI",
-    "openclaw": "[to be translated]:OpenClaw",
     "openrouter": "OpenRouter",
     "ovms": "Intel OVMS",
     "perplexity": "Perplexity",
@@ -3603,6 +3218,222 @@
       "undo": "Anulează"
     }
   },
+  "rpa_roles": {
+    "actions": {
+      "back": "[to be translated]:Back to Role Library",
+      "create": "[to be translated]:Create",
+      "delete_confirm": "[to be translated]:Delete this Role?",
+      "disable": "[to be translated]:Disable",
+      "duplicate": "[to be translated]:Duplicate",
+      "edit": "[to be translated]:Edit Role",
+      "enable": "[to be translated]:Enable",
+      "export": "[to be translated]:Export",
+      "import": "[to be translated]:Import",
+      "new_role": "[to be translated]:New Role",
+      "save": "[to be translated]:Save",
+      "start_session": "[to be translated]:Start new RPA session"
+    },
+    "alerts": {
+      "active_runs": "[to be translated]:Destructive changes are restricted while this Role has active runs",
+      "broken_bindings": "[to be translated]:{{count}} unresolved asset binding(s)"
+    },
+    "assets": {
+      "artifact": "[to be translated]:Files and Evidence",
+      "knowledge": "[to be translated]:Knowledge",
+      "prompt": "[to be translated]:Prompts",
+      "provider": "[to be translated]:Providers",
+      "skill": "[to be translated]:Skills"
+    },
+    "binding": {
+      "add": "[to be translated]:Add binding",
+      "artifact_imported": "[to be translated]:Imported {{count}} file asset(s)",
+      "asset": "[to be translated]:Asset",
+      "asset_source_hint": "[to be translated]:Create or import an asset here, then select it below.",
+      "bind_asset": "[to be translated]:Bind asset",
+      "bind_title": "[to be translated]:Bind {{asset}}",
+      "empty": "[to be translated]:No {{asset}} bindings",
+      "enabled": "[to be translated]:Enabled",
+      "import_files": "[to be translated]:Import files",
+      "import_skill": "[to be translated]:Import Skill JSON",
+      "manage_knowledge": "[to be translated]:Create or import knowledge",
+      "missing": "[to be translated]:Missing: {{id}}",
+      "ownership": "[to be translated]:Ownership",
+      "priority": "[to be translated]:Priority",
+      "reference_hint": "[to be translated]:References are stored on the Role; asset content remains in its original repository.",
+      "remove_confirm": "[to be translated]:Remove this binding?",
+      "requirement": "[to be translated]:Requirement",
+      "skill_imported": "[to be translated]:Imported {{count}} Skill asset(s)"
+    },
+    "columns": {
+      "actions": "[to be translated]:Actions",
+      "assets": "[to be translated]:Assets",
+      "health": "[to be translated]:Health",
+      "role": "[to be translated]:Role",
+      "updated": "[to be translated]:Updated"
+    },
+    "create": {
+      "name_placeholder": "[to be translated]:Meituan automation",
+      "title": "[to be translated]:Create RPA Role"
+    },
+    "form": {
+      "active_runs": "[to be translated]:Active runs",
+      "app_packages": "[to be translated]:App packages",
+      "description": "[to be translated]:Description",
+      "lifecycle": "[to be translated]:Lifecycle",
+      "migration": "[to be translated]:Migration",
+      "name": "[to be translated]:Name",
+      "primary_app_package": "[to be translated]:Primary app package",
+      "provider_health": "[to be translated]:{{configured}} configured / {{missing}} missing",
+      "providers": "[to be translated]:Providers",
+      "readiness": "[to be translated]:Readiness",
+      "recent_runs": "[to be translated]:Recent runs",
+      "role_name": "[to be translated]:Role name",
+      "supported_app_versions": "[to be translated]:Supported app versions",
+      "supporting_roles": "[to be translated]:Supporting Roles",
+      "system_capabilities": "[to be translated]:System capabilities",
+      "version": "[to be translated]:Version"
+    },
+    "library": {
+      "active_runs": "[to be translated]:{{count}} active runs",
+      "broken_bindings": "[to be translated]:{{count}} broken bindings",
+      "compatibility": "[to be translated]:compatibility",
+      "copy_name": "[to be translated]:{{name}} Copy",
+      "description": "[to be translated]:Manage app scope, prompts, models and qualified RPA assets.",
+      "empty": "[to be translated]:No RPA Roles",
+      "heading": "[to be translated]:App Automation Roles",
+      "no_app_package": "[to be translated]:No app package configured",
+      "no_assets": "[to be translated]:No assets",
+      "search_placeholder": "[to be translated]:Search Roles or packages"
+    },
+    "messages": {
+      "active_role_delete_blocked": "[to be translated]:This Role is used by an active run and cannot be deleted",
+      "already_exists": "[to be translated]:Role already exists: {{id}}",
+      "import_failed": "[to be translated]:Failed to import Role",
+      "imported": "[to be translated]:Role imported",
+      "invalid_json": "[to be translated]:Invalid Role JSON",
+      "load_failed": "[to be translated]:Failed to load RPA Roles",
+      "not_found": "[to be translated]:RPA Role not found",
+      "saved": "[to be translated]:Role saved",
+      "workspace_load_failed": "[to be translated]:Failed to load RPA Role workspace"
+    },
+    "migration": {
+      "compatibility_description": "[to be translated]:Generated from Assistant {{assistantId}}, profile version {{version}}. Continue using the compatibility reader until migration and rollback acceptance pass.",
+      "compatibility_title": "[to be translated]:Compatibility Role",
+      "native_description": "[to be translated]:Migration state: {{state}}",
+      "native_title": "[to be translated]:Native Role"
+    },
+    "model_kinds": {
+      "planner": "[to be translated]:Planner",
+      "recovery": "[to be translated]:Recovery",
+      "verification": "[to be translated]:Verification",
+      "vision": "[to be translated]:Vision"
+    },
+    "none": "[to be translated]:None",
+    "ownership": {
+      "linked": "[to be translated]:Linked",
+      "owned": "[to be translated]:Owned",
+      "shared": "[to be translated]:Shared"
+    },
+    "prompt_kinds": {
+      "capability": "[to be translated]:Capability",
+      "planner": "[to be translated]:Planner",
+      "recovery": "[to be translated]:Recovery",
+      "system": "[to be translated]:System",
+      "verification": "[to be translated]:Verification"
+    },
+    "prompts": {
+      "add": "[to be translated]:Add prompt",
+      "add_title": "[to be translated]:Add versioned Role prompt",
+      "capability": "[to be translated]:Capability",
+      "content": "[to be translated]:Prompt",
+      "delete_confirm": "[to be translated]:Delete this prompt version?",
+      "empty": "[to be translated]:No Role prompts",
+      "id": "[to be translated]:Prompt ID",
+      "kind": "[to be translated]:Prompt kind",
+      "model_id": "[to be translated]:Model ID",
+      "provider": "[to be translated]:Provider",
+      "save": "[to be translated]:Save prompt",
+      "versioned": "[to be translated]:Versioned prompts"
+    },
+    "provider_status": {
+      "degraded": "[to be translated]:Degraded",
+      "disabled": "[to be translated]:Disabled",
+      "healthy": "[to be translated]:Healthy",
+      "needs_configuration": "[to be translated]:Unavailable"
+    },
+    "readiness": {
+      "blocked": "[to be translated]:Blocked",
+      "degraded": "[to be translated]:Degraded",
+      "draft": "[to be translated]:Draft",
+      "loading": "[to be translated]:Loading",
+      "ready": "[to be translated]:Ready"
+    },
+    "requirement": {
+      "optional": "[to be translated]:Optional",
+      "required": "[to be translated]:Required"
+    },
+    "role": "[to be translated]:RPA Role",
+    "settings": {
+      "assets": "[to be translated]:Role assets",
+      "bound_description": "[to be translated]:This conversation uses the Role version recorded when it was created. Saving creates a new version without rewriting historical run context.",
+      "bound_title": "[to be translated]:Configuration is bound to the current Role",
+      "enabled_prompt_versions": "[to be translated]:{{count}} enabled versions",
+      "load_failed": "[to be translated]:Failed to load RPA Role settings",
+      "manage": "[to be translated]:Manage",
+      "model_defaults": "[to be translated]:Model defaults",
+      "save_failed": "[to be translated]:Failed to save RPA Role settings",
+      "save_role": "[to be translated]:Save Role",
+      "saved": "[to be translated]:RPA Role settings saved",
+      "unbound_description": "[to be translated]:Choose a Role from RPA Roles and start a new task conversation. Normal chat settings do not create automation asset bindings.",
+      "unbound_title": "[to be translated]:The current topic is not bound to an RPA Role",
+      "use_chat_model": "[to be translated]:Use chat model"
+    },
+    "sidebar_title": "[to be translated]:RPA Roles",
+    "status": {
+      "disabled": "[to be translated]:Disabled",
+      "draft": "[to be translated]:Draft",
+      "enabled": "[to be translated]:Enabled"
+    },
+    "tabs": {
+      "migration": "[to be translated]:Migration",
+      "overview": "[to be translated]:Overview",
+      "prompts": "[to be translated]:Prompts",
+      "providers": "[to be translated]:Providers",
+      "versions": "[to be translated]:Versions"
+    },
+    "title": "[to be translated]:RPA Role Library",
+    "versions": {
+      "last_updated": "[to be translated]:Last updated",
+      "prompt_versions": "[to be translated]:Prompt versions",
+      "role_version": "[to be translated]:Role version"
+    }
+  },
+  "rpa_supplements": {
+    "add_files": "[to be translated]:Add files",
+    "empty": "[to be translated]:No Session Supplements yet",
+    "manual_retention": "[to be translated]:Until removed",
+    "next_request": "[to be translated]:Next request",
+    "no_authorized_provider": "[to be translated]:No healthy trusted workspace retrieval or MCP Provider is available.",
+    "no_pending_files": "[to be translated]:No files selected for the next task request.",
+    "no_role_sources": "[to be translated]:No reusable sources are bound to this Role.",
+    "optional": "[to be translated]:Optional",
+    "pending_files": "[to be translated]:Pending files",
+    "remote_sources": "[to be translated]:Approved URL and MCP sources",
+    "request_retention": "[to be translated]:Request only",
+    "required": "[to be translated]:Required",
+    "role_sources": "[to be translated]:Role sources",
+    "select_knowledge": "[to be translated]:Select task-specific Knowledge",
+    "select_mcp_resource": "[to be translated]:Select an MCP Resource",
+    "select_provider": "[to be translated]:Select Provider",
+    "session_knowledge": "[to be translated]:Temporary Knowledge",
+    "session_retention": "[to be translated]:Until session ends",
+    "session_scope": "[to be translated]:Session",
+    "session_sources": "[to be translated]:Session sources",
+    "title": "[to be translated]:Supplemental Context"
+  },
+  "rpa_templates": {
+    "title": "[to be translated]:RPA Templates"
+  },
   "selection": {
     "action": {
       "builtin": {
@@ -3611,16 +3442,12 @@
         "quote": "Citează",
         "refine": "Rafinează",
         "search": "Caută",
-        "summary": "Rezumat",
-        "translate": "Tradu"
+        "summary": "Rezumat"
       },
       "prompt": {
         "explain": "Te rog să explici următorul conținut. Cerințe: Răspunde în {{language}}; nu include nicio explicație a acestui prompt, oferă direct răspunsul:",
         "refine": "Te rugăm să optimizezi sau să îmbunătățești conținutul introdus de utilizator, cuprins în eticheta XML <INPUT>, păstrând sensul și integritatea textului original. Cerințe: rezultatul tău trebuie să fie în aceeași limbă cu cel introdus de utilizator; nu include nicio explicație referitoare la acest prompt, oferă direct răspunsul; nu afișa etichetele XML, ci doar conținutul optimizat.",
         "summary": "Vă rog să rezumați următorul conținut. Cerințe: Răspundeți în {{language}}; nu includeți nicio explicație a acestui prompt, oferiți direct răspunsul:"
-      },
-      "translate": {
-        "smart_translate_tips": "Traducere inteligentă: Conținutul va fi tradus mai întâi în limba țintă; conținutul aflat deja în limba țintă va fi tradus în limba alternativă"
       },
       "window": {
         "c_copy": "C: Copiază",
@@ -3924,7 +3751,6 @@
         "joplin": "Exportă în Joplin",
         "markdown": "Exportă ca Markdown",
         "markdown_reason": "Exportă ca Markdown (cu raționament)",
-        "notes": "Exportă în Notițe",
         "notion": "Exportă în Notion",
         "obsidian": "Exportă în Obsidian",
         "plain_text": "Copiază ca text simplu",
@@ -4512,16 +4338,10 @@
         "knowledge": {
           "icon": "Afișează pictograma Cunoștințe"
         },
-        "minapp": {
-          "icon": "Afișează pictograma MinApp"
-        },
         "painting": {
           "icon": "Afișează pictograma Imagini"
         },
         "title": "Setări bară laterală",
-        "translate": {
-          "icon": "Afișează pictograma Traducere"
-        },
         "visible": "Afișează pictograme"
       },
       "title": "Setări afișare",
@@ -4592,13 +4412,11 @@
       "title": "Dezactivează accelerarea hardware"
     },
     "input": {
-      "auto_translate_with_space": "Tradu rapid cu 3 spații",
       "clear": {
         "all": "Golește",
         "knowledge_base": "Golește bazele de cunoștințe selectate",
         "models": "Golește toate modelele"
       },
-      "show_translate_confirm": "Afișează fereastra de confirmare a traducerii",
       "target_language": {
         "chinese": "Chineză simplificată",
         "chinese-traditional": "Chineză tradițională",
@@ -5069,10 +4887,6 @@
         "label": "Numire subiect",
         "prompt": "Prompt numire subiect"
       },
-      "translate_model": "Model traducere",
-      "translate_model_description": "Model folosit pentru serviciul de traducere",
-      "translate_model_prompt_message": "Te rugăm să introduci promptul modelului de traducere",
-      "translate_model_prompt_title": "Prompt model traducere",
       "use_assistant": "Folosește asistent",
       "use_model": "Model implicit"
     },
@@ -5352,7 +5166,6 @@
       "openai": {
         "alert": "Furnizorul OpenAI nu mai acceptă metodele vechi de apelare. Dacă folosești un API terț, te rugăm să creezi un furnizor de servicii nou."
       },
-      "openclaw": "[to be translated]:OpenClaw",
       "remove_duplicate_keys": "Elimină cheile duplicate",
       "remove_invalid_keys": "Elimină cheile invalide",
       "search": "Caută furnizori...",
@@ -5622,51 +5435,6 @@
         "time": "Afișează ora subiectului"
       }
     },
-    "translate": {
-      "custom": {
-        "delete": {
-          "description": "Ești sigur că vrei să ștergi această limbă?",
-          "title": "Șterge limba personalizată"
-        },
-        "error": {
-          "add": "Adăugarea a eșuat",
-          "delete": "Ștergerea a eșuat",
-          "langCode": {
-            "builtin": "Limbă deja integrată",
-            "empty": "Codul limbii lipsește",
-            "exists": "Limba există deja",
-            "invalid": "Cod limbă invalid"
-          },
-          "update": "Actualizarea a eșuat",
-          "value": {
-            "empty": "Numele limbii este obligatoriu",
-            "too_long": "Numele limbii este prea lung"
-          }
-        },
-        "langCode": {
-          "help": "Format [limbă+regiune], [2-3 litere mici]-[2-3 litere mici]",
-          "label": "Cod limbă",
-          "placeholder": "en-us"
-        },
-        "success": {
-          "add": "Adăugată cu succes",
-          "delete": "Ștearsă cu succes",
-          "update": "Actualizată cu succes"
-        },
-        "table": {
-          "action": {
-            "title": "Acțiuni"
-          }
-        },
-        "value": {
-          "help": "1~32 caractere",
-          "label": "Nume limbă",
-          "placeholder": "Engleză"
-        }
-      },
-      "prompt": "Prompt traducere",
-      "title": "Setări traducere"
-    },
     "tray": {
       "onclose": "Minimizează în zona de notificare la închidere",
       "show": "Afișează pictograma în zona de notificare",
@@ -5684,135 +5452,6 @@
       "title": "Zoom pagină"
     }
   },
-  "taskflow": {
-    "description": "[to be translated]:Android WeChat message monitoring and auto-reply task flow",
-    "deviceQueue": {
-      "actions": {
-        "cancel": "[to be translated]:Cancel",
-        "pause": "[to be translated]:Pause",
-        "resume": "[to be translated]:Resume"
-      },
-      "columns": {
-        "actions": "[to be translated]:Actions",
-        "device": "[to be translated]:Device",
-        "goal": "[to be translated]:Goal",
-        "progress": "[to be translated]:Progress",
-        "status": "[to be translated]:Status",
-        "updated": "[to be translated]:Updated"
-      },
-      "enqueue": "[to be translated]:Enqueue",
-      "enqueueSuccess": "[to be translated]:Device task enqueued",
-      "goalPlaceholder": "[to be translated]:Example: open the target app and tap the visible reward button",
-      "localVlm": "[to be translated]:Local VLM",
-      "onlineDevice": "[to be translated]:Online device",
-      "refresh": "[to be translated]:Refresh",
-      "selectTaskLogs": "[to be translated]:Select a task to view logs.",
-      "selectedLogs": "[to be translated]:Selected task logs",
-      "title": "[to be translated]:Device task queue",
-      "tryDeerFlow": "[to be translated]:Try DeerFlow",
-      "validation": {
-        "device": "[to be translated]:Select a device",
-        "goal": "[to be translated]:Input task goal"
-      }
-    },
-    "editor": {
-      "back": "[to be translated]:Back to List",
-      "create": "[to be translated]:Create Task",
-      "createSuccess": "[to be translated]:Task created successfully",
-      "edit": "[to be translated]:Edit Task",
-      "editSuccess": "[to be translated]:Task updated successfully",
-      "nodePalette": "[to be translated]:Node Palette",
-      "nodeTypes": "[to be translated]:Node Types",
-      "run": "[to be translated]:Run Task",
-      "runError": "[to be translated]:Task run failed",
-      "runSuccess": "[to be translated]:Task run successfully",
-      "save": "[to be translated]:Save Task",
-      "saveFirst": "[to be translated]:Please save the task first",
-      "startingTask": "[to be translated]:Starting task...",
-      "taskDescription": "[to be translated]:Task Description",
-      "taskDescriptionPlaceholder": "[to be translated]:Enter task description",
-      "taskInfo": "[to be translated]:Task Information",
-      "taskName": "[to be translated]:Task Name",
-      "taskNamePlaceholder": "[to be translated]:Enter task name",
-      "taskNameRequired": "[to be translated]:Please enter task name",
-      "title": "[to be translated]:Task Editor",
-      "updateSuccess": "[to be translated]:Task updated successfully"
-    },
-    "executionType": {
-      "manual": "[to be translated]:Manual",
-      "scheduled": "[to be translated]:Scheduled"
-    },
-    "list": {
-      "actions": "[to be translated]:Actions",
-      "create": "[to be translated]:Create Task",
-      "createdAt": "[to be translated]:Created At",
-      "delete": "[to be translated]:Delete Task",
-      "deleteConfirm": "[to be translated]:Are you sure you want to delete this task? This action cannot be undone.",
-      "edit": "[to be translated]:Edit Task",
-      "executionType": "[to be translated]:Execution Type",
-      "lastRunAt": "[to be translated]:Last Run",
-      "name": "[to be translated]:Task Name",
-      "neverRun": "[to be translated]:Never run",
-      "run": "[to be translated]:Run Task",
-      "runSuccess": "[to be translated]:Task run successfully",
-      "search": "[to be translated]:Search Tasks",
-      "status": "[to be translated]:Status",
-      "title": "[to be translated]:Task List",
-      "viewLogs": "[to be translated]:View Logs"
-    },
-    "logs": {
-      "back": "[to be translated]:Back to Task List",
-      "endTime": "[to be translated]:End Time",
-      "error": "[to be translated]:Error",
-      "info": "[to be translated]:Info",
-      "level": "[to be translated]:Level",
-      "message": "[to be translated]:Message",
-      "refresh": "[to be translated]:Refresh",
-      "search": "[to be translated]:Search Logs",
-      "startTime": "[to be translated]:Start Time",
-      "time": "[to be translated]:Time",
-      "title": "[to be translated]:Task Logs",
-      "warn": "[to be translated]:Warning"
-    },
-    "nodeConfig": {
-      "contactName": "[to be translated]:Contact Name",
-      "field": "[to be translated]:Field",
-      "groupName": "[to be translated]:Group Name",
-      "keywords": "[to be translated]:Keywords",
-      "message": "[to be translated]:Message Content",
-      "model": "[to be translated]:Model",
-      "operator": "[to be translated]:Operator",
-      "prompt": "[to be translated]:Prompt",
-      "script": "[to be translated]:Script Content",
-      "temperature": "[to be translated]:Temperature",
-      "timeout": "[to be translated]:Timeout",
-      "useTemplate": "[to be translated]:Use Template",
-      "value": "[to be translated]:Value"
-    },
-    "nodes": {
-      "condition": "[to be translated]:Condition",
-      "end": "[to be translated]:End",
-      "execute": "[to be translated]:Execute Action",
-      "listenMessage": "[to be translated]:Listen Message",
-      "llm": "[to be translated]:LLM Processing",
-      "sendMessage": "[to be translated]:Send Message",
-      "start": "[to be translated]:Start"
-    },
-    "operators": {
-      "contains": "[to be translated]:Contains",
-      "equals": "[to be translated]:Equals",
-      "greater": "[to be translated]:Greater Than",
-      "less": "[to be translated]:Less Than"
-    },
-    "status": {
-      "completed": "[to be translated]:Completed",
-      "created": "[to be translated]:Created",
-      "error": "[to be translated]:Failed",
-      "running": "[to be translated]:Running",
-      "stopped": "[to be translated]:Stopped"
-    },
-    "title": "[to be translated]:Task Flow"
-  },
   "title": {
     "apps": "Aplicații",
     "code": "Cod",
@@ -5822,12 +5461,8 @@
     "launchpad": "Launchpad",
     "mcp-servers": "Servere MCP",
     "memories": "Amintiri",
-    "notes": "Notițe",
-    "openclaw": "OpenClaw",
-    "paintings": "Imagini",
     "settings": "Setări",
-    "store": "Bibliotecă asistenți",
-    "translate": "Traducere"
+    "store": "Bibliotecă asistenți"
   },
   "trace": {
     "backList": "Înapoi la listă",
@@ -5845,137 +5480,6 @@
     "tag": "Etichetă",
     "tokenUsage": "Utilizare token",
     "traceWindow": "Fereastră lanț de apelare"
-  },
-  "translate": {
-    "alter_language": "Limbă alternativă",
-    "any": {
-      "language": "Orice limbă"
-    },
-    "button": {
-      "translate": "Tradu"
-    },
-    "close": "Închide",
-    "closed": "Traducere închisă",
-    "complete": "Traducere finalizată",
-    "confirm": {
-      "content": "Traducerea va înlocui textul original, continui?",
-      "title": "Confirmare traducere"
-    },
-    "copied": "Conținutul traducerii copiat",
-    "custom": {
-      "label": "Limbă personalizată"
-    },
-    "detect": {
-      "method": {
-        "algo": {
-          "label": "Algoritm",
-          "tip": "Folosește biblioteca franc pentru detectarea limbii"
-        },
-        "auto": {
-          "label": "Automat",
-          "tip": "Selectează automat metoda de detectare potrivită"
-        },
-        "label": "Metodă de detectare automată",
-        "llm": {
-          "tip": "Folosirea modelului rapid pentru detectarea limbii consumă mai puțini tokeni."
-        },
-        "placeholder": "Selectează metoda de detectare automată",
-        "tip": "Metoda folosită la detectarea automată a limbii de intrare"
-      }
-    },
-    "detected": {
-      "language": "Detectare automată"
-    },
-    "detected_source": "Detectat",
-    "detecting": "Se detectează...",
-    "empty": "Conținutul traducerii este gol",
-    "error": {
-      "chat_qwen_mt": "Modelul Qwen MT nu poate fi folosit în chat. Te rugăm să mergi la pagina de traducere.",
-      "detect": {
-        "qwen_mt": "Modelul QwenMT nu poate fi folosit pentru detectarea limbii",
-        "unknown": "Limbă necunoscută detectată",
-        "update_setting": "Setarea a eșuat"
-      },
-      "empty": "Rezultatul traducerii este un conținut gol",
-      "failed": "Traducerea a eșuat",
-      "invalid_source": "Limbă sursă invalidă",
-      "not_configured": "Modelul de traducere nu este configurat",
-      "not_supported": "Limbă neacceptată {{language}}",
-      "unknown": "A apărut o eroare necunoscută în timpul traducerii"
-    },
-    "exchange": {
-      "label": "Schimbă limbile sursă și țintă"
-    },
-    "files": {
-      "drag_text": "Trage aici",
-      "error": {
-        "check_type": "A apărut o eroare la verificarea tipului de fișier",
-        "multiple": "Încărcarea mai multor fișiere nu este permisă",
-        "too_large": "Fișier prea mare",
-        "unknown": "Citirea conținutului fișierului a eșuat"
-      },
-      "reading": "Se citește conținutul fișierului..."
-    },
-    "history": {
-      "clear": "Golește istoricul",
-      "clear_description": "Golirea istoricului va șterge tot istoricul traducerilor, continui?",
-      "delete": "Șterge istoricul traducerilor",
-      "empty": "Niciun istoric de traducere",
-      "error": {
-        "delete": "Ștergerea a eșuat",
-        "save": "Salvarea istoricului traducerilor a eșuat"
-      },
-      "search": {
-        "placeholder": "Caută în istoricul traducerilor"
-      },
-      "title": "Istoric traduceri"
-    },
-    "info": {
-      "aborted": "Traducere anulată"
-    },
-    "input": {
-      "placeholder": "Textul, fișierele text sau imaginile (cu suport OCR) pot fi lipite sau trase aici"
-    },
-    "language": {
-      "not_pair": "Limba sursă este diferită de limba setată",
-      "same": "Limbile sursă și țintă sunt aceleași"
-    },
-    "language_settings": "Setări limbă",
-    "menu": {
-      "description": "Tradu conținutul casetei de intrare curente"
-    },
-    "not": {
-      "found": "Conținutul traducerii nu a fost găsit"
-    },
-    "output": {
-      "placeholder": "Traducere"
-    },
-    "preferred_target": "Țintă Preferată",
-    "processing": "Traducere în curs...",
-    "settings": {
-      "autoCopy": "Copiază după traducere ",
-      "bidirectional": "Setări traducere bidirecțională",
-      "bidirectional_tip": "Când este activat, este acceptată doar traducerea bidirecțională între limbile sursă și țintă",
-      "model": "Setări model",
-      "model_desc": "Model folosit pentru serviciul de traducere",
-      "model_placeholder": "Selectează modelul de traducere",
-      "no_model_warning": "Niciun model de traducere selectat",
-      "preview": "Previzualizare Markdown",
-      "scroll_sync": "Setări sincronizare derulare",
-      "title": "Setări traducere"
-    },
-    "stop": "Oprește traducerea",
-    "success": {
-      "custom": {
-        "delete": "Șters cu succes",
-        "update": "Actualizare reușită"
-      }
-    },
-    "target_language": "Limbă țintă",
-    "title": "Traducere",
-    "tooltip": {
-      "newline": "Linie nouă"
-    }
   },
   "tray": {
     "quit": "Ieșire",

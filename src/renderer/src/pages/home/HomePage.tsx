@@ -2,13 +2,15 @@ import { ErrorBoundary } from '@renderer/components/ErrorBoundary'
 import { useAgentSessionInitializer } from '@renderer/hooks/agents/useAgentSessionInitializer'
 import { useAssistants } from '@renderer/hooks/useAssistant'
 import { useRuntime } from '@renderer/hooks/useRuntime'
-import { useNavbarPosition, useSettings } from '@renderer/hooks/useSettings'
+import { useNavbarPosition } from '@renderer/hooks/useSettings'
+import { useShowAssistants } from '@renderer/hooks/useStore'
 import { useActiveTopic } from '@renderer/hooks/useTopic'
+import DeviceManagementModal from '@renderer/pages/device/DeviceManagementModal'
+import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import NavigationService from '@renderer/services/NavigationService'
 import { newMessagesActions } from '@renderer/store/newMessage'
 import { setActiveAgentId, setActiveTopicOrSessionAction } from '@renderer/store/runtime'
 import type { Assistant, Topic } from '@renderer/types'
-import type { Tab } from '@renderer/types/chat'
 import { MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH, SECOND_MIN_WINDOW_WIDTH } from '@shared/config/constant'
 import { AnimatePresence, motion } from 'motion/react'
 import type { CSSProperties, FC, PointerEvent as ReactPointerEvent } from 'react'
@@ -49,7 +51,7 @@ const HomePage: FC = () => {
   const { isLeftNavbar } = useNavbarPosition()
   const [assistantsWidth, setAssistantsWidth] = useState(getStoredAssistantsWidth)
   const [isResizingAssistants, setIsResizingAssistants] = useState(false)
-  const [activeHomeTab, setActiveHomeTab] = useState<Tab>('assistants')
+  const [deviceManagementOpen, setDeviceManagementOpen] = useState(false)
 
   // Initialize agent session hook
   useAgentSessionInitializer()
@@ -61,7 +63,7 @@ const HomePage: FC = () => {
     state?.assistant || _activeAssistant || assistants[0]
   )
   const { activeTopic, setActiveTopic: _setActiveTopic } = useActiveTopic(activeAssistant?.id ?? '', state?.topic)
-  const { showAssistants, showTopics, topicPosition } = useSettings()
+  const { showAssistants, setShowAssistants } = useShowAssistants()
   const dispatch = useDispatch()
   const { chat } = useRuntime()
   const { activeTopicOrSession } = chat
@@ -105,19 +107,29 @@ const HomePage: FC = () => {
   }, [navigate])
 
   useEffect(() => {
+    const showWorkspace = () => {
+      setShowAssistants(true)
+    }
+    const unsubscribes = [
+      EventEmitter.on(EVENT_NAMES.SHOW_ASSISTANTS, showWorkspace),
+      EventEmitter.on(EVENT_NAMES.SHOW_TOPIC_SIDEBAR, showWorkspace)
+    ]
+    return () => unsubscribes.forEach((unsubscribe) => unsubscribe())
+  }, [setShowAssistants])
+
+  useEffect(() => {
     state?.assistant && setActiveAssistant(state?.assistant)
     state?.topic && setActiveTopic(state?.topic)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state])
 
   useEffect(() => {
-    const canMinimize = topicPosition == 'left' ? !showAssistants : !showAssistants && !showTopics
-    window.api.window.setMinimumSize(canMinimize ? SECOND_MIN_WINDOW_WIDTH : MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT)
+    window.api.window.setMinimumSize(!showAssistants ? SECOND_MIN_WINDOW_WIDTH : MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT)
 
     return () => {
       window.api.window.resetMinimumSize()
     }
-  }, [showAssistants, showTopics, topicPosition])
+  }, [showAssistants])
 
   useEffect(() => {
     document.documentElement.style.setProperty('--assistants-width', `${assistantsWidth}px`)
@@ -168,6 +180,7 @@ const HomePage: FC = () => {
           setActiveAssistant={setActiveAssistant}
           position="left"
           activeTopicOrSession={activeTopicOrSession}
+          onOpenDeviceManagement={() => setDeviceManagementOpen(true)}
         />
       )}
       <ContentContainer id={isLeftNavbar ? 'content-container' : undefined}>
@@ -183,10 +196,8 @@ const HomePage: FC = () => {
                 <HomeTabs
                   activeAssistant={activeAssistant}
                   activeTopic={activeTopic}
-                  setActiveAssistant={setActiveAssistant}
                   setActiveTopic={setActiveTopic}
-                  position="left"
-                  onTabChange={setActiveHomeTab}
+                  onOpenDeviceManagement={() => setDeviceManagementOpen(true)}
                 />
               </motion.div>
               <ResizeHandle onPointerDown={startResizeAssistants} aria-label="Resize sidebar" role="separator" />
@@ -199,10 +210,12 @@ const HomePage: FC = () => {
             activeTopic={activeTopic}
             setActiveTopic={setActiveTopic}
             setActiveAssistant={setActiveAssistant}
-            rpaAvailable={activeHomeTab === 'device'}
+            onOpenDeviceManagement={() => setDeviceManagementOpen(true)}
+            rpaAvailable
           />
         </ErrorBoundary>
       </ContentContainer>
+      <DeviceManagementModal open={deviceManagementOpen} onClose={() => setDeviceManagementOpen(false)} />
     </Container>
   )
 }

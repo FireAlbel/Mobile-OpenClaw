@@ -86,6 +86,7 @@
     "@yume-chan/scrcpy": "2.3.0",
     "@yume-chan/scrcpy-decoder-webcodecs": "2.5.3",
     "@yume-chan/stream-extra": "2.6.1",
+    "croner": "^10.0.1",
     "express": "5.1.0",
     "font-list": "2.0.0",
     "graceful-fs": "4.2.11",

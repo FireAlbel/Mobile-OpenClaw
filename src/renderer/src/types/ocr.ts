@@ -133,8 +133,20 @@ export const isSupportedOcrFile = (file: FileMetadata): file is SupportedOcrFile
   return isImageFileMetadata(file)
 }
 
+export interface OcrResultBlock {
+  text: string
+  confidence: number
+  bounds: {
+    left: number
+    top: number
+    right: number
+    bottom: number
+  }
+}
+
 export type OcrResult = {
   text: string
+  blocks?: OcrResultBlock[]
 }
 
 export type OcrHandler = (file: SupportedOcrFile, options?: OcrProviderBaseConfig) => Promise<OcrResult>

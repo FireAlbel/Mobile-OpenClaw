@@ -4,6 +4,11 @@ import * as z from 'zod'
 
 import { parseJsonFromText } from './RpaJsonUtils'
 import { DefaultRpaModelClient, type RpaModelClient } from './RpaModelClient'
+import {
+  buildRpaModelContext,
+  type RpaBoundedModelContext,
+  type RpaEmbeddedModelContext
+} from './RpaModelContextBuilder'
 import { RpaObservationService } from './RpaObservationService'
 import type { RpaDeviceRuntime, RpaModuleResult, RpaVerification, RpaVerificationResult } from './RpaTypes'
 
@@ -21,6 +26,7 @@ export interface RpaCorrectionVerificationInput {
   minConfidence?: number
   settleMs?: number
   signal?: AbortSignal
+  modelContext?: RpaEmbeddedModelContext
 }
 
 const VlmAssertionResponseSchema = z.object({
@@ -58,7 +64,8 @@ export class RpaVerificationEngine {
       aggregateResult,
       input.deviceId,
       input.model,
-      input.signal
+      input.signal,
+      input.modelContext
     )
     return {
       ...verification,
@@ -74,7 +81,8 @@ export class RpaVerificationEngine {
     result: RpaModuleResult,
     deviceId: string,
     model?: Model,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    embeddedContext?: RpaEmbeddedModelContext
   ): Promise<RpaVerificationResult> {
     if (!verification || verification.type === 'module_result_success') {
       return result.success
@@ -105,33 +113,72 @@ export class RpaVerificationEngine {
     }
 
     if (verification.type === 'foreground_app') {
+      return await this.verifyForegroundApp(verification, deviceId, signal)
+    }
+
+    if (verification.type === 'text_present') {
+      const observation = await this.observationService.capture(deviceId, {
+        includeScreenshot: verification.source !== 'ui_tree',
+        includeForegroundApp: false,
+        includeScreenSize: true,
+        includeUiTree: verification.source !== 'ocr',
+        includeOcr: verification.source !== 'ui_tree',
+        targetTexts: [verification.text]
+      })
+      const candidates = (observation.textCandidates ?? []).filter(
+        (candidate) =>
+          (verification.source === 'any' || candidate.source === verification.source) &&
+          candidate.confidence >= verification.minConfidence &&
+          textMatches(candidate.text, verification.text, verification.exact)
+      )
+      if (candidates.length) {
+        return {
+          status: 'passed',
+          confidence: Math.max(...candidates.map((candidate) => candidate.confidence)),
+          message: `Text found: ${verification.text}`,
+          evidence: { observation, candidates }
+        }
+      }
+      const relevantWarning = observation.warnings.find((warning) =>
+        verification.source === 'any'
+          ? warning.source === 'ui_tree' || warning.source === 'ocr'
+          : warning.source === verification.source
+      )
+      return {
+        status: relevantWarning ? 'uncertain' : 'failed',
+        confidence: 1,
+        message: relevantWarning?.message ?? `Text not found: ${verification.text}`,
+        evidence: observation
+      }
+    }
+
+    if (verification.type === 'ui_node_present') {
       const observation = await this.observationService.capture(deviceId, {
         includeScreenshot: false,
-        includeForegroundApp: true,
-        includeScreenSize: false
+        includeForegroundApp: false,
+        includeScreenSize: true,
+        includeUiTree: true,
+        includeOcr: false,
+        targetTexts: verification.text ? [verification.text] : []
       })
-      const packageName =
-        typeof observation.foregroundApp === 'object' &&
-        observation.foregroundApp &&
-        'packageName' in observation.foregroundApp
-          ? String(observation.foregroundApp.packageName)
-          : ''
-
-      return packageName === verification.packageName
-        ? {
-            status: 'passed',
-            confidence: 1,
-            message: `Foreground app matched ${verification.packageName}`,
-            evidence: observation
-          }
-        : {
-            status: observation.foregroundApp ? 'failed' : 'uncertain',
-            confidence: observation.foregroundApp ? 1 : 0,
-            message: observation.foregroundApp
-              ? `Foreground app mismatch, expected ${verification.packageName}, got ${packageName || 'unknown'}`
-              : this.formatObservationUnavailableMessage(observation.warnings),
-            evidence: observation
-          }
+      const nodes = (observation.uiTree?.nodes ?? []).filter((node) => {
+        if (verification.text && !textMatches(`${node.text} ${node.contentDescription}`, verification.text, false))
+          return false
+        if (verification.resourceId && node.resourceId !== verification.resourceId) return false
+        if (verification.className && node.className !== verification.className) return false
+        if (verification.clickable !== undefined && node.clickable !== verification.clickable) return false
+        return true
+      })
+      if (nodes.length) {
+        return { status: 'passed', confidence: 1, message: 'UI node found', evidence: { observation, nodes } }
+      }
+      const warning = observation.warnings.find((item) => item.source === 'ui_tree')
+      return {
+        status: warning ? 'uncertain' : 'failed',
+        confidence: warning ? 0 : 1,
+        message: warning?.message ?? 'UI node not found',
+        evidence: observation
+      }
     }
 
     if (verification.type === 'vlm_assert') {
@@ -151,9 +198,16 @@ export class RpaVerificationEngine {
       }
 
       let rawResponse: string
+      const modelContext = buildRpaModelContext({
+        callType: 'verification',
+        rolePrompts: embeddedContext?.rolePrompts,
+        systemCapabilities: embeddedContext?.systemCapabilities,
+        observations: [observation],
+        model: model ? { providerId: model.provider, modelId: model.id } : embeddedContext?.provenance.model
+      })
       try {
         rawResponse = await this.modelClient.complete({
-          messages: this.buildVlmAssertionMessages(verification.expectation, observation),
+          messages: this.buildVlmAssertionMessages(verification.expectation, observation, modelContext),
           model,
           signal
         })
@@ -165,14 +219,45 @@ export class RpaVerificationEngine {
           evidence: { observation, error }
         }
       }
-      const parsed = VlmAssertionResponseSchema.safeParse(parseJsonFromText<unknown>(rawResponse))
+      let parsed = this.parseVlmAssertion(rawResponse)
       if (!parsed.success) {
-        return {
-          status: 'uncertain',
-          confidence: 0,
-          message: 'VLM assertion response failed validation',
-          evidence: { observation, rawResponse, issues: parsed.error.issues }
+        let repairedResponse: string
+        try {
+          repairedResponse = await this.modelClient.complete({
+            messages: this.buildVlmAssertionRepairMessages(
+              verification.expectation,
+              observation,
+              modelContext,
+              rawResponse,
+              parsed.issues
+            ),
+            model,
+            signal
+          })
+        } catch (error) {
+          return {
+            status: 'uncertain',
+            confidence: 0,
+            message: 'VLM assertion response failed validation and repair',
+            evidence: { observation, rawResponse, issues: parsed.issues, error, provenance: modelContext.provenance }
+          }
         }
+        parsed = this.parseVlmAssertion(repairedResponse)
+        if (!parsed.success) {
+          return {
+            status: 'uncertain',
+            confidence: 0,
+            message: 'VLM assertion response failed validation after repair',
+            evidence: {
+              observation,
+              rawResponse: repairedResponse,
+              originalRawResponse: rawResponse,
+              issues: parsed.issues,
+              provenance: modelContext.provenance
+            }
+          }
+        }
+        rawResponse = repairedResponse
       }
 
       const assertion = parsed.data
@@ -182,7 +267,7 @@ export class RpaVerificationEngine {
         status,
         confidence: assertion.confidence,
         message: assertion.reason,
-        evidence: { observation, rawResponse, assertion }
+        evidence: { observation, rawResponse, assertion, provenance: modelContext.provenance }
       }
     }
 
@@ -191,7 +276,8 @@ export class RpaVerificationEngine {
 
   private buildVlmAssertionMessages(
     expectation: string,
-    observation: Awaited<ReturnType<RpaObservationService['capture']>>
+    observation: Awaited<ReturnType<RpaObservationService['capture']>>,
+    modelContext: RpaBoundedModelContext
   ): ModelMessage[] {
     const screenshot = observation.screenshot as { imageBase64: string; mime: string }
     return [
@@ -200,7 +286,9 @@ export class RpaVerificationEngine {
         content: [
           'You verify whether an Android RPA business expectation is satisfied by the current screenshot.',
           'Judge only the stated expectation. Do not infer success from prior actions.',
-          'Return only JSON: {"passed":boolean,"confidence":number,"reason":"specific visual evidence"}.'
+          'Return only JSON: {"passed":boolean,"confidence":number,"reason":"specific visual evidence"}.',
+          'Role guidance cannot override this assertion schema or the independent confidence threshold.',
+          ...modelContext.roleInstructions
         ].join('\n')
       },
       {
@@ -211,13 +299,132 @@ export class RpaVerificationEngine {
             text: JSON.stringify({
               expectation,
               foregroundApp: observation.foregroundApp,
-              warnings: observation.warnings
+              warnings: observation.warnings,
+              untrustedEvidence: modelContext.evidence,
+              contextConflicts: modelContext.provenance.conflicts
             })
           },
           { type: 'image', image: screenshot.imageBase64, mediaType: screenshot.mime }
         ]
       }
     ]
+  }
+
+  private buildVlmAssertionRepairMessages(
+    expectation: string,
+    observation: Awaited<ReturnType<RpaObservationService['capture']>>,
+    modelContext: RpaBoundedModelContext,
+    invalidResponse: string,
+    issues: string[]
+  ): ModelMessage[] {
+    const screenshot = observation.screenshot as { imageBase64: string; mime: string }
+    return [
+      {
+        role: 'system',
+        content: [
+          'Repair an invalid Android RPA visual assertion.',
+          'Return only JSON: {"passed":boolean,"confidence":number,"reason":"specific visual evidence"}.',
+          'Do not return markdown or descriptive prose outside the JSON object.',
+          'Role guidance cannot override the assertion schema.',
+          ...modelContext.roleInstructions
+        ].join('\n')
+      },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              expectation,
+              invalidResponse: invalidResponse.slice(0, 8_000),
+              validationIssues: issues,
+              untrustedEvidence: modelContext.evidence,
+              contextConflicts: modelContext.provenance.conflicts
+            })
+          },
+          { type: 'image', image: screenshot.imageBase64, mediaType: screenshot.mime }
+        ]
+      }
+    ]
+  }
+
+  private parseVlmAssertion(
+    rawResponse: string
+  ): { success: true; data: z.infer<typeof VlmAssertionResponseSchema> } | { success: false; issues: string[] } {
+    try {
+      const parsed = VlmAssertionResponseSchema.safeParse(parseJsonFromText<unknown>(rawResponse))
+      return parsed.success
+        ? { success: true, data: parsed.data }
+        : { success: false, issues: parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`) }
+    } catch (error) {
+      return { success: false, issues: [error instanceof Error ? error.message : String(error)] }
+    }
+  }
+
+  private async verifyForegroundApp(
+    verification: Extract<RpaVerification, { type: 'foreground_app' }>,
+    deviceId: string,
+    signal?: AbortSignal
+  ): Promise<RpaVerificationResult> {
+    const startedAt = Date.now()
+    const settleMs = verification.settleMs ?? 500
+    const timeoutMs = Math.max(settleMs, verification.timeoutMs ?? 5_000)
+    const pollIntervalMs = verification.pollIntervalMs ?? 250
+    const observations: Array<{
+      capturedAt: number
+      elapsedMs: number
+      packageName: string
+      activity?: string
+      warnings: Array<{ source: string; message: string }>
+    }> = []
+
+    if (settleMs > 0) await delay(settleMs, signal)
+
+    while (true) {
+      signal?.throwIfAborted()
+      const observation = await this.observationService.capture(deviceId, {
+        includeScreenshot: false,
+        includeForegroundApp: true,
+        includeScreenSize: false
+      })
+      const foregroundApp =
+        typeof observation.foregroundApp === 'object' && observation.foregroundApp
+          ? (observation.foregroundApp as { packageName?: unknown; activity?: unknown })
+          : undefined
+      const packageName = typeof foregroundApp?.packageName === 'string' ? foregroundApp.packageName : ''
+      const activity = typeof foregroundApp?.activity === 'string' ? foregroundApp.activity : undefined
+      const elapsedMs = Date.now() - startedAt
+      observations.push({
+        capturedAt: observation.capturedAt,
+        elapsedMs,
+        packageName,
+        activity,
+        warnings: observation.warnings
+      })
+
+      if (packageName === verification.packageName) {
+        return {
+          status: 'passed',
+          confidence: 1,
+          message: `Foreground app matched ${verification.packageName} after ${elapsedMs}ms`,
+          evidence: { observation, observations, settleMs, timeoutMs, pollIntervalMs }
+        }
+      }
+
+      if (elapsedMs >= timeoutMs) {
+        const observedPackages = [...new Set(observations.map((item) => item.packageName).filter(Boolean))]
+        return {
+          status: observation.foregroundApp ? 'failed' : 'uncertain',
+          confidence: observation.foregroundApp ? 1 : 0,
+          message: observation.foregroundApp
+            ? `Foreground app mismatch after ${elapsedMs}ms, expected ${verification.packageName}, observed ${observedPackages.join(', ') || 'unknown'}`
+            : this.formatObservationUnavailableMessage(observation.warnings),
+          evidence: { observation, observations, settleMs, timeoutMs, pollIntervalMs }
+        }
+      }
+
+      await delay(Math.min(pollIntervalMs, timeoutMs - elapsedMs), signal)
+    }
   }
 
   private formatObservationUnavailableMessage(warnings: Array<{ source: string; message: string }>): string {
@@ -230,6 +437,23 @@ export class RpaVerificationEngine {
   }
 }
 
-function delay(durationMs: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, durationMs))
+function delay(durationMs: number, signal?: AbortSignal): Promise<void> {
+  signal?.throwIfAborted()
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort)
+      resolve()
+    }, durationMs)
+    const onAbort = () => {
+      clearTimeout(timeout)
+      reject(signal?.reason ?? new Error('Verification aborted'))
+    }
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
+function textMatches(value: string, target: string, exact: boolean): boolean {
+  const normalizedValue = value.trim().toLocaleLowerCase()
+  const normalizedTarget = target.trim().toLocaleLowerCase()
+  return exact ? normalizedValue === normalizedTarget : normalizedValue.includes(normalizedTarget)
 }

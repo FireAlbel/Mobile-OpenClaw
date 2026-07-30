@@ -66,6 +66,19 @@ export const launchAppModule: RpaActionModule<{ packageName: string }> = {
   }
 }
 
+export const restartAppModule: RpaActionModule<{ packageName: string }> = {
+  metadata: baseMetadata('restart_app', 'Restart app', 'Force-stop and reopen an Android app by package name.'),
+  paramsSchema: z.object({
+    packageName: packageNameSchema
+  }),
+  async execute(context, params) {
+    const startedAt = now()
+    if (!context.runtime.restartApp) return failedResult(startedAt, 'Restart app is unavailable in this runtime')
+    const runtimeResult = await context.runtime.restartApp(context.deviceId, params.packageName)
+    return resultFromRuntime(startedAt, runtimeResult)
+  }
+}
+
 export const waitModule: RpaActionModule<{ durationMs: number }> = {
   metadata: baseMetadata('wait', 'Wait', 'Wait for a fixed duration before continuing.', 10_000),
   paramsSchema: z.object({
@@ -207,6 +220,7 @@ export const getForegroundAppModule: RpaActionModule = {
 
 export const baseRpaModules = [
   launchAppModule,
+  restartAppModule,
   waitModule,
   screenshotModule,
   tapAbsoluteModule,

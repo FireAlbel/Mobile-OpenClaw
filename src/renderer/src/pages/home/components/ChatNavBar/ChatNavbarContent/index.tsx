@@ -17,7 +17,7 @@ const ChatNavbarContent: FC<Props> = ({ assistant }) => {
 
   return (
     <div className="flex min-w-0 flex-1 items-center justify-between">
-      {activeTopicOrSession === 'topic' && <TopicContent assistant={assistant} />}
+      {activeTopicOrSession === 'topic' && <TopicContent assistant={assistant} topic={chat.activeTopic} />}
       {activeTopicOrSession === 'session' && activeAgent && <AgentContent activeAgent={activeAgent} />}
     </div>
   )

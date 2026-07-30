@@ -1,153 +1,64 @@
-import AddAssistantPopup from '@renderer/components/Popups/AddAssistantPopup'
-import { useAssistants, useDefaultAssistant } from '@renderer/hooks/useAssistant'
-import { useNavbarPosition, useSettings } from '@renderer/hooks/useSettings'
-import { useShowTopics } from '@renderer/hooks/useStore'
-import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
-import { useAppDispatch } from '@renderer/store'
-import { setActiveAgentId, setActiveTopicOrSessionAction } from '@renderer/store/runtime'
+import { useNavbarPosition } from '@renderer/hooks/useSettings'
 import type { Assistant, Topic } from '@renderer/types'
-import type { Tab } from '@renderer/types/chat'
-import { classNames, uuid } from '@renderer/utils'
+import { Button, Tooltip } from 'antd'
+import { ListTodo, Smartphone } from 'lucide-react'
 import type { FC } from 'react'
-import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
-import DevicePage from '../../device/DevicePage'
-import Assistants from './AssistantsTab'
+import ActiveRpaRuns from './ActiveRpaRuns'
 import Topics from './TopicsTab'
 
 interface Props {
   activeAssistant: Assistant
   activeTopic: Topic
-  setActiveAssistant: (assistant: Assistant) => void
   setActiveTopic: (topic: Topic) => void
-  position: 'left' | 'right'
-  forceToSeeAllTab?: boolean
+  onOpenDeviceManagement: () => void
   style?: React.CSSProperties
-  onTabChange?: (tab: Tab) => void
 }
 
-let _tab: Tab | null = null
-
-const HomeTabs: FC<Props> = ({
-  activeAssistant,
-  activeTopic,
-  setActiveAssistant,
-  setActiveTopic,
-  position,
-  forceToSeeAllTab,
-  style,
-  onTabChange
-}) => {
-  const { addAssistant } = useAssistants()
-  const { topicPosition } = useSettings()
-  const { defaultAssistant } = useDefaultAssistant()
-  const { toggleShowTopics } = useShowTopics()
+const HomeTabs: FC<Props> = ({ activeAssistant, activeTopic, setActiveTopic, onOpenDeviceManagement, style }) => {
   const { isLeftNavbar } = useNavbarPosition()
   const { t } = useTranslation()
-  const dispatch = useAppDispatch()
-
-  const [tab, setTab] = useState<Tab>(position === 'left' ? _tab || 'assistants' : 'topic')
-
-  const selectTab = (nextTab: Tab) => {
-    setTab(nextTab)
-  }
-
-  useEffect(() => onTabChange?.(tab), [onTabChange, tab])
-  const borderStyle = '0.5px solid var(--color-border)'
-  const border =
-    position === 'left'
-      ? { borderRight: isLeftNavbar ? borderStyle : 'none' }
-      : { borderLeft: isLeftNavbar ? borderStyle : 'none', borderTopLeftRadius: 0 }
-
-  if (position === 'left' && topicPosition === 'left') {
-    _tab = tab
-  }
-
-  const showTab = position === 'left' && topicPosition === 'left'
-
-  const onCreateAssistant = async () => {
-    const assistant = await AddAssistantPopup.show()
-    if (assistant) {
-      setActiveAssistant(assistant)
-      dispatch(setActiveAgentId(null))
-      dispatch(setActiveTopicOrSessionAction('topic'))
-    }
-  }
-
-  const onCreateDefaultAssistant = () => {
-    const assistant = { ...defaultAssistant, id: uuid() }
-    addAssistant(assistant)
-    setActiveAssistant(assistant)
-    dispatch(setActiveAgentId(null))
-    dispatch(setActiveTopicOrSessionAction('topic'))
-  }
-
-  useEffect(() => {
-    const unsubscribes = [
-      EventEmitter.on(EVENT_NAMES.SHOW_ASSISTANTS, (): any => {
-        showTab && setTab('assistants')
-      }),
-      EventEmitter.on(EVENT_NAMES.SHOW_TOPIC_SIDEBAR, (): any => {
-        showTab && setTab('topic')
-      }),
-      EventEmitter.on(EVENT_NAMES.SWITCH_TOPIC_SIDEBAR, () => {
-        showTab && setTab('topic')
-        if (position === 'left' && topicPosition === 'right') {
-          toggleShowTopics()
-        }
-      })
-    ]
-    return () => unsubscribes.forEach((unsub) => unsub())
-  }, [position, setTab, showTab, tab, toggleShowTopics, topicPosition])
-
-  useEffect(() => {
-    if (position === 'right' && topicPosition === 'right' && tab === 'assistants') {
-      setTab('topic')
-    }
-    if (position === 'left' && topicPosition === 'right' && tab === 'topic') {
-      setTab('assistants')
-    }
-  }, [position, tab, topicPosition, forceToSeeAllTab])
+  const border = isLeftNavbar ? { borderRight: '0.5px solid var(--color-border)' } : undefined
 
   return (
-    <Container
-      style={{ ...border, ...style }}
-      className={classNames('home-tabs', { right: position === 'right' && topicPosition === 'right' })}>
-      {position === 'left' && topicPosition === 'left' && (
-        <CustomTabs>
-          <TabItem active={tab === 'assistants'} onClick={() => selectTab('assistants')}>
-            {t('assistants.abbr')}
-          </TabItem>
-          <TabItem active={tab === 'topic'} onClick={() => selectTab('topic')}>
-            {t('common.topics')}
-          </TabItem>
-          <TabItem active={tab === 'device'} onClick={() => selectTab('device')}>
-            {t('device.title')}
-          </TabItem>
-        </CustomTabs>
-      )}
-
-      <TabContent className="home-tabs-content">
-        {tab === 'assistants' && (
-          <Assistants
-            activeAssistant={activeAssistant}
-            setActiveAssistant={setActiveAssistant}
-            onCreateAssistant={onCreateAssistant}
-            onCreateDefaultAssistant={onCreateDefaultAssistant}
+    <Container style={{ ...border, ...style }} className="home-tabs">
+      <WorkspaceHeader>
+        <WorkspaceTitle>
+          <ListTodo size={17} />
+          <span>{t('device.rpa.workspace')}</span>
+        </WorkspaceTitle>
+        <Tooltip title={t('device.management_title')}>
+          <Button
+            type="text"
+            icon={<Smartphone size={17} />}
+            aria-label={t('device.management_title')}
+            onClick={onOpenDeviceManagement}
           />
-        )}
-        {tab === 'topic' && (
+        </Tooltip>
+      </WorkspaceHeader>
+
+      <ActiveSection>
+        <SectionTitle>
+          <span>{t('device.rpa.active_runs')}</span>
+        </SectionTitle>
+        <ActiveRpaRuns />
+      </ActiveSection>
+
+      <TopicsSection>
+        <SectionTitle>
+          <span>{t('device.rpa.chat_topics')}</span>
+        </SectionTitle>
+        <TopicsContent>
           <Topics
             assistant={activeAssistant}
             activeTopic={activeTopic}
             setActiveTopic={setActiveTopic}
-            position={position}
+            position="left"
           />
-        )}
-        {tab === 'device' && <DevicePage />}
-      </TabContent>
+        </TopicsContent>
+      </TopicsSection>
     </Container>
   )
 }
@@ -156,89 +67,72 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   width: var(--assistants-width);
-  transition: width 0.3s;
   height: calc(100vh - var(--navbar-height));
   position: relative;
-
-  &.right {
-    height: calc(100vh - var(--navbar-height));
-  }
-
-  [navbar-position='left'] & {
-    background-color: var(--color-background);
-  }
-  [navbar-position='top'] & {
-    height: calc(100vh - var(--navbar-height));
-  }
   overflow: hidden;
+  background: var(--color-background);
+
   .collapsed {
     width: 0;
     border-left: none;
   }
 `
 
-const TabContent = styled.div`
+const WorkspaceHeader = styled.div`
   display: flex;
-  transition: width 0.3s;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px 6px 14px;
+  border-bottom: 1px solid var(--color-border);
+  -webkit-app-region: no-drag;
+
+  .ant-btn {
+    width: 32px;
+    height: 32px;
+    color: var(--color-text-secondary);
+  }
+`
+
+const WorkspaceTitle = styled.div`
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+`
+
+const ActiveSection = styled.section`
+  max-height: 42%;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--color-border);
+`
+
+const TopicsSection = styled.section`
+  display: flex;
+  min-height: 0;
   flex: 1;
   flex-direction: column;
-  overflow-y: hidden;
-  overflow-x: hidden;
 `
 
-const CustomTabs = styled.div`
+const SectionTitle = styled.div`
   display: flex;
-  margin: 0 12px;
-  padding: 6px 0;
-  border-bottom: 1px solid var(--color-border);
-  background: transparent;
-  -webkit-app-region: no-drag;
-  [navbar-position='top'] & {
-    padding-top: 2px;
-  }
-`
-
-const TabItem = styled.button<{ active: boolean }>`
-  flex: 1;
-  height: 30px;
-  border: none;
-  background: transparent;
-  color: ${(props) => (props.active ? 'var(--color-text)' : 'var(--color-text-secondary)')};
-  font-size: 13px;
-  font-weight: ${(props) => (props.active ? '600' : '400')};
-  cursor: pointer;
-  border-radius: 8px;
-  margin: 0 2px;
-  position: relative;
-  display: flex;
+  min-height: 34px;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 8px 12px 4px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+`
 
-  &:hover {
-    color: var(--color-text);
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: ${(props) => (props.active ? '30px' : '0')};
-    height: 3px;
-    background: var(--color-primary);
-    border-radius: 1px;
-    transition: all 0.2s ease;
-  }
-
-  &:hover::after {
-    width: ${(props) => (props.active ? '30px' : '16px')};
-    background: ${(props) => (props.active ? 'var(--color-primary)' : 'var(--color-primary-soft)')};
-  }
+const TopicsContent = styled.div`
+  min-height: 0;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
 `
 
 export default HomeTabs

@@ -145,7 +145,6 @@ const titleKeyMap = {
   launchpad: 'title.launchpad',
   'mcp-servers': 'title.mcp-servers',
   memories: 'title.memories',
-  notes: 'title.notes',
   paintings: 'title.paintings',
   settings: 'title.settings',
   translate: 'title.translate',
@@ -175,7 +174,6 @@ export const getThemeModeLabel = (key: string): string => {
 //   knowledge: t('knowledge.title'),
 //   files: t('files.title'),
 //   code_tools: t('code.title'),
-//   notes: t('notes.title')
 // } as const
 
 const sidebarIconKeyMap = {
@@ -187,9 +185,9 @@ const sidebarIconKeyMap = {
   knowledge: 'knowledge.title',
   files: 'files.title',
   code_tools: 'code.title',
-  notes: 'notes.title',
   openclaw: 'openclaw.title',
-  taskflow: 'taskflow.title'
+  rpa_roles: 'rpa_roles.sidebar_title',
+  rpa_templates: 'rpa_templates.title'
 } as const
 
 export const getSidebarIconLabel = (key: string): string => {

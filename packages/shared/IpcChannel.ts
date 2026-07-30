@@ -55,17 +55,9 @@ export enum IpcChannel {
   Notification_Send = 'notification:send',
   Notification_OnClick = 'notification:on-click',
 
-  Webview_SetOpenLinkExternal = 'webview:set-open-link-external',
-  Webview_SetSpellCheckEnabled = 'webview:set-spell-check-enabled',
-  Webview_SearchHotkey = 'webview:search-hotkey',
-  Webview_PrintToPDF = 'webview:print-to-pdf',
-  Webview_SaveAsHTML = 'webview:save-as-html',
-
   // Open
   Open_Path = 'open:path',
   Open_Website = 'open:website',
-
-  Minapp = 'minapp',
 
   Config_Set = 'config:set',
   Config_Get = 'config:get',
@@ -206,9 +198,7 @@ export enum IpcChannel {
   File_IsTextFile = 'file:isTextFile',
   File_IsDirectory = 'file:isDirectory',
   File_ListDirectory = 'file:listDirectory',
-  File_GetDirectoryStructure = 'file:getDirectoryStructure',
   File_CheckFileName = 'file:checkFileName',
-  File_ValidateNotesDirectory = 'file:validateNotesDirectory',
   File_StartWatcher = 'file:startWatcher',
   File_StopWatcher = 'file:stopWatcher',
   File_PauseWatcher = 'file:pauseWatcher',
@@ -365,13 +355,6 @@ export enum IpcChannel {
   // ExternalApps
   ExternalApps_DetectInstalled = 'external-apps:detect-installed',
 
-  // CodeTools
-  CodeTools_Run = 'code-tools:run',
-  CodeTools_GetAvailableTerminals = 'code-tools:get-available-terminals',
-  CodeTools_SetCustomTerminalPath = 'code-tools:set-custom-terminal-path',
-  CodeTools_GetCustomTerminalPath = 'code-tools:get-custom-terminal-path',
-  CodeTools_RemoveCustomTerminalPath = 'code-tools:remove-custom-terminal-path',
-
   // OCR
   OCR_ocr = 'ocr:ocr',
   OCR_ListProviders = 'ocr:list-providers',
@@ -412,25 +395,37 @@ export enum IpcChannel {
   // RPA
   Rpa_LoadRuns = 'rpa:load-runs',
   Rpa_SaveRuns = 'rpa:save-runs',
+  Rpa_LoadAssistantProfiles = 'rpa:load-assistant-profiles',
+  Rpa_SaveAssistantProfiles = 'rpa:save-assistant-profiles',
+  Rpa_LoadAppRoles = 'rpa:load-app-roles',
+  Rpa_SaveAppRoles = 'rpa:save-app-roles',
+  Rpa_LoadRolePrompts = 'rpa:load-role-prompts',
+  Rpa_SaveRolePrompts = 'rpa:save-role-prompts',
+  Rpa_SecureHttpFetch = 'rpa:secure-http-fetch',
+  Rpa_LoadDslSessions = 'rpa:load-dsl-sessions',
+  Rpa_SaveDslSessions = 'rpa:save-dsl-sessions',
+  Rpa_LoadSessionSupplements = 'rpa:load-session-supplements',
+  Rpa_SaveSessionSupplements = 'rpa:save-session-supplements',
+  Rpa_LoadSupplementContext = 'rpa:load-supplement-context',
+  Rpa_SaveSupplementContext = 'rpa:save-supplement-context',
+  Rpa_LoadKnowledgeEntries = 'rpa:load-knowledge-entries',
+  Rpa_SaveKnowledgeEntries = 'rpa:save-knowledge-entries',
+  Rpa_LoadArtifacts = 'rpa:load-artifacts',
+  Rpa_SaveArtifacts = 'rpa:save-artifacts',
+  Rpa_LoadTemplates = 'rpa:load-templates',
+  Rpa_SaveTemplates = 'rpa:save-templates',
+  Rpa_LoadTaskFlowSchedules = 'rpa:load-task-flow-schedules',
+  Rpa_SaveTaskFlowSchedules = 'rpa:save-task-flow-schedules',
+  Rpa_TriggerTaskFlowSchedule = 'rpa:trigger-task-flow-schedule',
+  Rpa_CompleteTaskFlowTrigger = 'rpa:complete-task-flow-trigger',
+  Rpa_TaskFlowScheduleDue = 'rpa:task-flow-schedule-due',
+  Rpa_LoadSkills = 'rpa:load-skills',
+  Rpa_SaveSkills = 'rpa:save-skills',
+  Rpa_LoadImprovementProposals = 'rpa:load-improvement-proposals',
+  Rpa_SaveImprovementProposals = 'rpa:save-improvement-proposals',
+  Rpa_LoadFailureFingerprints = 'rpa:load-failure-fingerprints',
+  Rpa_SaveFailureFingerprints = 'rpa:save-failure-fingerprints',
   Rpa_ExportDebugBundle = 'rpa:export-debug-bundle',
-
-  // OpenClaw
-  OpenClaw_CheckInstalled = 'openclaw:check-installed',
-  OpenClaw_CheckNodeVersion = 'openclaw:check-node-version',
-  OpenClaw_CheckGitAvailable = 'openclaw:check-git-available',
-  OpenClaw_GetNodeDownloadUrl = 'openclaw:get-node-download-url',
-  OpenClaw_GetGitDownloadUrl = 'openclaw:get-git-download-url',
-  OpenClaw_Install = 'openclaw:install',
-  OpenClaw_Uninstall = 'openclaw:uninstall',
-  OpenClaw_InstallProgress = 'openclaw:install-progress',
-  OpenClaw_StartGateway = 'openclaw:start-gateway',
-  OpenClaw_StopGateway = 'openclaw:stop-gateway',
-  OpenClaw_RestartGateway = 'openclaw:restart-gateway',
-  OpenClaw_GetStatus = 'openclaw:get-status',
-  OpenClaw_CheckHealth = 'openclaw:check-health',
-  OpenClaw_GetDashboardUrl = 'openclaw:get-dashboard-url',
-  OpenClaw_SyncConfig = 'openclaw:sync-config',
-  OpenClaw_GetChannels = 'openclaw:get-channels',
 
   // Analytics
   Analytics_TrackTokenUsage = 'analytics:track-token-usage'

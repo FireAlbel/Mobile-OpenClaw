@@ -3,14 +3,17 @@ import type { RpaStep, RpaTask, RpaValidationIssue } from '@renderer/services/rp
 import { Alert, Button, Checkbox, Input, InputNumber, Select, Space, Timeline, Typography } from 'antd'
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
 import type { FC } from 'react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
+
+import JsonEditor from './JsonEditor'
 
 interface Props {
   task: RpaTask
   issues: RpaValidationIssue[]
   onChange: (task: RpaTask) => void
+  onJsonValidityChange?: (valid: boolean) => void
 }
 
 const moduleOptions = defaultRpaModuleRegistry.listForPlanner().map((module) => ({
@@ -18,8 +21,25 @@ const moduleOptions = defaultRpaModuleRegistry.listForPlanner().map((module) => 
   label: `${module.name} (${module.id})`
 }))
 
-const RpaTimelineEditor: FC<Props> = ({ task, issues, onChange }) => {
+const RpaTimelineEditor: FC<Props> = ({ task, issues, onChange, onJsonValidityChange }) => {
   const { t } = useTranslation()
+  const paramsValidity = useRef(new Map<string, boolean>())
+
+  const reportParamsValidity = useCallback(
+    (stepId: string, valid: boolean) => {
+      paramsValidity.current.set(stepId, valid)
+      onJsonValidityChange?.(task.steps.every((step) => paramsValidity.current.get(step.id) !== false))
+    },
+    [onJsonValidityChange, task.steps]
+  )
+
+  useEffect(() => {
+    const activeStepIds = new Set(task.steps.map((step) => step.id))
+    for (const stepId of paramsValidity.current.keys()) {
+      if (!activeStepIds.has(stepId)) paramsValidity.current.delete(stepId)
+    }
+    onJsonValidityChange?.(task.steps.every((step) => paramsValidity.current.get(step.id) !== false))
+  }, [onJsonValidityChange, task.steps])
 
   const updateStep = (index: number, step: RpaStep) => {
     const steps = [...task.steps]
@@ -79,6 +99,7 @@ const RpaTimelineEditor: FC<Props> = ({ task, issues, onChange }) => {
               onChange={(nextStep) => updateStep(index, nextStep)}
               onMove={(offset) => moveStep(index, offset)}
               onRemove={() => removeStep(index)}
+              onJsonValidityChange={(valid) => reportParamsValidity(step.id, valid)}
             />
           )
         }))}
@@ -97,7 +118,8 @@ const StepEditor: FC<{
   onChange: (step: RpaStep) => void
   onMove: (offset: number) => void
   onRemove: () => void
-}> = ({ step, index, total, onChange, onMove, onRemove }) => {
+  onJsonValidityChange: (valid: boolean) => void
+}> = ({ step, index, total, onChange, onMove, onRemove, onJsonValidityChange }) => {
   const { t } = useTranslation()
   const [paramsText, setParamsText] = useState(() => JSON.stringify(step.params, null, 2))
   const [paramsError, setParamsError] = useState<string>()
@@ -181,14 +203,14 @@ const StepEditor: FC<{
       </FieldGrid>
       <Field>
         <FieldLabel>{t('device.rpa.params', { defaultValue: 'Parameters (JSON)' })}</FieldLabel>
-        <Input.TextArea
-          rows={4}
-          status={paramsError ? 'error' : undefined}
+        <JsonEditor
           value={paramsText}
-          onChange={(event) => setParamsText(event.target.value)}
+          onChange={setParamsText}
           onBlur={applyParams}
+          onValidityChange={onJsonValidityChange}
+          error={paramsError}
+          ariaLabel={t('device.rpa.params', { defaultValue: 'Parameters (JSON)' })}
         />
-        {paramsError && <Typography.Text type="danger">{paramsError}</Typography.Text>}
       </Field>
     </StepPanel>
   )

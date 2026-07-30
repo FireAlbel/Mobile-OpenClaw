@@ -1,5 +1,3 @@
-export type Tab = 'assistants' | 'topic' | 'device'
-
 export type InputBarToolType =
   | 'new_topic'
   | 'attachment'

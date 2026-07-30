@@ -36,6 +36,7 @@ export interface InputbarToolsNewProps {
   scope: InputbarScope
   assistantId: string
   session?: ToolContext['session']
+  rpaTask?: ToolContext['rpaTask']
 }
 
 interface ToolConfig {
@@ -49,7 +50,7 @@ const DraggablePortal = ({ children, isDragging }: { children: React.ReactNode; 
   return isDragging ? createPortal(children, document.body) : children
 }
 
-const InputbarTools = ({ scope, assistantId, session }: InputbarToolsNewProps) => {
+const InputbarTools = ({ scope, assistantId, session, rpaTask }: InputbarToolsNewProps) => {
   const { t } = useTranslation()
   const dispatch = useAppDispatch()
   const { assistant, model } = useAssistant(assistantId)
@@ -81,8 +82,8 @@ const InputbarTools = ({ scope, assistantId, session }: InputbarToolsNewProps) =
 
   // Get tools for current scope
   const availableTools = useMemo(() => {
-    return getToolsForScope(scope, { assistant, model, session })
-  }, [scope, assistant, model, session])
+    return getToolsForScope(scope, { assistant, model, session, rpaTask })
+  }, [scope, assistant, model, session, rpaTask])
 
   // Get tool order for current scope
   const toolOrder = useMemo(() => {
@@ -122,6 +123,7 @@ const InputbarTools = ({ scope, assistantId, session }: InputbarToolsNewProps) =
         assistant,
         model,
         session,
+        rpaTask,
         state,
         actions,
         quickPanel,
@@ -129,7 +131,7 @@ const InputbarTools = ({ scope, assistantId, session }: InputbarToolsNewProps) =
         t
       } as ToolRenderContext<S, A>
     },
-    [assistant, model, quickPanelContext, scope, session, t, toolsContext, getQuickPanelApiForTool]
+    [assistant, model, quickPanelContext, scope, session, rpaTask, t, toolsContext, getQuickPanelApiForTool]
   )
 
   // Build tool metadata (without rendering)

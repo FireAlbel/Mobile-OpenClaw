@@ -1,4 +1,3 @@
-import { loggerService } from '@logger'
 import {
   DEFAULT_CONTEXTCOUNT,
   DEFAULT_MAX_TOKENS,
@@ -6,26 +5,12 @@ import {
   MAX_CONTEXT_COUNT,
   UNLIMITED_CONTEXT_COUNT
 } from '@renderer/config/constant'
-import { getModelSupportedReasoningEffortOptions } from '@renderer/config/models'
-import { isQwenMTModel } from '@renderer/config/models/qwen'
-import { UNKNOWN } from '@renderer/config/translate'
 import { getStoreProviders } from '@renderer/hooks/useStore'
 import i18n from '@renderer/i18n'
 import store from '@renderer/store'
 import { addAssistant } from '@renderer/store/assistants'
-import type {
-  Assistant,
-  AssistantPreset,
-  AssistantSettings,
-  Model,
-  Provider,
-  Topic,
-  TranslateAssistant,
-  TranslateLanguage
-} from '@renderer/types'
+import type { Assistant, AssistantPreset, AssistantSettings, Model, Provider, Topic } from '@renderer/types'
 import { uuid } from '@renderer/utils'
-
-const logger = loggerService.withContext('AssistantService')
 
 /**
  * Default assistant settings configuration template.
@@ -94,55 +79,6 @@ export function getDefaultAssistant(): Assistant {
  * @param _settings - Optional settings to override default assistant settings
  * @returns Configured translate assistant
  */
-export function getDefaultTranslateAssistant(
-  targetLanguage: TranslateLanguage,
-  text: string,
-  _settings?: Partial<AssistantSettings>
-): TranslateAssistant {
-  const model = getTranslateModel()
-  const assistant: Assistant = getDefaultAssistant()
-
-  if (!model) {
-    logger.error('No translate model')
-    throw new Error(i18n.t('translate.error.not_configured'))
-  }
-
-  if (targetLanguage.langCode === UNKNOWN.langCode) {
-    logger.error('Unknown target language', targetLanguage)
-    throw new Error('Unknown target language')
-  }
-
-  const supportedOptions = getModelSupportedReasoningEffortOptions(model)
-  // disable reasoning if it could be disabled, otherwise no configuration
-  const reasoningEffort = supportedOptions?.includes('none') ? 'none' : 'default'
-  const settings = {
-    reasoning_effort: reasoningEffort,
-    ..._settings
-  } satisfies Partial<AssistantSettings>
-
-  const getTranslateContent = (model: Model, text: string, targetLanguage: TranslateLanguage): string => {
-    if (isQwenMTModel(model)) {
-      return text // QwenMT models handle raw text directly
-    }
-
-    return store
-      .getState()
-      .settings.translateModelPrompt.replaceAll('{{target_language}}', targetLanguage.value)
-      .replaceAll('{{text}}', text)
-  }
-
-  const content = getTranslateContent(model, text, targetLanguage)
-  const translateAssistant = {
-    ...assistant,
-    model,
-    settings,
-    prompt: '',
-    targetLanguage,
-    content
-  } satisfies TranslateAssistant
-  return translateAssistant
-}
-
 /**
  * Gets the CURRENT SETTINGS of the default assistant.
  *
@@ -180,10 +116,6 @@ export function getDefaultModel() {
 
 export function getQuickModel() {
   return store.getState().llm.quickModel
-}
-
-export function getTranslateModel() {
-  return store.getState().llm.translateModel
 }
 
 export function getAssistantProvider(assistant: Assistant): Provider {

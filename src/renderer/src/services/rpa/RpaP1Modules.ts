@@ -1,6 +1,7 @@
 import * as z from 'zod'
 
-import type { RpaActionModule, RpaModuleResult, RpaRetryPolicy } from './RpaTypes'
+import { RpaObservationService } from './RpaObservationService'
+import type { RpaActionModule, RpaModuleExecutionContext, RpaModuleResult, RpaRetryPolicy } from './RpaTypes'
 
 const defaultRetry: RpaRetryPolicy = {
   maxAttempts: 1,
@@ -79,7 +80,11 @@ export const handlePopupModule: RpaActionModule<{
   }
 }
 
-export const tapByVlmTargetModule: RpaActionModule<{ target: string; instruction?: string }> = {
+export const tapByVlmTargetModule: RpaActionModule<{
+  target: string
+  instruction?: string
+  fallbackToVlm?: boolean
+}> = {
   metadata: metadata(
     'tap_by_vlm_target',
     'Tap by VLM target',
@@ -88,10 +93,35 @@ export const tapByVlmTargetModule: RpaActionModule<{ target: string; instruction
   ),
   paramsSchema: z.object({
     target: z.string().min(1),
-    instruction: z.string().min(1).optional()
+    instruction: z.string().min(1).optional(),
+    fallbackToVlm: z.boolean().default(true)
   }),
   async execute(context, params) {
     const startedAt = now()
+    const candidate = await findDeterministicTextCandidate(context, params.target)
+    if (candidate) {
+      const radius = Math.max(
+        0,
+        Math.min(7, candidate.bounds.physical.width / 2 - 2, candidate.bounds.physical.height / 2 - 2)
+      )
+      const tap = await context.runtime.tap(
+        context.deviceId,
+        candidate.bounds.physical.centerX,
+        candidate.bounds.physical.centerY,
+        { randomRadiusPx: radius, safeInsetPx: 2 }
+      )
+      return moduleResult(startedAt, tap, `Deterministic text target tapped: ${candidate.text}`)
+    }
+    if (params.fallbackToVlm === false) {
+      return {
+        success: false,
+        status: 'failed',
+        message: `Deterministic text target not found: ${params.target}`,
+        data: { target: params.target, fallbackToVlm: false },
+        startedAt,
+        finishedAt: now()
+      }
+    }
     const instruction = params.instruction ?? `Find and tap this visual target: ${params.target}`
     const result = await context.runtime.visionInstruction(
       context.deviceId,
@@ -104,11 +134,60 @@ export const tapByVlmTargetModule: RpaActionModule<{ target: string; instruction
   }
 }
 
+function extractTargetAliases(target: string): string[] {
+  const quoted = [...target.matchAll(/[“”"']([^“”"']+)[“”"']/g)].map((match) => match[1])
+  const delimited = target
+    .split(/(?:\s*(?:或|或者|、|\/|\||；|;)\s*)/u)
+    .map((value) => value.replace(/^[“”"']+|[“”"']+$/g, '').trim())
+    .filter((value) => value.length > 1 && value.length <= 40)
+  return [...new Set([...quoted, ...delimited, target].map(normalizeTargetText).filter(Boolean))]
+}
+
+function compareTextCandidates(
+  left: { text: string; confidence: number },
+  right: { text: string; confidence: number },
+  aliases: string[]
+): number {
+  const score = (candidate: { text: string; confidence: number }) => {
+    const text = normalizeTargetText(candidate.text)
+    const exactAlias = aliases.find((alias) => text === alias)
+    const containedAlias = aliases
+      .filter((alias) => text.includes(alias))
+      .sort((leftAlias, rightAlias) => rightAlias.length - leftAlias.length)[0]
+    return (
+      (exactAlias ? 2_000 + exactAlias.length : containedAlias ? 1_000 + containedAlias.length : 0) +
+      candidate.confidence
+    )
+  }
+  return score(right) - score(left)
+}
+
+function normalizeTargetText(value: string): string {
+  return value.trim().toLocaleLowerCase()
+}
+
+async function findDeterministicTextCandidate(context: RpaModuleExecutionContext, target: string) {
+  if (typeof context.runtime.getUiTree !== 'function') return undefined
+  const targetAliases = extractTargetAliases(target)
+  const observation = await new RpaObservationService(context.runtime).capture(context.deviceId, {
+    includeScreenshot: false,
+    includeForegroundApp: false,
+    includeScreenSize: true,
+    includeUiTree: true,
+    includeOcr: false,
+    targetTexts: targetAliases
+  })
+  return observation.textCandidates
+    ?.filter((item) => !item.approximate)
+    .sort((left, right) => compareTextCandidates(left, right, targetAliases))[0]
+}
+
 export const swipeUntilVlmTargetModule: RpaActionModule<{
   target: string
   direction?: 'up' | 'down' | 'left' | 'right'
   maxAttempts?: number
   maxSwipes?: number
+  fallbackToVlm?: boolean
 }> = {
   metadata: metadata(
     'swipe_until_vlm_target',
@@ -120,7 +199,8 @@ export const swipeUntilVlmTargetModule: RpaActionModule<{
     target: z.string().min(1),
     direction: z.enum(['up', 'down', 'left', 'right']).default('up'),
     maxAttempts: z.number().int().min(1).max(10).default(3),
-    maxSwipes: z.number().int().min(1).max(10).optional()
+    maxSwipes: z.number().int().min(1).max(10).optional(),
+    fallbackToVlm: z.boolean().default(true)
   }),
   async execute(context, params) {
     const startedAt = now()
@@ -128,23 +208,34 @@ export const swipeUntilVlmTargetModule: RpaActionModule<{
     const maxAttempts = params.maxSwipes ?? params.maxAttempts ?? 3
 
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-      const located = await context.runtime.locateVisualTarget(
-        context.deviceId,
-        params.target,
-        context.task.visionModel,
-        context.signal
-      )
-      if (!located.success) {
-        return moduleResult(startedAt, located)
-      }
-      if (located.data?.found) {
+      const candidate = await findDeterministicTextCandidate(context, params.target)
+      if (candidate) {
         return {
           success: true,
           status: 'passed',
-          message: `Visual target found: ${params.target}`,
-          data: { ...located.data, attempts: attempt },
+          message: `Deterministic text target found: ${candidate.text}`,
+          data: { target: params.target, matchedText: candidate.text, attempts: attempt },
           startedAt,
           finishedAt: now()
+        }
+      }
+      if (params.fallbackToVlm !== false) {
+        const located = await context.runtime.locateVisualTarget(
+          context.deviceId,
+          params.target,
+          context.task.visionModel,
+          context.signal
+        )
+        if (!located.success) return moduleResult(startedAt, located)
+        if (located.data?.found) {
+          return {
+            success: true,
+            status: 'passed',
+            message: `Visual target found: ${params.target}`,
+            data: { ...located.data, attempts: attempt },
+            startedAt,
+            finishedAt: now()
+          }
         }
       }
       if (attempt >= maxAttempts) break

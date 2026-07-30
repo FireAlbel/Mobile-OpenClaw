@@ -24,8 +24,9 @@ export class RpaDebugExportService {
     const filePath = ensureZipExtension(result.filePath)
     try {
       await this.writeArchive(filePath, payload)
+      const fileSize = (await fsPromises.stat(filePath)).size
       logger.info('RPA debug bundle exported', { filePath, entryCount: payload.entries.length })
-      return { cancelled: false, filePath }
+      return { cancelled: false, filePath, fileSize }
     } catch (error) {
       await fsPromises.rm(filePath, { force: true }).catch(() => undefined)
       logger.error('Failed to export RPA debug bundle', { error, filePath })

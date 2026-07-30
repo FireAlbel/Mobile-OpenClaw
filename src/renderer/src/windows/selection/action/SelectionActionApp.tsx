@@ -17,7 +17,6 @@ import styled from 'styled-components'
 type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 
 import ActionGeneral from './components/ActionGeneral'
-import ActionTranslate from './components/ActionTranslate'
 
 const SelectionActionApp: FC = () => {
   const { language, customCss } = useSettings()
@@ -302,8 +301,7 @@ const SelectionActionApp: FC = () => {
       </TitleBar>
       <MainContainer>
         <Content ref={contentElementRef}>
-          {action.id == 'translate' && <ActionTranslate action={action} scrollToBottom={handleScrollToBottom} />}
-          {action.id != 'translate' && <ActionGeneral action={action} scrollToBottom={handleScrollToBottom} />}
+          <ActionGeneral action={action} scrollToBottom={handleScrollToBottom} />
         </Content>
       </MainContainer>
     </WindowFrame>

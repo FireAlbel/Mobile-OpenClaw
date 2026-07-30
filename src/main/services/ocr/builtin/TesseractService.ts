@@ -78,7 +78,20 @@ export class TesseractService extends OcrBaseService {
     }
     const buffer = await loadOcrImage(file)
     const result = await worker.recognize(buffer)
-    return { text: result.data.text }
+    return {
+      text: result.data.text,
+      blocks:
+        result.data.blocks?.map((block) => ({
+          text: block.text,
+          confidence: block.confidence / 100,
+          bounds: {
+            left: block.bbox.x0,
+            top: block.bbox.y0,
+            right: block.bbox.x1,
+            bottom: block.bbox.y1
+          }
+        })) ?? undefined
+    }
   }
 
   public ocr = async (file: SupportedOcrFile, options?: OcrTesseractConfig): Promise<OcrResult> => {

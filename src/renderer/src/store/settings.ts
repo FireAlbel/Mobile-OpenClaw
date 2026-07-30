@@ -17,7 +17,6 @@
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { createSlice } from '@reduxjs/toolkit'
 import { DEFAULT_STREAM_OPTIONS_INCLUDE_USAGE, isMac } from '@renderer/config/constant'
-import { TRANSLATE_PROMPT } from '@renderer/config/prompts'
 import { DEFAULT_SIDEBAR_ICONS } from '@renderer/config/sidebar'
 import type {
   ApiServerConfig,
@@ -25,11 +24,8 @@ import type {
   CodeStyleVarious,
   LanguageVarious,
   MathEngine,
-  MinAppRegionFilter,
   OpenAIServiceTier,
-  PaintingProvider,
-  S3Config,
-  TranslateLanguageCode
+  S3Config
 } from '@renderer/types'
 import { ThemeMode } from '@renderer/types'
 import type {
@@ -64,7 +60,6 @@ export interface SettingsState {
   assistantsTabSortType: AssistantsSortType
   sendMessageShortcut: SendMessageShortcut
   language: LanguageVarious
-  targetLanguage: TranslateLanguageCode
   proxyMode: 'system' | 'custom' | 'none'
   proxyUrl?: string
   proxyBypassRules?: string
@@ -140,9 +135,6 @@ export interface SettingsState {
   webdavMaxBackups: number
   webdavSkipBackupFile: boolean
   webdavDisableStream: boolean
-  translateModelPrompt: string
-  autoTranslateWithSpace: boolean
-  showTranslateConfirm: boolean
   enableTopicNaming: boolean
   customCss: string
   topicNamingPrompt: string
@@ -188,12 +180,6 @@ export interface SettingsState {
   siyuanRootPath: string | null
   // 订阅的助手地址
   agentssubscribeUrl: string | null
-  // MinApps
-  maxKeepAliveMinapps: number
-  showOpenedMinappsInSidebar: boolean
-  minappsOpenLinkExternal: boolean
-  /** Mini app region filter: 'auto' (detect from IP), 'CN', or 'Global' */
-  minAppRegion: MinAppRegionFilter
   // 隐私设置
   enableDataCollection: boolean
   enableSpellCheck: boolean
@@ -214,7 +200,6 @@ export interface SettingsState {
     siyuan: boolean
     docx: boolean
     plain_text: boolean
-    notes: boolean
   }
   // OpenAI
   openAI: {
@@ -239,7 +224,6 @@ export interface SettingsState {
   localBackupSyncInterval: number
   localBackupMaxBackups: number
   localBackupSkipBackupFile: boolean
-  defaultPaintingProvider: PaintingProvider
   s3: S3Config
   // Developer mode
   enableDeveloperMode: boolean
@@ -258,7 +242,6 @@ export const initialState: SettingsState = {
   assistantsTabSortType: 'list',
   sendMessageShortcut: 'Enter',
   language: navigator.language as LanguageVarious,
-  targetLanguage: 'en-us',
   proxyMode: 'system',
   proxyUrl: undefined,
   proxyBypassRules: undefined,
@@ -335,9 +318,6 @@ export const initialState: SettingsState = {
   webdavMaxBackups: 0,
   webdavSkipBackupFile: false,
   webdavDisableStream: false,
-  translateModelPrompt: TRANSLATE_PROMPT,
-  autoTranslateWithSpace: false,
-  showTranslateConfirm: true,
   enableTopicNaming: true,
   customCss: '',
   topicNamingPrompt: '',
@@ -375,11 +355,6 @@ export const initialState: SettingsState = {
   siyuanBoxId: null,
   siyuanRootPath: null,
   agentssubscribeUrl: '',
-  // MinApps
-  maxKeepAliveMinapps: 3,
-  showOpenedMinappsInSidebar: true,
-  minappsOpenLinkExternal: false,
-  minAppRegion: 'auto',
   enableDataCollection: false,
   enableSpellCheck: false,
   spellCheckLanguages: [],
@@ -401,8 +376,7 @@ export const initialState: SettingsState = {
     obsidian: true,
     siyuan: true,
     docx: true,
-    plain_text: true,
-    notes: true
+    plain_text: true
   },
   // OpenAI
   openAI: {
@@ -424,7 +398,6 @@ export const initialState: SettingsState = {
   localBackupSyncInterval: 0,
   localBackupMaxBackups: 0,
   localBackupSkipBackupFile: false,
-  defaultPaintingProvider: 'cherryin',
   s3: {
     endpoint: '',
     region: '',
@@ -441,7 +414,7 @@ export const initialState: SettingsState = {
   // Developer mode
   enableDeveloperMode: false,
   // UI
-  navbarPosition: 'top',
+  navbarPosition: 'left',
   // API Server
   apiServer: {
     enabled: false,
@@ -476,9 +449,6 @@ const settingsSlice = createSlice({
     },
     setLanguage: (state, action: PayloadAction<LanguageVarious>) => {
       state.language = action.payload
-    },
-    setTargetLanguage: (state, action: PayloadAction<TranslateLanguageCode>) => {
-      state.targetLanguage = action.payload
     },
     setProxyMode: (state, action: PayloadAction<'system' | 'custom' | 'none'>) => {
       state.proxyMode = action.payload
@@ -674,15 +644,6 @@ const settingsSlice = createSlice({
     setMessageStyle: (state, action: PayloadAction<'plain' | 'bubble'>) => {
       state.messageStyle = action.payload
     },
-    setTranslateModelPrompt: (state, action: PayloadAction<string>) => {
-      state.translateModelPrompt = action.payload
-    },
-    setAutoTranslateWithSpace: (state, action: PayloadAction<boolean>) => {
-      state.autoTranslateWithSpace = action.payload
-    },
-    setShowTranslateConfirm: (state, action: PayloadAction<boolean>) => {
-      state.showTranslateConfirm = action.payload
-    },
     setEnableTopicNaming: (state, action: PayloadAction<boolean>) => {
       state.enableTopicNaming = action.payload
     },
@@ -793,18 +754,6 @@ const settingsSlice = createSlice({
     setAgentssubscribeUrl: (state, action: PayloadAction<string>) => {
       state.agentssubscribeUrl = action.payload
     },
-    setMaxKeepAliveMinapps: (state, action: PayloadAction<number>) => {
-      state.maxKeepAliveMinapps = action.payload
-    },
-    setShowOpenedMinappsInSidebar: (state, action: PayloadAction<boolean>) => {
-      state.showOpenedMinappsInSidebar = action.payload
-    },
-    setMinappsOpenLinkExternal: (state, action: PayloadAction<boolean>) => {
-      state.minappsOpenLinkExternal = action.payload
-    },
-    setMinAppRegion: (state, action: PayloadAction<MinAppRegionFilter>) => {
-      state.minAppRegion = action.payload
-    },
     setEnableDataCollection: (state, action: PayloadAction<boolean>) => {
       state.enableDataCollection = action.payload
     },
@@ -863,9 +812,6 @@ const settingsSlice = createSlice({
     setLocalBackupSkipBackupFile: (state, action: PayloadAction<boolean>) => {
       state.localBackupSkipBackupFile = action.payload
     },
-    setDefaultPaintingProvider: (state, action: PayloadAction<PaintingProvider>) => {
-      state.defaultPaintingProvider = action.payload
-    },
     setS3: (state, action: PayloadAction<S3Config>) => {
       state.s3 = action.payload
     },
@@ -913,7 +859,6 @@ export const {
   setAssistantsTabSortType,
   setSendMessageShortcut,
   setLanguage,
-  setTargetLanguage,
   setProxyMode,
   setProxyUrl,
   setProxyBypassRules,
@@ -964,9 +909,6 @@ export const {
   setGridColumns,
   setGridPopoverTrigger,
   setMessageStyle,
-  setTranslateModelPrompt,
-  setAutoTranslateWithSpace,
-  setShowTranslateConfirm,
   setEnableTopicNaming,
   setPasteLongTextThreshold,
   setCustomCss,
@@ -1001,10 +943,6 @@ export const {
   setSiyuanBoxId,
   setAgentssubscribeUrl,
   setSiyuanRootPath,
-  setMaxKeepAliveMinapps,
-  setShowOpenedMinappsInSidebar,
-  setMinappsOpenLinkExternal,
-  setMinAppRegion,
   setEnableDataCollection,
   setEnableSpellCheck,
   setSpellCheckLanguages,
@@ -1024,7 +962,6 @@ export const {
   setLocalBackupSyncInterval,
   setLocalBackupMaxBackups,
   setLocalBackupSkipBackupFile,
-  setDefaultPaintingProvider,
   setS3,
   setS3Partial,
   setEnableDeveloperMode,

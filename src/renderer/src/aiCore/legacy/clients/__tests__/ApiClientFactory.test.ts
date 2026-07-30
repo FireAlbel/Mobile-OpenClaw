@@ -57,6 +57,15 @@ vi.mock('../ppio/PPIOAPIClient', () => ({
 vi.mock('../aws/AwsBedrockAPIClient', () => ({
   AwsBedrockAPIClient: vi.fn().mockImplementation(() => ({}))
 }))
+vi.mock('../cherryai/CherryAiAPIClient', () => ({
+  CherryAiAPIClient: vi.fn().mockImplementation(() => ({}))
+}))
+vi.mock('../ovms/OVMSClient', () => ({
+  OVMSClient: vi.fn().mockImplementation(() => ({}))
+}))
+vi.mock('../zhipu/ZhipuAPIClient', () => ({
+  ZhipuAPIClient: vi.fn().mockImplementation(() => ({}))
+}))
 
 vi.mock('@renderer/services/AssistantService.ts', () => ({
   getDefaultAssistant: () => {

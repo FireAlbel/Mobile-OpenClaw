@@ -4,21 +4,19 @@ import Scrollbar from '@renderer/components/Scrollbar'
 import Selector from '@renderer/components/Selector'
 import { HelpTooltip } from '@renderer/components/TooltipIcons'
 import { isOpenAIModel, isSupportVerbosityModel } from '@renderer/config/models'
-import { UNKNOWN } from '@renderer/config/translate'
 import { useCodeStyle } from '@renderer/context/CodeStyleProvider'
 import { useTheme } from '@renderer/context/ThemeProvider'
 import { useAssistant } from '@renderer/hooks/useAssistant'
 import { useProvider } from '@renderer/hooks/useProvider'
 import { useRuntime } from '@renderer/hooks/useRuntime'
 import { useSettings } from '@renderer/hooks/useSettings'
-import useTranslate from '@renderer/hooks/useTranslate'
 import { SettingDivider, SettingRow, SettingRowTitle } from '@renderer/pages/settings'
 import { CollapsibleSettingGroup } from '@renderer/pages/settings/SettingGroup'
 import { getDefaultModel } from '@renderer/services/AssistantService'
+import { isConsolidatedAssistantSettingsEnabled } from '@renderer/services/rpa/RpaFeatureFlags'
 import { useAppDispatch } from '@renderer/store'
 import type { SendMessageShortcut } from '@renderer/store/settings'
 import {
-  setAutoTranslateWithSpace,
   setCodeCollapsible,
   setCodeEditor,
   setCodeExecution,
@@ -43,7 +41,6 @@ import {
   setShowInputEstimatedTokens,
   setShowMessageOutline,
   setShowPrompt,
-  setShowTranslateConfirm,
   setThoughtAutoCollapse
 } from '@renderer/store/settings'
 import type { Assistant, CodeStyleVarious, MathEngine } from '@renderer/types'
@@ -61,6 +58,7 @@ import styled from 'styled-components'
 
 import GroqSettingsGroup from './GroqSettingsGroup'
 import OpenAISettingsGroup from './OpenAISettingsGroup'
+import RpaAutomationSettings from './RpaAutomationSettings'
 
 const logger = loggerService.withContext('AssistantSettingsTab')
 
@@ -73,12 +71,11 @@ const AssistantSettingsTab = (props: Props) => {
   const { assistant } = useAssistant(props.assistant.id)
   const { provider } = useProvider(assistant.model.provider)
 
-  const { messageStyle, fontSize, language } = useSettings()
+  const { messageStyle, fontSize } = useSettings()
   const { theme } = useTheme()
   const { themeNames } = useCodeStyle()
 
   const [fontSizeValue, setFontSizeValue] = useState(fontSize)
-  const { translateLanguages } = useTranslate()
 
   const { t } = useTranslation()
 
@@ -90,8 +87,6 @@ const AssistantSettingsTab = (props: Props) => {
     showInputEstimatedTokens,
     sendMessageShortcut,
     setSendMessageShortcut,
-    targetLanguage,
-    setTargetLanguage,
     pasteLongTextAsFile,
     renderInputMessageAsMarkdown,
     codeShowLineNumbers,
@@ -104,13 +99,11 @@ const AssistantSettingsTab = (props: Props) => {
     codeFancyBlock,
     mathEngine,
     mathEnableSingleDollar,
-    autoTranslateWithSpace,
     pasteLongTextThreshold,
     multiModelMessageStyle,
     thoughtAutoCollapse,
     messageNavigation,
     enableQuickPanelTriggers,
-    showTranslateConfirm,
     showMessageOutline,
     confirmDeleteMessage,
     confirmRegenerateMessage
@@ -151,6 +144,7 @@ const AssistantSettingsTab = (props: Props) => {
     (isSupportVerbosityModel(model) && isSupportVerbosityProvider(provider))
 
   const isTopicSettings = chat.activeTopicOrSession === 'topic'
+  const showConsolidatedRpaSettings = isConsolidatedAssistantSettingsEnabled()
 
   if (!isTopicSettings) {
     logger.warn('AssistantSettingsTab is rendered when not topic activated.')
@@ -159,6 +153,7 @@ const AssistantSettingsTab = (props: Props) => {
 
   return (
     <Container className="settings-tab">
+      {showConsolidatedRpaSettings && <RpaAutomationSettings assistant={assistant} />}
       {showOpenAiSettings && (
         <OpenAISettingsGroup
           model={model}
@@ -489,28 +484,6 @@ const AssistantSettingsTab = (props: Props) => {
             />
           </SettingRow>
           <SettingDivider />
-          {!language.startsWith('en') && (
-            <>
-              <SettingRow>
-                <SettingRowTitleSmall>{t('settings.input.auto_translate_with_space')}</SettingRowTitleSmall>
-                <Switch
-                  size="small"
-                  checked={autoTranslateWithSpace}
-                  onChange={(checked) => dispatch(setAutoTranslateWithSpace(checked))}
-                />
-              </SettingRow>
-              <SettingDivider />
-            </>
-          )}
-          <SettingRow>
-            <SettingRowTitleSmall>{t('settings.input.show_translate_confirm')}</SettingRowTitleSmall>
-            <Switch
-              size="small"
-              checked={showTranslateConfirm}
-              onChange={(checked) => dispatch(setShowTranslateConfirm(checked))}
-            />
-          </SettingRow>
-          <SettingDivider />
           <SettingRow>
             <SettingRowTitleSmall>{t('settings.messages.input.enable_quick_triggers')}</SettingRowTitleSmall>
             <Switch
@@ -538,17 +511,6 @@ const AssistantSettingsTab = (props: Props) => {
             />
           </SettingRow>
           <SettingDivider />
-          <SettingRow>
-            <SettingRowTitleSmall>{t('settings.input.target_language.label')}</SettingRowTitleSmall>
-            <Selector
-              value={targetLanguage}
-              onChange={(value) => setTargetLanguage(value)}
-              placeholder={UNKNOWN.emoji + ' ' + UNKNOWN.label()}
-              options={translateLanguages.map((item) => {
-                return { value: item.langCode, label: item.emoji + ' ' + item.label() }
-              })}
-            />
-          </SettingRow>
           <SettingDivider />
           <SettingRow>
             <SettingRowTitleSmall>{t('settings.messages.input.send_shortcuts')}</SettingRowTitleSmall>

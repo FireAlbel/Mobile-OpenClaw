@@ -33,7 +33,6 @@ import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
 import ChatWindow from '../chat/ChatWindow'
-import TranslateWindow from '../translate/TranslateWindow'
 import ClipboardPreview from './components/ClipboardPreview'
 import type { FeatureMenusRef } from './components/FeatureMenus'
 import FeatureMenus from './components/FeatureMenus'
@@ -47,7 +46,7 @@ const HomeWindow: FC<{ draggable?: boolean }> = ({ draggable = true }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
 
-  const [route, setRoute] = useState<'home' | 'chat' | 'translate' | 'summary' | 'explanation'>('home')
+  const [route, setRoute] = useState<'home' | 'chat' | 'summary' | 'explanation'>('home')
   const [isFirstMessage, setIsFirstMessage] = useState(true)
 
   const [userInputText, setUserInputText] = useState('')
@@ -566,15 +565,6 @@ const HomeWindow: FC<{ draggable?: boolean }> = ({ draggable = true }) => {
 
           <Divider style={{ margin: '10px 0' }} />
           <Footer key="footer" {...baseFooterProps} onCopy={handleCopy} />
-        </Container>
-      )
-
-    case 'translate':
-      return (
-        <Container style={{ backgroundColor }} $draggable={draggable}>
-          <TranslateWindow text={referenceText} />
-          <Divider style={{ margin: '10px 0' }} />
-          <Footer key="footer" {...baseFooterProps} />
         </Container>
       )
 

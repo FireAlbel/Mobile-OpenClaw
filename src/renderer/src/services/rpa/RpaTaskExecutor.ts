@@ -1,11 +1,20 @@
 import { loggerService } from '@logger'
 
+import { RpaAppStateRecognizer } from './RpaAppStateRecognizer'
+import { RpaDeterministicRecoveryService } from './RpaDeterministicRecoveryService'
+import {
+  type RpaKnowledgeRetrievalResult,
+  type RpaKnowledgeRetrievalService,
+  rpaKnowledgeRetrievalService
+} from './RpaKnowledgeRetrievalService'
+import { readEmbeddedRpaModelContext } from './RpaModelContextBuilder'
 import { type RpaModuleRegistry } from './RpaModuleRegistry'
 import { RpaObservationService } from './RpaObservationService'
 import { type RpaReplanResult, RpaReplanService } from './RpaReplanService'
 import { RpaSafetyPolicyEngine } from './RpaSafetyPolicyEngine'
 import { RpaTaskValidator } from './RpaTaskValidator'
 import type {
+  RpaAppStateProfile,
   RpaCorrectionAction,
   RpaCorrectionDecision,
   RpaDeviceRuntime,
@@ -29,6 +38,7 @@ const logger = loggerService.withContext('RpaTaskExecutor')
 interface RpaStepExecutionResult {
   result: RpaModuleResult
   verification: RpaVerificationResult
+  actionSucceeded?: boolean
 }
 
 type RpaEventDetails = Partial<
@@ -40,11 +50,17 @@ export interface RpaTaskExecutorOptions {
   runtime: RpaDeviceRuntime
   verificationEngine?: RpaVerificationEngine
   observationService?: RpaObservationService
+  appStateRecognizer?: RpaAppStateRecognizer
+  deterministicRecoveryService?: RpaDeterministicRecoveryService
   replanService?: RpaReplanService
   visualCorrectionService?: RpaVisualCorrectionService
+  knowledgeRetrievalService?: RpaKnowledgeRetrievalService
   maxRecoveryAttempts?: number
   recoveryTimeoutMs?: number
+  verificationTimeoutMs?: number
+  minimumVlmRecoveryBudgetMs?: number
   noProgressLimit?: number
+  maxDeterministicRecoveryDepth?: number
   safetyPolicyEngine?: RpaSafetyPolicyEngine
   safetyApproval?: RpaSafetyApproval
   onEvent?: (event: RpaRunStepEvent) => void
@@ -54,11 +70,17 @@ export class RpaTaskExecutor {
   private readonly validator: RpaTaskValidator
   private readonly verificationEngine: RpaVerificationEngine
   private readonly observationService: RpaObservationService
+  private readonly appStateRecognizer: RpaAppStateRecognizer
+  private readonly deterministicRecoveryService: RpaDeterministicRecoveryService
   private readonly replanService: RpaReplanService
   private readonly visualCorrectionService: RpaVisualCorrectionService
+  private readonly knowledgeRetrievalService: RpaKnowledgeRetrievalService
   private readonly maxRecoveryAttempts: number
   private readonly recoveryTimeoutMs: number
+  private readonly verificationTimeoutMs: number
+  private readonly minimumVlmRecoveryBudgetMs: number
   private readonly noProgressLimit: number
+  private readonly maxDeterministicRecoveryDepth: number
   private readonly safetyPolicyEngine: RpaSafetyPolicyEngine
   private externalSignal?: AbortSignal
 
@@ -66,11 +88,21 @@ export class RpaTaskExecutor {
     this.validator = new RpaTaskValidator(options.registry)
     this.verificationEngine = options.verificationEngine ?? new RpaVerificationEngine({ runtime: options.runtime })
     this.observationService = options.observationService ?? new RpaObservationService(options.runtime)
+    this.appStateRecognizer = options.appStateRecognizer ?? new RpaAppStateRecognizer()
+    this.deterministicRecoveryService =
+      options.deterministicRecoveryService ?? new RpaDeterministicRecoveryService(options.registry)
     this.replanService = options.replanService ?? new RpaReplanService({ registry: options.registry })
     this.visualCorrectionService = options.visualCorrectionService ?? new RpaVisualCorrectionService()
+    this.knowledgeRetrievalService = options.knowledgeRetrievalService ?? rpaKnowledgeRetrievalService
     this.maxRecoveryAttempts = options.maxRecoveryAttempts ?? 3
     this.recoveryTimeoutMs = options.recoveryTimeoutMs ?? 120_000
+    this.verificationTimeoutMs = options.verificationTimeoutMs ?? 90_000
+    this.minimumVlmRecoveryBudgetMs = Math.min(
+      options.minimumVlmRecoveryBudgetMs ?? 60_000,
+      Math.floor(this.recoveryTimeoutMs / 2)
+    )
     this.noProgressLimit = options.noProgressLimit ?? 2
+    this.maxDeterministicRecoveryDepth = options.maxDeterministicRecoveryDepth ?? 3
     this.safetyPolicyEngine = options.safetyPolicyEngine ?? new RpaSafetyPolicyEngine()
   }
 
@@ -312,11 +344,11 @@ export class RpaTaskExecutor {
         step,
         result,
         deviceId,
-        Math.max(1, Math.min(timeoutMs, deadline - Date.now()))
+        Math.max(1, Math.min(this.resolveVerificationTimeoutMs(step), deadline - Date.now()))
       )
       if (result.success && verification.status === 'passed') {
         emit(step, 'passed', attempt, result.message, { result, verification }, { ...eventDetails, verification })
-        return { result, verification }
+        return { result, verification, actionSucceeded: true }
       }
 
       const failureStatus =
@@ -338,11 +370,11 @@ export class RpaTaskExecutor {
           result: {
             ...result,
             success: false,
-            status:
-              result.status === 'needs_human' || verification.status === 'uncertain' ? 'needs_human' : failureStatus,
+            status: result.status === 'needs_human' ? 'needs_human' : failureStatus,
             message: verification.message
           },
-          verification
+          verification,
+          actionSucceeded: result.success
         }
       }
 
@@ -386,17 +418,90 @@ export class RpaTaskExecutor {
   ): Promise<RpaStepExecutionResult> {
     let failedExecution = initialExecution
     this.throwIfAborted()
-    let latestObservation = await this.observationService.capture(deviceId)
+    let latestObservation = await this.captureRecognizedObservation(task, deviceId, originalStep, events)
     this.throwIfAborted()
     const recoveryDeadline = Math.min(taskDeadline, Date.now() + this.recoveryTimeoutMs)
+    const preVlmDeadline = recoveryDeadline - this.minimumVlmRecoveryBudgetMs
     const previousDecisions: RpaCorrectionDecision[] = []
     let previousDecisionSignature = ''
     let noProgressCount = 0
+    let recoveryKnowledge: RpaKnowledgeRetrievalResult = { summaries: [], conflicts: [], warnings: [] }
+
+    try {
+      recoveryKnowledge = await this.knowledgeRetrievalService.retrieve({
+        knowledgeBaseIds: readTaskKnowledgeIds(task),
+        appPackage: readForegroundPackage(latestObservation.foregroundApp),
+        taskGoal: task.goal,
+        errorClass: initialExecution.result.status,
+        categories: ['failure_case', 'recovery_guidance', 'page_state_explanation', 'locator_guidance']
+      })
+    } catch (error) {
+      logger.warn('Failed to retrieve RPA recovery knowledge', {
+        error,
+        taskId: task.id,
+        deviceId,
+        stepId: originalStep.id
+      })
+    }
 
     emit(originalStep, 'failed', 1, `Original step failed: ${initialExecution.result.message}`, initialExecution, {
       phase: 'original_failure',
       parentStepId: originalStep.id
     })
+    emit(
+      originalStep,
+      'running',
+      1,
+      `Recognized app state: ${latestObservation.recognizedState?.stateId ?? 'UNKNOWN'}`,
+      { recognizedState: latestObservation.recognizedState, observation: latestObservation },
+      { phase: 'state_recognition', parentStepId: originalStep.id }
+    )
+
+    const deterministicRecovery = initialExecution.actionSucceeded
+      ? {
+          status: 'continue' as const,
+          observation: latestObservation,
+          depth: 0,
+          message: 'Action completed; defer failed verification to VLM before changing device state'
+        }
+      : preVlmDeadline <= Date.now()
+        ? {
+            status: 'continue' as const,
+            observation: latestObservation,
+            depth: 0,
+            message: 'Deterministic recovery skipped to preserve the VLM recovery budget'
+          }
+        : await this.attemptDeterministicRecovery(
+            task,
+            deviceId,
+            originalStep,
+            latestObservation,
+            events,
+            emit,
+            preVlmDeadline
+          )
+    latestObservation = deterministicRecovery.observation
+    if (deterministicRecovery.status === 'human_required') {
+      return this.finishRecoveryAsHuman(
+        originalStep,
+        deterministicRecovery.depth,
+        deterministicRecovery.message,
+        { observation: latestObservation, deterministicRecovery },
+        emit,
+        'deterministic_recovery_terminal'
+      )
+    }
+    if (deterministicRecovery.status === 'recovered') {
+      if (preVlmDeadline > Date.now()) {
+        const retriedOriginal = await this.runStep(task, deviceId, originalStep, emit, preVlmDeadline, {
+          phase: 'original_step',
+          recoveryRound: deterministicRecovery.depth,
+          parentStepId: originalStep.id
+        })
+        if (retriedOriginal.result.success) return retriedOriginal
+        failedExecution = retriedOriginal
+      }
+    }
 
     for (let correctionRound = 1; correctionRound <= this.maxRecoveryAttempts; correctionRound += 1) {
       this.throwIfAborted()
@@ -444,6 +549,8 @@ export class RpaTaskExecutor {
           observation: latestObservation,
           correctionRound,
           previousDecisions,
+          knowledgeContext: recoveryKnowledge,
+          modelContext: readEmbeddedRpaModelContext(task.metadata.rpaModelContext),
           signal: this.operationSignal(Math.max(1, remainingMs))
         })
       } catch (error) {
@@ -474,7 +581,18 @@ export class RpaTaskExecutor {
         decision.decision === 'human_required' ? 'needs_human' : 'running',
         correctionRound,
         `Correction decision: ${decision.decision} - ${decision.reason}`,
-        { decision, rawResponse: decisionResult.rawResponse, observation: latestObservation },
+        {
+          decision,
+          rawResponse: decisionResult.rawResponse,
+          originalRawResponse: decisionResult.originalRawResponse,
+          repaired: decisionResult.repaired,
+          observation: latestObservation,
+          knowledgeReferences: recoveryKnowledge.summaries.map((summary) => ({
+            id: summary.id,
+            knowledgeBaseId: summary.knowledgeBaseId,
+            category: summary.category
+          }))
+        },
         {
           phase: 'correction_decision',
           recoveryRound: correctionRound,
@@ -600,8 +718,20 @@ export class RpaTaskExecutor {
         }
       }
 
-      const nextObservation = await this.observationService.capture(deviceId)
+      const nextObservation = await this.captureRecognizedObservation(task, deviceId, originalStep, events)
       this.throwIfAborted()
+      emit(
+        originalStep,
+        'running',
+        correctionRound,
+        `Recognized app state after correction: ${nextObservation.recognizedState?.stateId ?? 'UNKNOWN'}`,
+        { recognizedState: nextObservation.recognizedState, observation: nextObservation },
+        {
+          phase: 'state_recognition',
+          recoveryRound: correctionRound,
+          parentStepId: originalStep.id
+        }
+      )
       const decisionSignature = correctionDecisionSignature(decision)
       const madeNoProgress =
         observationFingerprint(nextObservation) === beforeFingerprint ||
@@ -628,6 +758,183 @@ export class RpaTaskExecutor {
       { observation: latestObservation, previousDecisions },
       emit
     )
+  }
+
+  private async attemptDeterministicRecovery(
+    task: RpaTask,
+    deviceId: string,
+    originalStep: RpaStep,
+    initialObservation: Awaited<ReturnType<RpaObservationService['capture']>>,
+    events: RpaRunStepEvent[],
+    emit: (
+      step: RpaStep,
+      status: RpaStepStatus,
+      attempt: number,
+      message: string,
+      data?: unknown,
+      details?: RpaEventDetails
+    ) => void,
+    recoveryDeadline: number
+  ): Promise<
+    | {
+        status: 'recovered' | 'continue'
+        observation: Awaited<ReturnType<RpaObservationService['capture']>>
+        depth: number
+        message: string
+      }
+    | {
+        status: 'human_required'
+        observation: Awaited<ReturnType<RpaObservationService['capture']>>
+        depth: number
+        message: string
+      }
+  > {
+    let observation = initialObservation
+    const attemptedPolicyIds: string[] = []
+    let noProgressCount = 0
+
+    for (let depth = 0; depth < this.maxDeterministicRecoveryDepth; depth += 1) {
+      this.throwIfAborted()
+      if (Date.now() >= recoveryDeadline) {
+        return { status: 'continue', observation, depth: depth + 1, message: 'Deterministic recovery timed out' }
+      }
+      const plan = await this.deterministicRecoveryService.plan({
+        task,
+        observation,
+        expectedStateId: readExpectedStateId(task, originalStep),
+        depth,
+        attemptedPolicyIds
+      })
+      if (plan.status === 'human_required') {
+        return { status: 'human_required', observation, depth: depth + 1, message: plan.reason }
+      }
+      if (plan.status !== 'steps') {
+        return {
+          status: 'continue',
+          observation,
+          depth,
+          message: plan.reason
+        }
+      }
+
+      attemptedPolicyIds.push(plan.policyId)
+      emit(
+        originalStep,
+        'running',
+        depth + 1,
+        `Deterministic recovery: ${plan.reason}`,
+        { plan, observation },
+        {
+          phase: 'deterministic_recovery_plan',
+          recoveryRound: depth + 1,
+          parentStepId: originalStep.id
+        }
+      )
+      const beforeFingerprint = observationFingerprint(observation)
+      let failedExecution: RpaStepExecutionResult | undefined
+      for (const step of plan.steps) {
+        const execution = await this.runStep(task, deviceId, step, emit, recoveryDeadline, {
+          phase: 'deterministic_recovery_action',
+          recoveryRound: depth + 1,
+          parentStepId: originalStep.id,
+          temporary: true
+        })
+        if (!execution.result.success) {
+          failedExecution = execution
+          break
+        }
+      }
+      if (failedExecution?.result.status === 'needs_human') {
+        return {
+          status: 'human_required',
+          observation,
+          depth: depth + 1,
+          message: failedExecution.result.message
+        }
+      }
+
+      const nextObservation = await this.captureRecognizedObservation(task, deviceId, originalStep, events)
+      const recovered = !failedExecution && this.deterministicRecoveryService.isRecovered(plan, nextObservation)
+      emit(
+        originalStep,
+        recovered ? 'passed' : 'failed',
+        depth + 1,
+        recovered
+          ? `Deterministic recovery reached ${nextObservation.recognizedState?.stateId ?? 'a known state'}`
+          : `Deterministic recovery did not reach a target state; current state is ${nextObservation.recognizedState?.stateId ?? 'UNKNOWN'}`,
+        { plan, before: observation.recognizedState, after: nextObservation.recognizedState, failedExecution },
+        {
+          phase: 'deterministic_recovery_verification',
+          recoveryRound: depth + 1,
+          parentStepId: originalStep.id
+        }
+      )
+      if (recovered) {
+        return {
+          status: 'recovered',
+          observation: nextObservation,
+          depth: depth + 1,
+          message: `Deterministic recovery completed with policy ${plan.policyId}`
+        }
+      }
+
+      const madeNoProgress = observationFingerprint(nextObservation) === beforeFingerprint
+      noProgressCount = madeNoProgress ? noProgressCount + 1 : 0
+      observation = nextObservation
+      if (noProgressCount >= this.noProgressLimit) {
+        return {
+          status: 'continue',
+          observation,
+          depth: depth + 1,
+          message: `Deterministic recovery yielded to VLM after ${noProgressCount} action group(s) without progress`
+        }
+      }
+    }
+
+    return {
+      status: 'continue',
+      observation,
+      depth: this.maxDeterministicRecoveryDepth,
+      message: `Deterministic recovery depth ${this.maxDeterministicRecoveryDepth} exhausted`
+    }
+  }
+
+  private async captureRecognizedObservation(
+    task: RpaTask,
+    deviceId: string,
+    step: RpaStep,
+    events: RpaRunStepEvent[]
+  ) {
+    const profile = readAppStateProfile(task)
+    const observation = await this.observationService.capture(deviceId, {
+      includeScreenshot: true,
+      includeForegroundApp: true,
+      includeScreenSize: true,
+      includeUiTree: true,
+      includeOcr: true,
+      targetTexts: profile?.states.flatMap((state) => [...(state.requiredTexts ?? []), ...(state.anyTexts ?? [])]),
+      persistEvidence: true,
+      artifactContext: {
+        targetType: 'device_run',
+        targetId: `${task.id}:${deviceId}`,
+        relation: 'state_recognition_observation'
+      }
+    })
+    try {
+      await this.appStateRecognizer.recognize({
+        observation,
+        profile,
+        expectedStateId: readExpectedStateId(task, step),
+        recentEvents: events,
+        persistEvidence: true,
+        artifactContext: { targetType: 'device_run', targetId: `${task.id}:${deviceId}` }
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      observation.warnings.push({ source: 'state_recognition', message })
+      logger.warn('Failed to recognize app state', { error, taskId: task.id, deviceId, stepId: step.id })
+    }
+    return observation
   }
 
   private async executeCorrectionAction(
@@ -761,6 +1068,7 @@ export class RpaTaskExecutor {
           expectation,
           actionResults,
           model: task.visionModel,
+          modelContext: readEmbeddedRpaModelContext(task.metadata.rpaModelContext),
           signal: controller.signal
         }),
         new Promise<RpaVerificationResult>((resolve) => {
@@ -794,10 +1102,11 @@ export class RpaTaskExecutor {
       message: string,
       data?: unknown,
       details?: RpaEventDetails
-    ) => void
+    ) => void,
+    phase: RpaRunStepEvent['phase'] = 'correction_terminal'
   ): RpaStepExecutionResult {
     emit(originalStep, 'needs_human', recoveryRound, message, data, {
-      phase: 'correction_terminal',
+      phase,
       recoveryRound,
       parentStepId: originalStep.id
     })
@@ -976,6 +1285,10 @@ export class RpaTaskExecutor {
     return stepRetry ?? taskRetry ?? moduleRetry
   }
 
+  private resolveVerificationTimeoutMs(step: RpaStep): number {
+    return step.verify?.type === 'vlm_assert' ? (step.verify.timeoutMs ?? this.verificationTimeoutMs) : 30_000
+  }
+
   private shouldRetry(result: RpaModuleResult, verification: RpaVerificationResult, retry: RpaRetryPolicy): boolean {
     if (result.status === 'needs_human') return false
     if (result.status === 'timeout') return retry.retryOn.includes('timeout')
@@ -996,7 +1309,14 @@ export class RpaTaskExecutor {
     let timeoutHandle: ReturnType<typeof setTimeout> | undefined
     try {
       return await Promise.race([
-        this.verificationEngine.verify(step.verify, result, deviceId, task.visionModel, controller.signal),
+        this.verificationEngine.verify(
+          step.verify,
+          result,
+          deviceId,
+          task.visionModel,
+          controller.signal,
+          readEmbeddedRpaModelContext(task.metadata.rpaModelContext)
+        ),
         new Promise<RpaVerificationResult>((resolve) => {
           timeoutHandle = setTimeout(() => {
             controller.abort(new Error(`Verification timed out after ${timeoutMs}ms`))
@@ -1109,6 +1429,96 @@ function isBlockedBySafety(result: RpaModuleResult): boolean {
   if (!data || typeof data !== 'object' || !('safety' in data)) return false
   const safety = data.safety
   return Boolean(safety && typeof safety === 'object' && 'decision' in safety && safety.decision === 'blocked')
+}
+
+function readTaskKnowledgeIds(task: RpaTask): string[] {
+  const assets = task.metadata.rpaAssets
+  if (!assets || typeof assets !== 'object' || Array.isArray(assets)) return []
+  const knowledgeIds = (assets as Record<string, unknown>).knowledgeIds
+  if (!Array.isArray(knowledgeIds)) return []
+  return [...new Set(knowledgeIds.filter((id): id is string => typeof id === 'string' && Boolean(id.trim())))]
+}
+
+function readAppStateProfile(task: RpaTask): RpaAppStateProfile | undefined {
+  const value = task.metadata.appStateProfile
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const source = value as Record<string, unknown>
+  if (!Array.isArray(source.states)) return undefined
+  const states = source.states.flatMap((candidate) => {
+    if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return []
+    const state = candidate as Record<string, unknown>
+    if (typeof state.stateId !== 'string' || !state.stateId.trim()) return []
+    const blockingConditions = new Set([
+      'none',
+      'permission_dialog',
+      'popup',
+      'authentication',
+      'captcha',
+      'payment',
+      'account_security',
+      'unsupported_app_version',
+      'unknown'
+    ])
+    const recoveryScopes = new Set(['none', 'dismiss_overlay', 'navigate', 'restart_app', 'human'])
+    return [
+      {
+        stateId: state.stateId.trim(),
+        label: readOptionalString(state.label),
+        priority: typeof state.priority === 'number' && Number.isFinite(state.priority) ? state.priority : undefined,
+        packageNames: readStringArray(state.packageNames),
+        activityIncludes: readStringArray(state.activityIncludes),
+        requiredTexts: readStringArray(state.requiredTexts),
+        anyTexts: readStringArray(state.anyTexts),
+        excludedTexts: readStringArray(state.excludedTexts),
+        requireScreenshot: typeof state.requireScreenshot === 'boolean' ? state.requireScreenshot : undefined,
+        blockingCondition:
+          typeof state.blockingCondition === 'string' && blockingConditions.has(state.blockingCondition)
+            ? (state.blockingCondition as RpaAppStateProfile['states'][number]['blockingCondition'])
+            : undefined,
+        recoveryScope:
+          typeof state.recoveryScope === 'string' && recoveryScopes.has(state.recoveryScope)
+            ? (state.recoveryScope as RpaAppStateProfile['states'][number]['recoveryScope'])
+            : undefined,
+        suggestedTransitions: readStringArray(state.suggestedTransitions)
+      }
+    ]
+  })
+  if (!states.length) return undefined
+  return {
+    appPackage: readOptionalString(source.appPackage),
+    appVersion: readOptionalString(source.appVersion),
+    states
+  }
+}
+
+function readExpectedStateId(task: RpaTask, step: RpaStep): string | undefined {
+  for (const value of [step.params.expectedStateId, task.metadata.expectedStateId]) {
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return undefined
+}
+
+function readStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const values = [
+    ...new Set(value.filter((item): item is string => typeof item === 'string').map((item) => item.trim()))
+  ].filter(Boolean)
+  return values.length ? values : undefined
+}
+
+function readOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+function readForegroundPackage(value: unknown): string | undefined {
+  if (typeof value === 'string') return value.trim() || undefined
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const source = value as Record<string, unknown>
+  for (const key of ['packageName', 'package', 'appPackage']) {
+    const candidate = source[key]
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim()
+  }
+  return undefined
 }
 
 function correctionDecisionSignature(decision: RpaCorrectionDecision): string {

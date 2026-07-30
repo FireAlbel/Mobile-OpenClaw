@@ -13,7 +13,6 @@ import { useChatContext } from '@renderer/hooks/useChatContext'
 import { useRuntime } from '@renderer/hooks/useRuntime'
 import { useNavbarPosition, useSettings } from '@renderer/hooks/useSettings'
 import { useShortcut } from '@renderer/hooks/useShortcuts'
-import { useShowTopics } from '@renderer/hooks/useStore'
 import { useTimer } from '@renderer/hooks/useTimer'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
 import type { Assistant, Model, Topic } from '@renderer/types'
@@ -21,7 +20,7 @@ import { classNames } from '@renderer/utils'
 import { buildAgentSessionTopicId } from '@renderer/utils/agentSession'
 import { Alert, Flex } from 'antd'
 import { debounce } from 'lodash'
-import { AnimatePresence, motion } from 'motion/react'
+import { motion } from 'motion/react'
 import type { FC } from 'react'
 import React, { useCallback, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
@@ -36,7 +35,6 @@ import AgentSessionMessages from './Messages/AgentSessionMessages'
 import ChatNavigation from './Messages/ChatNavigation'
 import Messages from './Messages/Messages'
 import NarrowLayout from './Messages/NarrowLayout'
-import Tabs from './Tabs'
 
 const logger = loggerService.withContext('Chat')
 
@@ -45,14 +43,14 @@ interface Props {
   activeTopic: Topic
   setActiveTopic: (topic: Topic) => void
   setActiveAssistant: (assistant: Assistant) => void
+  onOpenDeviceManagement: () => void
   rpaAvailable?: boolean
 }
 
 const Chat: FC<Props> = (props) => {
   const { assistant, updateAssistant, updateTopic } = useAssistant(props.assistant.id)
   const { t } = useTranslation()
-  const { topicPosition, messageStyle, messageNavigation } = useSettings()
-  const { showTopics } = useShowTopics()
+  const { messageStyle, messageNavigation } = useSettings()
   const { isMultiSelectMode } = useChatContext(props.activeTopic)
   const { isTopNavbar } = useNavbarPosition()
   const { chat } = useRuntime()
@@ -214,6 +212,7 @@ const Chat: FC<Props> = (props) => {
                 setActiveTopic={props.setActiveTopic}
                 setActiveAssistant={props.setActiveAssistant}
                 position="left"
+                onOpenDeviceManagement={props.onOpenDeviceManagement}
               />
               <div
                 className="flex flex-1 flex-col justify-between"
@@ -269,27 +268,6 @@ const Chat: FC<Props> = (props) => {
             </QuickPanelProvider>
           </Main>
         </motion.div>
-        <AnimatePresence initial={false}>
-          {topicPosition === 'right' && showTopics && (
-            <motion.div
-              key="right-tabs"
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 'var(--assistants-width)', opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
-              style={{
-                overflow: 'hidden'
-              }}>
-              <Tabs
-                activeAssistant={assistant}
-                activeTopic={props.activeTopic}
-                setActiveAssistant={props.setActiveAssistant}
-                setActiveTopic={props.setActiveTopic}
-                position="right"
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
       </HStack>
     </Container>
   )

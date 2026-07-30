@@ -1,7 +1,6 @@
 import { loggerService } from '@logger'
 import { ActionIconButton } from '@renderer/components/Buttons'
 import CustomTag from '@renderer/components/Tags/CustomTag'
-import TranslateButton from '@renderer/components/TranslateButton'
 import { isGenerateImageModel, isVisionModel } from '@renderer/config/models'
 import { useAssistant } from '@renderer/hooks/useAssistant'
 import { useSettings } from '@renderer/hooks/useSettings'
@@ -160,13 +159,6 @@ const MessageBlockEditor: FC<Props> = ({ message, topicId, onSave, onResend, onC
     setEditedBlocks((prev) => prev.map((block) => (block.id === blockId ? { ...block, content } : block)))
   }
 
-  const onTranslated = (translatedText: string) => {
-    const mainTextBlock = editedBlocks.find((b) => b.type === MessageBlockType.MAIN_TEXT)
-    if (mainTextBlock) {
-      handleTextChange(mainTextBlock.id, translatedText)
-    }
-  }
-
   // 处理文件删除
   const handleFileRemove = async (blockId: string) => {
     setEditedBlocks((prev) => prev.filter((block) => block.id !== blockId))
@@ -287,9 +279,7 @@ const MessageBlockEditor: FC<Props> = ({ message, topicId, onSave, onResend, onC
               autoSize={{ minRows: 1, maxRows: 15 }}
               style={{
                 fontSize
-              }}>
-              <TranslateButton onTranslated={onTranslated} />
-            </TextArea>
+              }}></TextArea>
           ))}
         {(editedBlocks.some((block) => block.type === MessageBlockType.FILE || block.type === MessageBlockType.IMAGE) ||
           files.length > 0) && (

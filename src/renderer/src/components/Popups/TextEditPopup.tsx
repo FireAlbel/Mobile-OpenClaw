@@ -1,27 +1,18 @@
-import { LoadingOutlined } from '@ant-design/icons'
-import { loggerService } from '@logger'
-import { useSettings } from '@renderer/hooks/useSettings'
-import useTranslate from '@renderer/hooks/useTranslate'
-import { translateText } from '@renderer/services/TranslateService'
 import type { ModalProps } from 'antd'
 import { Modal } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
 import type { TextAreaProps } from 'antd/lib/input'
 import type { TextAreaRef } from 'antd/lib/input/TextArea'
-import { Languages } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
 import { TopView } from '../TopView'
 
-const logger = loggerService.withContext('TextEditPopup')
-
 interface ShowParams {
   text: string
   textareaProps?: TextAreaProps
   modalProps?: ModalProps
-  showTranslate?: boolean
   children?: (props: { onOk?: () => void; onCancel?: () => void }) => React.ReactNode
 }
 
@@ -29,28 +20,11 @@ interface Props extends ShowParams {
   resolve: (data: any) => void
 }
 
-const PopupContainer: React.FC<Props> = ({
-  text,
-  textareaProps,
-  modalProps,
-  resolve,
-  children,
-  showTranslate = true
-}) => {
+const PopupContainer: React.FC<Props> = ({ text, textareaProps, modalProps, resolve, children }) => {
   const [open, setOpen] = useState(true)
   const { t } = useTranslation()
-  const { getLanguageByLangcode } = useTranslate()
   const [textValue, setTextValue] = useState(text)
-  const [isTranslating, setIsTranslating] = useState(false)
   const textareaRef = useRef<TextAreaRef>(null)
-  const { targetLanguage, showTranslateConfirm } = useSettings()
-  const isMounted = useRef(true)
-
-  useEffect(() => {
-    return () => {
-      isMounted.current = false
-    }
-  }, [])
 
   const onOk = () => {
     setOpen(false)
@@ -90,37 +64,6 @@ const PopupContainer: React.FC<Props> = ({
     }
   }
 
-  const handleTranslate = async () => {
-    if (!textValue.trim() || isTranslating) return
-
-    if (showTranslateConfirm) {
-      const confirmed = await window?.modal?.confirm({
-        title: t('translate.confirm.title'),
-        content: t('translate.confirm.content'),
-        centered: true
-      })
-      if (!confirmed) return
-    }
-
-    if (isMounted.current) {
-      setIsTranslating(true)
-    }
-
-    try {
-      const translatedText = await translateText(textValue, getLanguageByLangcode(targetLanguage))
-      if (isMounted.current) {
-        setTextValue(translatedText)
-      }
-    } catch (error) {
-      logger.error('Translation failed:', error as Error)
-      window.toast.error(t('translate.error.failed'))
-    } finally {
-      if (isMounted.current) {
-        setIsTranslating(false)
-      }
-    }
-  }
-
   TextEditPopup.hide = onCancel
 
   return (
@@ -148,14 +91,6 @@ const PopupContainer: React.FC<Props> = ({
           onInput={resizeTextArea}
           onChange={(e) => setTextValue(e.target.value)}
         />
-        {showTranslate && (
-          <TranslateButton
-            onClick={handleTranslate}
-            aria-label={t('common.translate_text')}
-            disabled={isTranslating || !textValue.trim()}>
-            {isTranslating ? <LoadingOutlined spin /> : <Languages size={16} />}
-          </TranslateButton>
-        )}
       </TextAreaContainer>
       <ChildrenContainer>{children && children({ onOk, onCancel })}</ChildrenContainer>
     </Modal>
@@ -170,31 +105,6 @@ const ChildrenContainer = styled.div`
 
 const TextAreaContainer = styled.div`
   position: relative;
-`
-
-const TranslateButton = styled.button`
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  color: var(--color-icon);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    background-color: var(--color-background-mute);
-    color: var(--color-text-1);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 `
 
 export default class TextEditPopup {

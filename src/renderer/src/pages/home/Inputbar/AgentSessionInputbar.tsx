@@ -120,6 +120,8 @@ const AgentSessionInputbar: FC<Props> = ({ agentId, sessionId }) => {
         onTextChange: (updater) => actionsRef.current.onTextChange(updater),
         // Agent Session specific actions
         addNewTopic: () => {},
+        duplicateRpaTask: () => {},
+        endRpaTask: () => {},
         clearTopic: () => {},
         onNewContext: () => {},
         toggleExpanded: () => actionsRef.current.toggleExpanded()

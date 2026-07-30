@@ -2,8 +2,8 @@
 import CustomTag from '@renderer/components/Tags/CustomTag'
 import { InfoTooltip } from '@renderer/components/TooltipIcons'
 import { TESSERACT_LANG_MAP } from '@renderer/config/ocr'
+import useLanguages from '@renderer/hooks/useLanguages'
 import { useOcrProvider } from '@renderer/hooks/useOcrProvider'
-import useTranslate from '@renderer/hooks/useTranslate'
 import type { TesseractLangCode } from '@renderer/types'
 import { BuiltinOcrProviderIds, isOcrTesseractProvider } from '@renderer/types'
 import { Flex, Select } from 'antd'
@@ -23,7 +23,7 @@ export const OcrTesseractSettings = () => {
   }
 
   const [langs, setLangs] = useState<Partial<Record<TesseractLangCode, boolean>>>(provider.config?.langs ?? {})
-  const { translateLanguages } = useTranslate()
+  const { languages: translateLanguages } = useLanguages()
 
   const options = useMemo(
     () =>

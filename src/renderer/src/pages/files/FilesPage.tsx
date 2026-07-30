@@ -4,10 +4,10 @@ import { Navbar, NavbarCenter } from '@renderer/components/app/Navbar'
 import { DeleteIcon, EditIcon } from '@renderer/components/Icons'
 import ListItem from '@renderer/components/ListItem'
 import db from '@renderer/databases'
+import { useKnowledgeBases } from '@renderer/hooks/useKnowledge'
 import { getFileFieldLabel } from '@renderer/i18n/label'
 import { handleDelete, handleRename, sortFiles, tempFilesSort } from '@renderer/services/FileAction'
 import FileManager from '@renderer/services/FileManager'
-import store from '@renderer/store'
 import type { FileMetadata, FileType } from '@renderer/types'
 import { FILE_TYPE } from '@renderer/types'
 import { formatFileSize } from '@renderer/utils'
@@ -20,14 +20,17 @@ import {
   File as FileIcon,
   FileImage,
   FileText,
-  FileType as FileTypeIcon
+  FileType as FileTypeIcon,
+  FolderKanban
 } from 'lucide-react'
 import type { FC } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import styled from 'styled-components'
 
 import FileList from './FileList'
+import RpaArtifactsView from './RpaArtifactsView'
 
 type SortField = 'created_at' | 'size' | 'name'
 type SortOrder = 'asc' | 'desc'
@@ -36,7 +39,9 @@ const logger = loggerService.withContext('FilesPage')
 
 const FilesPage: FC = () => {
   const { t } = useTranslation()
-  const [fileType, setFileType] = useState<FileType | 'all'>('document')
+  const [searchParams] = useSearchParams()
+  const { bases: knowledgeBases } = useKnowledgeBases()
+  const [fileType, setFileType] = useState<FileType | 'all' | 'rpa'>('rpa')
   const [sortField, setSortField] = useState<SortField>('created_at')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([])
@@ -46,6 +51,7 @@ const FilesPage: FC = () => {
   }, [fileType])
 
   const files = useLiveQuery<FileMetadata[]>(async () => {
+    if (fileType === 'rpa') return []
     if (fileType === 'all') {
       return db.files.orderBy('count').toArray().then(tempFilesSort)
     }
@@ -55,25 +61,6 @@ const FilesPage: FC = () => {
   const sortedFiles = files ? sortFiles(files, sortField, sortOrder) : []
 
   const handleBatchDelete = async () => {
-    const selectedFiles = await Promise.all(selectedFileIds.map((id) => FileManager.getFile(id)))
-    const validFiles = selectedFiles.filter((file) => file !== null && file !== undefined)
-
-    const paintings = store.getState().paintings
-    const paintingsFiles = Object.values(paintings)
-      .flat()
-      .filter((painting) => painting?.files?.length > 0)
-      .flatMap((painting) => painting.files)
-
-    const filesInPaintings = validFiles.filter((file) => paintingsFiles.some((p) => p.id === file.id))
-
-    if (filesInPaintings.length > 0) {
-      window.modal.warning({
-        content: t('files.delete.paintings.warning'),
-        centered: true
-      })
-      return
-    }
-
     await Promise.all(selectedFileIds.map((fileId) => handleDelete(fileId, t)))
 
     setSelectedFileIds([])
@@ -137,6 +124,11 @@ const FilesPage: FC = () => {
   })
 
   const menuItems = [
+    {
+      key: 'rpa',
+      label: t('files.rpa_artifacts', 'RPA 证据与资产'),
+      icon: <FolderKanban size={16} />
+    },
     { key: FILE_TYPE.DOCUMENT, label: t('files.document'), icon: <FileIcon size={16} /> },
     { key: FILE_TYPE.IMAGE, label: t('files.image'), icon: <FileImage size={16} /> },
     { key: FILE_TYPE.TEXT, label: t('files.text'), icon: <FileTypeIcon size={16} /> },
@@ -161,64 +153,70 @@ const FilesPage: FC = () => {
           ))}
         </SideNav>
         <MainContent>
-          <SortContainer>
-            <Flex gap={8} align="center">
-              {(['created_at', 'size', 'name'] as const).map((field) => (
-                <SortButton
-                  key={field}
-                  active={sortField === field}
-                  onClick={() => {
-                    if (sortField === field) {
-                      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
-                    } else {
-                      setSortField(field as 'created_at' | 'size' | 'name')
-                      setSortOrder('desc')
-                    }
-                  }}>
-                  {getFileFieldLabel(field)}
-                  {sortField === field &&
-                    (sortOrder === 'desc' ? <ArrowUpWideNarrow size={12} /> : <ArrowDownNarrowWide size={12} />)}
-                </SortButton>
-              ))}
-            </Flex>
-            {fileType !== 'image' && (
-              <Dropdown.Button
-                style={{ width: 'auto' }}
-                menu={{
-                  items: [
-                    {
-                      key: 'delete',
-                      disabled: selectedFileIds.length === 0,
-                      danger: true,
-                      label: (
-                        <Popconfirm
-                          disabled={selectedFileIds.length === 0}
-                          title={t('files.delete.title')}
-                          description={t('files.delete.content')}
-                          okText={t('common.confirm')}
-                          cancelText={t('common.cancel')}
-                          onConfirm={handleBatchDelete}
-                          icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}>
-                          {t('files.batch_delete')} ({selectedFileIds.length})
-                        </Popconfirm>
-                      )
-                    }
-                  ]
-                }}
-                trigger={['click']}>
-                <Checkbox
-                  indeterminate={selectedFileIds.length > 0 && selectedFileIds.length < sortedFiles.length}
-                  checked={selectedFileIds.length === sortedFiles.length && sortedFiles.length > 0}
-                  onChange={(e) => handleSelectAll(e.target.checked)}>
-                  {t('files.batch_operation')}
-                </Checkbox>
-              </Dropdown.Button>
-            )}
-          </SortContainer>
-          {dataSource && dataSource?.length > 0 ? (
-            <FileList id={fileType} list={dataSource} files={sortedFiles} />
+          {fileType === 'rpa' ? (
+            <RpaArtifactsView runId={searchParams.get('runId') ?? undefined} knowledgeBases={knowledgeBases} />
           ) : (
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            <>
+              <SortContainer>
+                <Flex gap={8} align="center">
+                  {(['created_at', 'size', 'name'] as const).map((field) => (
+                    <SortButton
+                      key={field}
+                      active={sortField === field}
+                      onClick={() => {
+                        if (sortField === field) {
+                          setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+                        } else {
+                          setSortField(field as 'created_at' | 'size' | 'name')
+                          setSortOrder('desc')
+                        }
+                      }}>
+                      {getFileFieldLabel(field)}
+                      {sortField === field &&
+                        (sortOrder === 'desc' ? <ArrowUpWideNarrow size={12} /> : <ArrowDownNarrowWide size={12} />)}
+                    </SortButton>
+                  ))}
+                </Flex>
+                {fileType !== 'image' && (
+                  <Dropdown.Button
+                    style={{ width: 'auto' }}
+                    menu={{
+                      items: [
+                        {
+                          key: 'delete',
+                          disabled: selectedFileIds.length === 0,
+                          danger: true,
+                          label: (
+                            <Popconfirm
+                              disabled={selectedFileIds.length === 0}
+                              title={t('files.delete.title')}
+                              description={t('files.delete.content')}
+                              okText={t('common.confirm')}
+                              cancelText={t('common.cancel')}
+                              onConfirm={handleBatchDelete}
+                              icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}>
+                              {t('files.batch_delete')} ({selectedFileIds.length})
+                            </Popconfirm>
+                          )
+                        }
+                      ]
+                    }}
+                    trigger={['click']}>
+                    <Checkbox
+                      indeterminate={selectedFileIds.length > 0 && selectedFileIds.length < sortedFiles.length}
+                      checked={selectedFileIds.length === sortedFiles.length && sortedFiles.length > 0}
+                      onChange={(e) => handleSelectAll(e.target.checked)}>
+                      {t('files.batch_operation')}
+                    </Checkbox>
+                  </Dropdown.Button>
+                )}
+              </SortContainer>
+              {dataSource && dataSource?.length > 0 ? (
+                <FileList id={fileType} list={dataSource} files={sortedFiles} />
+              ) : (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              )}
+            </>
           )}
         </MainContent>
       </ContentContainer>

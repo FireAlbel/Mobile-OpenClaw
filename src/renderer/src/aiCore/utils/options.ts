@@ -12,11 +12,9 @@ import {
   isGrokModel,
   isOpenAIModel,
   isOpenAIOpenWeightModel,
-  isQwenMTModel,
   isSupportFlexServiceTierModel,
   isSupportVerbosityModel
 } from '@renderer/config/models'
-import { mapLanguageToQwenMTModel } from '@renderer/config/translate'
 import { getStoreSetting } from '@renderer/hooks/useSettings'
 import { getProviderById } from '@renderer/services/ProviderService'
 import {
@@ -27,7 +25,6 @@ import {
   isGroqServiceTier,
   isGroqSystemProvider,
   isOpenAIServiceTier,
-  isTranslateAssistant,
   type Model,
   type NotGroqProvider,
   type OpenAIServiceTier,
@@ -39,7 +36,6 @@ import {
 import { type AiSdkParam, isAiSdkParam, type OpenAIVerbosity } from '@renderer/types/aiCoreTypes'
 import { isSupportServiceTierProvider, isSupportVerbosityProvider } from '@renderer/utils/provider'
 import type { JSONValue } from 'ai'
-import { t } from 'i18next'
 import type { OllamaProviderOptions } from 'ollama-ai-provider-v2'
 
 import { addAnthropicHeaders } from '../prepareParams/header'
@@ -627,23 +623,6 @@ function buildGenericProviderOptions(
     providerOptions = {
       ...providerOptions,
       ...webSearchParams
-    }
-  }
-
-  // 特殊处理 Qwen MT
-  if (isQwenMTModel(model)) {
-    if (isTranslateAssistant(assistant)) {
-      const targetLanguage = assistant.targetLanguage
-      const translationOptions = {
-        source_lang: 'auto',
-        target_lang: mapLanguageToQwenMTModel(targetLanguage)
-      } as const
-      if (!translationOptions.target_lang) {
-        throw new Error(t('translate.error.not_supported', { language: targetLanguage.value }))
-      }
-      providerOptions.translation_options = translationOptions
-    } else {
-      throw new Error(t('translate.error.chat_qwen_mt'))
     }
   }
 

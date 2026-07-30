@@ -55,7 +55,25 @@ function createRun(status: RpaBatchRunRecord['status'] = 'completed'): RpaBatchR
 
 describe('RpaDebugBundleService', () => {
   it('builds a sanitized bundle with extracted screenshots', () => {
-    const bundle = new RpaDebugBundleService().build(createRun(), 10)
+    const run = createRun()
+    const model = { providerId: 'provider-1', modelId: 'model-1' }
+    Object.assign(run, {
+      contextSnapshot: {
+        schemaVersion: 1,
+        createdAt: 1,
+        topicId: 'topic-1',
+        assistantId: 'assistant-1',
+        assistantProfileVersion: 1,
+        models: { planner: model, vision: model, verification: model, recovery: model },
+        skills: [],
+        knowledge: [],
+        appPackages: [],
+        resolutionWarnings: [],
+        privatePrompt: 'never export this prompt',
+        apiKey: 'sk-secret-context'
+      }
+    })
+    const bundle = new RpaDebugBundleService().build(run, 10)
     const runEntry = bundle.payload.entries.find((entry) => entry.path === 'run.sanitized.json')
     const screenshot = bundle.payload.entries.find((entry) => entry.path.startsWith('screenshots/'))
 
@@ -63,6 +81,7 @@ describe('RpaDebugBundleService', () => {
     expect(bundle.payload.entries.map((entry) => entry.path)).toContain('manifest.json')
     expect(runEntry?.content).not.toContain('sk-secret')
     expect(runEntry?.content).not.toContain('another-hidden-token')
+    expect(runEntry?.content).not.toContain('never export this prompt')
     expect(runEntry?.content).toContain('[REDACTED]')
     expect(screenshot).toMatchObject({ content: 'YWJj', encoding: 'base64' })
   })

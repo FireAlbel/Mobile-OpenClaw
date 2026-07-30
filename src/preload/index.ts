@@ -3,7 +3,7 @@ import type { TokenUsageData } from '@cherrystudio/analytics-client'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { SpanEntity, TokenUsage } from '@mcp-trace/trace-core'
 import type { SpanContext } from '@opentelemetry/api'
-import type { GitBashPathInfo, TerminalConfig, UpgradeChannel } from '@shared/config/constant'
+import type { GitBashPathInfo, UpgradeChannel } from '@shared/config/constant'
 import type { LogLevel, LogSourceWithContext } from '@shared/config/logger'
 import type {
   FileChangeEvent,
@@ -11,14 +11,17 @@ import type {
   LanFileCompleteMessage,
   LanHandshakeAckMessage,
   LocalTransferConnectPayload,
-  LocalTransferState,
-  NodeCheckResult,
-  WebviewKeyEvent
+  LocalTransferState
 } from '@shared/config/types'
 import type { MCPServerLogEntry } from '@shared/config/types'
 import type { ExternalAppInfo } from '@shared/externalApp/types'
 import { IpcChannel } from '@shared/IpcChannel'
 import type { RpaDebugExportPayload, RpaDebugExportResult } from '@shared/types/RpaDebugExport'
+import type {
+  RpaTaskFlowDueTrigger,
+  RpaTaskFlowSchedule,
+  RpaTaskFlowTriggerResult
+} from '@shared/types/RpaTaskFlowSchedule'
 import type { Notification } from '@types'
 import type {
   AddMemoryOptions,
@@ -34,7 +37,6 @@ import type {
   MemoryConfig,
   MemoryListOptions,
   MemorySearchOptions,
-  Model,
   OcrProvider,
   OcrResult,
   Provider,
@@ -65,23 +67,6 @@ import type {
   WritePluginContentOptions
 } from '../renderer/src/types/plugin'
 import type { ActionItem } from '../renderer/src/types/selectionTypes'
-
-// OpenClaw types
-type OpenClawGatewayStatus = 'stopped' | 'starting' | 'running' | 'error'
-
-interface OpenClawHealthInfo {
-  status: 'healthy' | 'unhealthy'
-  gatewayPort: number
-  uptime?: number
-  version?: string
-}
-
-interface OpenClawChannelInfo {
-  id: string
-  name: string
-  type: string
-  status: 'connected' | 'disconnected' | 'error'
-}
 
 type DirectoryListOptions = {
   recursive?: boolean
@@ -235,7 +220,8 @@ const api = {
     createTempFile: (fileName: string): Promise<string> => ipcRenderer.invoke(IpcChannel.File_CreateTempFile, fileName),
     mkdir: (dirPath: string) => ipcRenderer.invoke(IpcChannel.File_Mkdir, dirPath),
     write: (filePath: string, data: Uint8Array | string) => ipcRenderer.invoke(IpcChannel.File_Write, filePath, data),
-    writeWithId: (id: string, content: string) => ipcRenderer.invoke(IpcChannel.File_WriteWithId, id, content),
+    writeWithId: (id: string, content: string): Promise<string> =>
+      ipcRenderer.invoke(IpcChannel.File_WriteWithId, id, content),
     open: (options?: OpenDialogOptions) => ipcRenderer.invoke(IpcChannel.File_Open, options),
     openPath: (path: string) => ipcRenderer.invoke(IpcChannel.File_OpenPath, path),
     save: (path: string, content: string | NodeJS.ArrayBufferView, options?: any) =>
@@ -259,12 +245,10 @@ const api = {
     openFileWithRelativePath: (file: FileMetadata) => ipcRenderer.invoke(IpcChannel.File_OpenWithRelativePath, file),
     isTextFile: (filePath: string): Promise<boolean> => ipcRenderer.invoke(IpcChannel.File_IsTextFile, filePath),
     isDirectory: (filePath: string): Promise<boolean> => ipcRenderer.invoke(IpcChannel.File_IsDirectory, filePath),
-    getDirectoryStructure: (dirPath: string) => ipcRenderer.invoke(IpcChannel.File_GetDirectoryStructure, dirPath),
     listDirectory: (dirPath: string, options?: DirectoryListOptions) =>
       ipcRenderer.invoke(IpcChannel.File_ListDirectory, dirPath, options),
     checkFileName: (dirPath: string, fileName: string, isFile: boolean) =>
       ipcRenderer.invoke(IpcChannel.File_CheckFileName, dirPath, fileName, isFile),
-    validateNotesDirectory: (dirPath: string) => ipcRenderer.invoke(IpcChannel.File_ValidateNotesDirectory, dirPath),
     startFileWatcher: (dirPath: string, config?: any) =>
       ipcRenderer.invoke(IpcChannel.File_StartWatcher, dirPath, config),
     stopFileWatcher: () => ipcRenderer.invoke(IpcChannel.File_StopWatcher),
@@ -488,23 +472,6 @@ const api = {
     closeSearchWindow: (uid: string) => ipcRenderer.invoke(IpcChannel.SearchWindow_Close, uid),
     openUrlInSearchWindow: (uid: string, url: string) => ipcRenderer.invoke(IpcChannel.SearchWindow_OpenUrl, uid, url)
   },
-  webview: {
-    setOpenLinkExternal: (webviewId: number, isExternal: boolean) =>
-      ipcRenderer.invoke(IpcChannel.Webview_SetOpenLinkExternal, webviewId, isExternal),
-    setSpellCheckEnabled: (webviewId: number, isEnable: boolean) =>
-      ipcRenderer.invoke(IpcChannel.Webview_SetSpellCheckEnabled, webviewId, isEnable),
-    printToPDF: (webviewId: number) => ipcRenderer.invoke(IpcChannel.Webview_PrintToPDF, webviewId),
-    saveAsHTML: (webviewId: number) => ipcRenderer.invoke(IpcChannel.Webview_SaveAsHTML, webviewId),
-    onFindShortcut: (callback: (payload: WebviewKeyEvent) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, payload: WebviewKeyEvent) => {
-        callback(payload)
-      }
-      ipcRenderer.on(IpcChannel.Webview_SearchHotkey, listener)
-      return () => {
-        ipcRenderer.off(IpcChannel.Webview_SearchHotkey, listener)
-      }
-    }
-  },
   storeSync: {
     subscribe: () => ipcRenderer.invoke(IpcChannel.StoreSync_Subscribe),
     unsubscribe: () => ipcRenderer.invoke(IpcChannel.StoreSync_Unsubscribe),
@@ -573,23 +540,6 @@ const api = {
     getAccessToken: () => ipcRenderer.invoke(IpcChannel.Anthropic_GetAccessToken),
     hasCredentials: () => ipcRenderer.invoke(IpcChannel.Anthropic_HasCredentials),
     clearCredentials: () => ipcRenderer.invoke(IpcChannel.Anthropic_ClearCredentials)
-  },
-  codeTools: {
-    run: (
-      cliTool: string,
-      model: string,
-      directory: string,
-      env: Record<string, string>,
-      options?: { autoUpdateToLatest?: boolean; terminal?: string }
-    ) => ipcRenderer.invoke(IpcChannel.CodeTools_Run, cliTool, model, directory, env, options),
-    getAvailableTerminals: (): Promise<TerminalConfig[]> =>
-      ipcRenderer.invoke(IpcChannel.CodeTools_GetAvailableTerminals),
-    setCustomTerminalPath: (terminalId: string, path: string): Promise<void> =>
-      ipcRenderer.invoke(IpcChannel.CodeTools_SetCustomTerminalPath, terminalId, path),
-    getCustomTerminalPath: (terminalId: string): Promise<string | undefined> =>
-      ipcRenderer.invoke(IpcChannel.CodeTools_GetCustomTerminalPath, terminalId),
-    removeCustomTerminalPath: (terminalId: string): Promise<void> =>
-      ipcRenderer.invoke(IpcChannel.CodeTools_RemoveCustomTerminalPath, terminalId)
   },
   ocr: {
     ocr: (file: SupportedOcrFile, provider: OcrProvider): Promise<OcrResult> =>
@@ -676,32 +626,63 @@ const api = {
   rpa: {
     loadRuns: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadRuns),
     saveRuns: (runs: unknown[]): Promise<void> => ipcRenderer.invoke(IpcChannel.Rpa_SaveRuns, runs),
+    loadAssistantProfiles: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadAssistantProfiles),
+    saveAssistantProfiles: (profiles: unknown[]): Promise<void> =>
+      ipcRenderer.invoke(IpcChannel.Rpa_SaveAssistantProfiles, profiles),
+    loadAppRoles: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadAppRoles),
+    saveAppRoles: (roles: unknown[]): Promise<void> => ipcRenderer.invoke(IpcChannel.Rpa_SaveAppRoles, roles),
+    loadRolePrompts: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadRolePrompts),
+    saveRolePrompts: (prompts: unknown[]): Promise<void> => ipcRenderer.invoke(IpcChannel.Rpa_SaveRolePrompts, prompts),
+    secureHttpFetch: (request: {
+      url: string
+      timeoutMs: number
+      maxBytes: number
+      allowedMimeTypes: string[]
+      allowedDomains: string[]
+      maxRedirects: number
+      requireTls: boolean
+    }) => ipcRenderer.invoke(IpcChannel.Rpa_SecureHttpFetch, request),
+    loadDslSessions: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadDslSessions),
+    saveDslSessions: (sessions: unknown[]): Promise<void> =>
+      ipcRenderer.invoke(IpcChannel.Rpa_SaveDslSessions, sessions),
+    loadSessionSupplements: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadSessionSupplements),
+    saveSessionSupplements: (records: unknown[]): Promise<void> =>
+      ipcRenderer.invoke(IpcChannel.Rpa_SaveSessionSupplements, records),
+    loadSupplementContext: (): Promise<unknown> => ipcRenderer.invoke(IpcChannel.Rpa_LoadSupplementContext),
+    saveSupplementContext: (state: unknown): Promise<void> =>
+      ipcRenderer.invoke(IpcChannel.Rpa_SaveSupplementContext, state),
+    loadKnowledgeEntries: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadKnowledgeEntries),
+    saveKnowledgeEntries: (entries: unknown[]): Promise<void> =>
+      ipcRenderer.invoke(IpcChannel.Rpa_SaveKnowledgeEntries, entries),
+    loadArtifacts: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadArtifacts),
+    saveArtifacts: (artifacts: unknown[]): Promise<void> => ipcRenderer.invoke(IpcChannel.Rpa_SaveArtifacts, artifacts),
+    loadTemplates: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadTemplates),
+    saveTemplates: (templates: unknown[]): Promise<void> => ipcRenderer.invoke(IpcChannel.Rpa_SaveTemplates, templates),
+    loadTaskFlowSchedules: (): Promise<RpaTaskFlowSchedule[]> =>
+      ipcRenderer.invoke(IpcChannel.Rpa_LoadTaskFlowSchedules),
+    saveTaskFlowSchedules: (schedules: RpaTaskFlowSchedule[]): Promise<RpaTaskFlowSchedule[]> =>
+      ipcRenderer.invoke(IpcChannel.Rpa_SaveTaskFlowSchedules, schedules),
+    triggerTaskFlowSchedule: (scheduleId: string): Promise<RpaTaskFlowDueTrigger> =>
+      ipcRenderer.invoke(IpcChannel.Rpa_TriggerTaskFlowSchedule, scheduleId),
+    completeTaskFlowTrigger: (result: RpaTaskFlowTriggerResult): Promise<void> =>
+      ipcRenderer.invoke(IpcChannel.Rpa_CompleteTaskFlowTrigger, result),
+    onTaskFlowScheduleDue: (callback: (trigger: RpaTaskFlowDueTrigger) => void) => {
+      const listener = (_: Electron.IpcRendererEvent, trigger: RpaTaskFlowDueTrigger) => callback(trigger)
+      ipcRenderer.on(IpcChannel.Rpa_TaskFlowScheduleDue, listener)
+      return () => {
+        ipcRenderer.removeListener(IpcChannel.Rpa_TaskFlowScheduleDue, listener)
+      }
+    },
+    loadSkills: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadSkills),
+    saveSkills: (skills: unknown[]): Promise<void> => ipcRenderer.invoke(IpcChannel.Rpa_SaveSkills, skills),
+    loadImprovementProposals: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadImprovementProposals),
+    saveImprovementProposals: (proposals: unknown[]): Promise<void> =>
+      ipcRenderer.invoke(IpcChannel.Rpa_SaveImprovementProposals, proposals),
+    loadFailureFingerprints: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadFailureFingerprints),
+    saveFailureFingerprints: (fingerprints: unknown[]): Promise<void> =>
+      ipcRenderer.invoke(IpcChannel.Rpa_SaveFailureFingerprints, fingerprints),
     exportDebugBundle: (payload: RpaDebugExportPayload): Promise<RpaDebugExportResult> =>
       ipcRenderer.invoke(IpcChannel.Rpa_ExportDebugBundle, payload)
-  },
-  openclaw: {
-    checkInstalled: (): Promise<{ installed: boolean; path: string | null }> =>
-      ipcRenderer.invoke(IpcChannel.OpenClaw_CheckInstalled),
-    checkNodeVersion: (): Promise<NodeCheckResult> => ipcRenderer.invoke(IpcChannel.OpenClaw_CheckNodeVersion),
-    checkGitAvailable: (): Promise<{ available: boolean; path: string | null }> =>
-      ipcRenderer.invoke(IpcChannel.OpenClaw_CheckGitAvailable),
-    getNodeDownloadUrl: (): Promise<string> => ipcRenderer.invoke(IpcChannel.OpenClaw_GetNodeDownloadUrl),
-    getGitDownloadUrl: (): Promise<string> => ipcRenderer.invoke(IpcChannel.OpenClaw_GetGitDownloadUrl),
-    install: (): Promise<{ success: boolean; message: string }> => ipcRenderer.invoke(IpcChannel.OpenClaw_Install),
-    uninstall: (): Promise<{ success: boolean; message: string }> => ipcRenderer.invoke(IpcChannel.OpenClaw_Uninstall),
-    startGateway: (port?: number): Promise<{ success: boolean; message: string }> =>
-      ipcRenderer.invoke(IpcChannel.OpenClaw_StartGateway, port),
-    stopGateway: (): Promise<{ success: boolean; message: string }> =>
-      ipcRenderer.invoke(IpcChannel.OpenClaw_StopGateway),
-    restartGateway: (): Promise<{ success: boolean; message: string }> =>
-      ipcRenderer.invoke(IpcChannel.OpenClaw_RestartGateway),
-    getStatus: (): Promise<{ status: OpenClawGatewayStatus; port: number }> =>
-      ipcRenderer.invoke(IpcChannel.OpenClaw_GetStatus),
-    checkHealth: (): Promise<OpenClawHealthInfo> => ipcRenderer.invoke(IpcChannel.OpenClaw_CheckHealth),
-    getDashboardUrl: (): Promise<string> => ipcRenderer.invoke(IpcChannel.OpenClaw_GetDashboardUrl),
-    syncConfig: (provider: Provider, primaryModel: Model): Promise<{ success: boolean; message: string }> =>
-      ipcRenderer.invoke(IpcChannel.OpenClaw_SyncConfig, provider, primaryModel),
-    getChannels: (): Promise<OpenClawChannelInfo[]> => ipcRenderer.invoke(IpcChannel.OpenClaw_GetChannels)
   },
   analytics: {
     trackTokenUsage: (data: TokenUsageData) => ipcRenderer.invoke(IpcChannel.Analytics_TrackTokenUsage, data)

@@ -4,8 +4,7 @@ import SearchPopup from '@renderer/components/Popups/SearchPopup'
 import { modelGenerating } from '@renderer/hooks/useRuntime'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { useShortcut } from '@renderer/hooks/useShortcuts'
-import { useShowAssistants, useShowTopics } from '@renderer/hooks/useStore'
-import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
+import { useShowAssistants } from '@renderer/hooks/useStore'
 import { useAppDispatch } from '@renderer/store'
 import { setNarrowMode } from '@renderer/store/settings'
 import type { Assistant, Topic } from '@renderer/types'
@@ -27,29 +26,23 @@ interface Props {
   setActiveAssistant: (assistant: Assistant) => void
   position: 'left' | 'right'
   activeTopicOrSession?: 'topic' | 'session'
+  onOpenDeviceManagement: () => void
 }
 
 const HeaderNavbar: FC<Props> = ({
   activeAssistant,
-  setActiveAssistant,
   activeTopic,
   setActiveTopic,
-  activeTopicOrSession
+  activeTopicOrSession,
+  onOpenDeviceManagement
 }) => {
   const { showAssistants, toggleShowAssistants } = useShowAssistants()
-  const { topicPosition, narrowMode } = useSettings()
-  const { showTopics, toggleShowTopics } = useShowTopics()
+  const { narrowMode } = useSettings()
   const dispatch = useAppDispatch()
 
   useShortcut('toggle_show_assistants', toggleShowAssistants)
 
-  useShortcut('toggle_show_topics', () => {
-    if (topicPosition === 'right') {
-      toggleShowTopics()
-    } else {
-      EventEmitter.emit(EVENT_NAMES.SHOW_TOPIC_SIDEBAR)
-    }
-  })
+  useShortcut('toggle_show_topics', toggleShowAssistants)
 
   useShortcut('search_message', () => {
     SearchPopup.show()
@@ -63,9 +56,9 @@ const HeaderNavbar: FC<Props> = ({
   const onShowAssistantsDrawer = () => {
     AssistantsDrawer.show({
       activeAssistant,
-      setActiveAssistant,
       activeTopic,
-      setActiveTopic
+      setActiveTopic,
+      onOpenDeviceManagement
     })
   }
 
@@ -139,20 +132,6 @@ const HeaderNavbar: FC<Props> = ({
               <i className="iconfont icon-icon-adaptive-width"></i>
             </NarrowIcon>
           </Tooltip>
-          {topicPosition === 'right' && !showTopics && (
-            <Tooltip title={t('navbar.show_sidebar')} mouseEnterDelay={2}>
-              <NavbarIcon onClick={toggleShowTopics}>
-                <PanelLeftClose size={18} />
-              </NavbarIcon>
-            </Tooltip>
-          )}
-          {topicPosition === 'right' && showTopics && (
-            <Tooltip title={t('navbar.hide_sidebar')} mouseEnterDelay={2}>
-              <NavbarIcon onClick={toggleShowTopics}>
-                <PanelRightClose size={18} />
-              </NavbarIcon>
-            </Tooltip>
-          )}
         </HStack>
       </NavbarRight>
     </Navbar>

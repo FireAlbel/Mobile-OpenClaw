@@ -1,3 +1,4 @@
+import { type RpaRunContextSnapshot, trySanitizeRpaRunContextSnapshot } from './RpaRunContextSnapshot'
 import type { RpaBatchRunRecord } from './RpaRunStorage'
 import type {
   RpaCorrectionAction,
@@ -42,6 +43,7 @@ export interface RpaReplay {
   frames: RpaReplayFrame[]
   phases: string[]
   missingArtifactCount: number
+  contextSnapshot?: RpaRunContextSnapshot
 }
 
 export class RpaReplayService {
@@ -78,7 +80,8 @@ export class RpaReplayService {
       run,
       frames,
       phases: [...new Set(frames.flatMap((frame) => (frame.phase ? [frame.phase] : [])))],
-      missingArtifactCount: frames.filter((frame) => frame.artifactStatus === 'missing').length
+      missingArtifactCount: frames.filter((frame) => frame.artifactStatus === 'missing').length,
+      contextSnapshot: trySanitizeRpaRunContextSnapshot(run.contextSnapshot)
     }
   }
 }
@@ -132,7 +135,12 @@ function findStringProperty(value: unknown, key: string): string | undefined {
 const EVENT_PHASES = new Set<RpaRunEventPhase>([
   'original_step',
   'original_failure',
+  'deterministic_recovery_plan',
+  'deterministic_recovery_action',
+  'deterministic_recovery_verification',
+  'deterministic_recovery_terminal',
   'correction_observation',
+  'state_recognition',
   'correction_decision',
   'temporary_action',
   'temporary_step',

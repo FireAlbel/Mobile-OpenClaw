@@ -127,6 +127,21 @@ describe('ScrcpyFrameService', () => {
     service.dispose()
   })
 
+  it('captures a new snapshot when packets advance inside the cache window', async () => {
+    const bridge = fakeRuntime()
+    const service = new ScrcpyFrameService(bridge.runtime, () => fakeDecoder(100, 200) as never)
+
+    await service.start('device-1')
+    bridge.emitPacket(dataPacket('device-1'))
+    const first = await service.getLatestFrame('device-1')
+    bridge.emitPacket(dataPacket('device-1'))
+    const second = await service.getLatestFrame('device-1')
+
+    expect(first.sequence).toBe(1)
+    expect(second.sequence).toBe(2)
+    service.dispose()
+  })
+
   it('restarts once and rejects a frame that remains stale', async () => {
     let emitPacket: (packet: ScrcpyFrameStreamPacket) => void = () => undefined
     const bridge = fakeRuntime((deviceId) => emitPacket(dataPacket(deviceId, Date.now() - 5_000)))

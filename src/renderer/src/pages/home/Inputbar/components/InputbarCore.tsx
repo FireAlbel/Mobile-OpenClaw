@@ -3,13 +3,10 @@ import { loggerService } from '@logger'
 import { ActionIconButton } from '@renderer/components/Buttons'
 import type { QuickPanelTriggerInfo } from '@renderer/components/QuickPanel'
 import { QuickPanelReservedSymbol, QuickPanelView, useQuickPanel } from '@renderer/components/QuickPanel'
-import TranslateButton from '@renderer/components/TranslateButton'
 import { useRuntime } from '@renderer/hooks/useRuntime'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { useTimer } from '@renderer/hooks/useTimer'
-import useTranslate from '@renderer/hooks/useTranslate'
 import PasteService from '@renderer/services/PasteService'
-import { translateText } from '@renderer/services/TranslateService'
 import { useAppDispatch } from '@renderer/store'
 import { setSearching } from '@renderer/store/runtime'
 import type { FileMetadata } from '@renderer/types'
@@ -20,7 +17,7 @@ import { IpcChannel } from '@shared/IpcChannel'
 import { Tooltip } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
 import type { TextAreaRef } from 'antd/lib/input/TextArea'
-import { CirclePause, Languages } from 'lucide-react'
+import { CirclePause } from 'lucide-react'
 import type { CSSProperties, FC } from 'react'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -130,24 +127,17 @@ export const InputbarCore: FC<InputbarCoreProps> = ({
   const isEmpty = text.trim().length === 0
   const [inputFocus, setInputFocus] = useState(false)
   const {
-    targetLanguage,
     sendMessageShortcut,
     fontSize,
     pasteLongTextAsFile,
     pasteLongTextThreshold,
-    autoTranslateWithSpace,
     enableQuickPanelTriggers,
     enableSpellCheck
   } = useSettings()
   const quickPanelTriggersEnabled = forceEnableQuickPanelTriggers ?? enableQuickPanelTriggers
 
   const { t } = useTranslation()
-  const [isTranslating, setIsTranslating] = useState(false)
-  const { getLanguageByLangcode } = useTranslate()
-
   const dispatch = useAppDispatch()
-  const [spaceClickCount, setSpaceClickCount] = useState(0)
-  const spaceClickTimer = useRef<NodeJS.Timeout | null>(null)
   const { searching } = useRuntime()
   const startDragY = useRef<number>(0)
   const startHeight = useRef<number>(0)
@@ -204,37 +194,11 @@ export const InputbarCore: FC<InputbarCoreProps> = ({
     [focusTextarea, setIsExpanded, isExpanded]
   )
 
-  const translate = useCallback(async () => {
-    if (isTranslating) {
-      return
-    }
-
-    try {
-      setIsTranslating(true)
-      const translatedText = await translateText(text, getLanguageByLangcode(targetLanguage))
-      translatedText && setText(translatedText)
-      setTimeoutTimer('translate', () => resizeTextArea(), 0)
-    } catch (error) {
-      logger.warn('Translation failed:', error as Error)
-    } finally {
-      setIsTranslating(false)
-    }
-  }, [getLanguageByLangcode, isTranslating, resizeTextArea, setText, setTimeoutTimer, targetLanguage, text])
-
   const rootTriggerHandlerRef = useRef<((payload?: unknown) => void) | undefined>(undefined)
 
   useEffect(() => {
     rootTriggerHandlerRef.current = (payload) => {
       const menuItems = triggers.getRootMenu()
-
-      if (text.trim()) {
-        menuItems.push({
-          label: t('translate.title'),
-          description: t('translate.menu.description'),
-          icon: <Languages size={16} />,
-          action: () => translate()
-        })
-      }
 
       if (!menuItems.length) {
         return
@@ -248,7 +212,7 @@ export const InputbarCore: FC<InputbarCoreProps> = ({
         triggerInfo
       })
     }
-  }, [triggers, quickPanelOpen, t, text, translate])
+  }, [triggers, quickPanelOpen, t])
 
   useEffect(() => {
     if (!config.enableQuickPanel) {
@@ -295,23 +259,6 @@ export const InputbarCore: FC<InputbarCoreProps> = ({
           return
         }
       }
-      if (autoTranslateWithSpace && event.key === ' ') {
-        setSpaceClickCount((prev) => prev + 1)
-        if (spaceClickTimer.current) {
-          clearTimeout(spaceClickTimer.current)
-        }
-        spaceClickTimer.current = setTimeout(() => {
-          setSpaceClickCount(0)
-        }, 200)
-
-        if (spaceClickCount === 2) {
-          logger.info('Triple space detected - trigger translation')
-          setSpaceClickCount(0)
-          translate()
-          return
-        }
-      }
-
       if (isExpanded && event.key === 'Escape') {
         event.stopPropagation()
         handleToggleExpanded()
@@ -338,13 +285,10 @@ export const InputbarCore: FC<InputbarCoreProps> = ({
     },
     [
       inputFocus,
-      autoTranslateWithSpace,
       isExpanded,
       text.length,
       files.length,
       textareaRef,
-      spaceClickCount,
-      translate,
       handleToggleExpanded,
       sendMessageShortcut,
       isSendDisabled,
@@ -450,14 +394,6 @@ export const InputbarCore: FC<InputbarCoreProps> = ({
       }
     },
     [setText, textareaRef, quickPanelTriggersEnabled, config.enableQuickPanel, quickPanel, triggers]
-  )
-
-  const onTranslated = useCallback(
-    (translatedText: string) => {
-      setText(translatedText)
-      setTimeoutTimer('onTranslated', () => resizeTextArea(), 0)
-    },
-    [resizeTextArea, setText, setTimeoutTimer]
   )
 
   const appendTxtContentToInput = useCallback(
@@ -596,25 +532,8 @@ export const InputbarCore: FC<InputbarCoreProps> = ({
     }
   }, [handlePaste])
 
-  useEffect(() => {
-    return () => {
-      if (spaceClickTimer.current) {
-        clearTimeout(spaceClickTimer.current)
-      }
-    }
-  }, [])
-
   const rightSectionExtras = useMemo(() => {
     const extras: React.ReactNode[] = []
-    extras.push(
-      <TranslateButton
-        key="translate"
-        text={text}
-        disabled={isSendDisabled}
-        onTranslated={onTranslated}
-        isLoading={isTranslating}
-      />
-    )
     extras.push(<SendMessageButton sendMessage={handleSendMessage} disabled={isSendDisabled} />)
 
     if (isLoading) {
@@ -628,7 +547,7 @@ export const InputbarCore: FC<InputbarCoreProps> = ({
     }
 
     return <>{extras}</>
-  }, [text, onTranslated, isTranslating, handleSendMessage, isSendDisabled, isLoading, t, onPause])
+  }, [handleSendMessage, isSendDisabled, isLoading, t, onPause])
 
   const quickPanelElement = config.enableQuickPanel ? <QuickPanelView setInputText={setText} /> : null
 
@@ -661,7 +580,7 @@ export const InputbarCore: FC<InputbarCoreProps> = ({
             onPaste={(e) => handlePaste(e.nativeEvent)}
             onFocus={handleFocus}
             onBlur={() => setInputFocus(false)}
-            placeholder={isTranslating ? t('chat.input.translating') : placeholder}
+            placeholder={placeholder}
             autoFocus
             variant="borderless"
             spellCheck={enableSpellCheck}
@@ -673,7 +592,7 @@ export const InputbarCore: FC<InputbarCoreProps> = ({
               height: height,
               minHeight: '30px'
             }}
-            disabled={isTranslating || searching}
+            disabled={searching}
             onClick={() => {
               searching && dispatch(setSearching(false))
               quickPanel.close()

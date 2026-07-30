@@ -101,6 +101,84 @@ describe('RpaP1Modules', () => {
     )
   })
 
+  it('taps an exact UI tree alias before invoking the VLM', async () => {
+    const testRuntime = runtime({
+      getUiTree: vi.fn().mockResolvedValue({
+        success: true,
+        message: 'ui tree ok',
+        data: '<hierarchy><node text="关于本机" clickable="true" enabled="true" bounds="[100,1800][900,1940]" /></hierarchy>'
+      }),
+      tap: vi.fn().mockResolvedValue({ success: true, message: 'tapped' })
+    })
+
+    const result = await tapByVlmTargetModule.execute(context(testRuntime), {
+      target: '“关于本机”“关于手机”“关于设备”“About phone”“About device”或“设备信息”等设备信息入口'
+    })
+
+    expect(result).toMatchObject({ success: true, message: 'Deterministic text target tapped: 关于本机' })
+    expect(testRuntime.tap).toHaveBeenCalledWith('device-1', 500, 1870, {
+      randomRadiusPx: 7,
+      safeInsetPx: 2
+    })
+    expect(testRuntime.screenshot).not.toHaveBeenCalled()
+    expect(testRuntime.visionInstruction).not.toHaveBeenCalled()
+  })
+
+  it('falls back to the VLM when no UI tree alias is visible', async () => {
+    const testRuntime = runtime({
+      getUiTree: vi.fn().mockResolvedValue({
+        success: true,
+        message: 'ui tree ok',
+        data: '<hierarchy><node text="系统与更新" clickable="true" enabled="true" bounds="[100,1800][900,1940]" /></hierarchy>'
+      })
+    })
+
+    const result = await tapByVlmTargetModule.execute(context(testRuntime), {
+      target: '“关于本机”“About phone”或“设备信息”'
+    })
+
+    expect(result.success).toBe(true)
+    expect(testRuntime.tap).not.toHaveBeenCalled()
+    expect(testRuntime.visionInstruction).toHaveBeenCalledOnce()
+  })
+
+  it('fails deterministically without invoking the VLM when fallback is disabled', async () => {
+    const testRuntime = runtime({
+      getUiTree: vi.fn().mockResolvedValue({
+        success: true,
+        message: 'ui tree ok',
+        data: '<hierarchy><node text="System update" bounds="[0,0][100,100]" /></hierarchy>'
+      })
+    })
+
+    const result = await tapByVlmTargetModule.execute(context(testRuntime), {
+      target: 'About phone',
+      fallbackToVlm: false
+    })
+
+    expect(result).toMatchObject({ success: false, message: 'Deterministic text target not found: About phone' })
+    expect(testRuntime.visionInstruction).not.toHaveBeenCalled()
+  })
+
+  it('finds a swipe target through the UI tree without invoking the VLM', async () => {
+    const testRuntime = runtime({
+      getUiTree: vi.fn().mockResolvedValue({
+        success: true,
+        message: 'ui tree ok',
+        data: '<hierarchy><node text="About phone" bounds="[100,1800][900,1940]" /></hierarchy>'
+      })
+    })
+
+    const result = await swipeUntilVlmTargetModule.execute(context(testRuntime), {
+      target: 'About phone',
+      fallbackToVlm: false
+    })
+
+    expect(result).toMatchObject({ success: true, message: 'Deterministic text target found: About phone' })
+    expect(testRuntime.locateVisualTarget).not.toHaveBeenCalled()
+    expect(testRuntime.swipe).not.toHaveBeenCalled()
+  })
+
   it('runs bounded VLM swipe attempts', async () => {
     const locateVisualTarget = vi
       .fn()

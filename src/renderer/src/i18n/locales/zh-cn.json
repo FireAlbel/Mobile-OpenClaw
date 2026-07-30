@@ -860,7 +860,6 @@
         "expand": "展开"
       },
       "topics": "话题",
-      "translate": "翻译成 {{target_language}}",
       "translating": "翻译中...",
       "upload": {
         "attachment": "上传附件",
@@ -1107,7 +1106,6 @@
           "label": "导出为 Markdown",
           "reason": "导出为 Markdown (包含思考)"
         },
-        "notes": "导出到笔记",
         "notion": "导出到 Notion",
         "obsidian": "导出到 Obsidian",
         "obsidian_atributes": "配置笔记属性",
@@ -1189,47 +1187,11 @@
       "title": "话题",
       "unpin": "取消固定"
     },
-    "translate": "翻译",
     "web_search": {
       "warning": {
         "openai": "GPT5 模型 minimal 思考强度不支持网络搜索"
       }
     }
-  },
-  "code": {
-    "auto_update_to_latest": "检查更新并安装最新版本",
-    "bun_required_message": "运行 CLI 工具需要安装 Bun 环境",
-    "cli_tool": "CLI 工具",
-    "cli_tool_placeholder": "选择要使用的 CLI 工具",
-    "custom_path": "自定义路径",
-    "custom_path_error": "设置自定义终端路径失败",
-    "custom_path_required": "此终端需要设置自定义路径",
-    "custom_path_set": "自定义终端路径设置成功",
-    "description": "快速启动多个代码 CLI 工具，提高开发效率",
-    "env_vars_help": "输入自定义环境变量（每行一个，格式：KEY=value）",
-    "environment_variables": "环境变量",
-    "folder_placeholder": "选择工作目录",
-    "install_bun": "安装 Bun",
-    "installing_bun": "安装中...",
-    "launch": {
-      "bun_required": "请先安装 Bun 环境再启动 CLI 工具",
-      "error": "启动失败，请重试",
-      "label": "启动",
-      "success": "启动成功",
-      "validation_error": "请完成所有必填项：CLI 工具、模型和工作目录"
-    },
-    "launching": "启动中...",
-    "model": "模型",
-    "model_placeholder": "选择要使用的模型",
-    "model_required": "请选择模型",
-    "select_folder": "选择文件夹",
-    "set_custom_path": "设置自定义终端路径",
-    "supported_providers": "支持的服务商",
-    "terminal": "终端",
-    "terminal_placeholder": "选择终端应用",
-    "title": "代码工具",
-    "update_options": "更新选项",
-    "working_directory": "工作目录"
   },
   "code_block": {
     "collapse": "收起",
@@ -1394,7 +1356,6 @@
     "swap": "交换",
     "topics": "话题",
     "total": "共",
-    "translate_text": "翻译文本",
     "unknown": "未知",
     "unnamed": "未命名",
     "unsubscribe": "退订",
@@ -1549,76 +1510,163 @@
       "update_success": "分组已更新"
     },
     "last_refresh": "最后刷新时间",
+    "management_title": "设备管理",
     "model": "型号",
     "no_devices": "暂无设备连接",
     "port": "端口",
     "refresh": "刷新",
     "remark": "备注",
     "rpa": {
+      "active_runs": "执行中的 RPA 任务",
       "add_step": "添加步骤",
+      "adjust_context": "调整",
       "advanced_dsl": "高级 DSL 编辑器",
+      "advanced_model_overrides": "高级模型覆盖",
       "all_devices": "全部设备",
       "all_phases": "全部阶段",
+      "any_compatible_version": "任意兼容版本",
       "approve_and_retry": "批准并重试",
+      "asset_status_empty": "空内容",
+      "asset_status_error": "异常",
+      "asset_status_legacy": "旧版",
+      "asset_status_missing": "缺失",
+      "asset_status_ready": "可用",
+      "asset_status_running": "处理中",
+      "assistant_profile_version": "助手 Profile",
       "attempt": "第 {{attempt}} 次尝试",
+      "automation_settings": "自动化配置",
+      "binding_priority": "绑定优先级",
       "chat_placeholder": "描述要在所选设备上执行的任务，按 Enter 生成流程。",
+      "chat_topics": "聊天话题",
+      "clear_topic_overrides": "清除覆盖配置",
+      "compiled_skills": "已编译 Skill",
       "confidence": "置信度",
       "confirm_and_execute": "确认并执行",
       "confirm_execution": "确认执行 RPA",
       "confirm_execution_detail": "该流程将在 {{devices}} 台设备上执行 {{steps}} 个步骤。",
       "confirm_high_risk_execution": "确认执行高风险 RPA 任务",
+      "confirm_partial_group": "请检查分组中的不可用设备，并确认仅在在线设备上继续执行。",
       "confirm_safety_target": "批准所选设备执行此操作：{{target}}",
+      "continue_device": "继续",
       "continue_on_failure": "失败后继续",
+      "continue_with_online_subset": "仅使用当前可用的在线设备继续执行",
       "correction_evidence": "纠偏证据",
       "correction_round": "第 {{round}} 轮纠偏",
-      "create_template": "生成模板",
+      "create_template": "生成任务流",
       "current_step": "当前步骤",
       "debug_export_failed": "调试包导出失败。",
       "debug_exported": "调试包已导出。",
       "decision": "判断结果",
+      "default_model": "默认模型",
+      "degraded_generation_warning": "降级生成警告",
+      "device_completed_steps": "已完成 {{completed}} / {{total}} 个步骤",
+      "device_execution_progress": "设备执行进度",
+      "device_name": "设备名",
+      "device_offline_cannot_continue": "请重新连接设备后再继续执行。",
+      "device_offline_reason": "设备 {{device}} 已下线，执行已自动停止。",
+      "device_unauthorized_reason": "设备 {{device}} 的 USB 调试授权不可用，执行已自动停止。",
       "devices": "设备",
       "draft_saved": "RPA 流程草稿已保存。",
       "dsl": "任务 DSL",
-      "emergency_stop": "停止全部任务",
-      "emergency_stop_confirm": "停止全部 RPA 任务？",
-      "emergency_stop_detail": "所有运行中和等待中的设备任务都将立即取消。",
+      "dsl_provenance": "DSL 来源",
+      "dsl_validation_failed": "DSL 校验失败。",
+      "emergency_stop": "停止当前 RPA",
+      "emergency_stop_confirm": "停止当前 RPA 执行？",
+      "emergency_stop_detail": "仅取消当前 RPA 中运行中和等待中的设备任务，其他 RPA 不受影响。",
+      "empty_groups_selected": "以下分组没有设备：{{groups}}",
+      "enabled_skills": "已启用 Skill",
       "executable_action": "可执行动作",
       "execute": "执行",
       "execution_details": "执行详情（{{count}} 条）",
-      "execution_progress": "RPA 执行进度",
+      "execution_devices": "RPA 执行设备",
+      "execution_failed": "RPA 执行启动失败。",
+      "execution_progress": "RPA 执行详情",
+      "execution_status": "执行状态",
+      "execution_target_summary": "执行范围：{{groups}} 个分组，共 {{devices}} 台设备",
       "export_debug_bundle": "导出调试包",
       "fix_validation_errors": "请先修复流程校验错误。",
+      "follow_latest_version": "跟随最新版本",
+      "format_json": "格式化 JSON",
       "frame_captured_at": "采集时间",
       "frame_codec": "视频编码",
       "frame_dimensions": "画面尺寸",
       "frame_reconnects": "重连次数",
       "frame_sequence": "帧序号",
       "frame_source": "画面来源",
+      "group_devices_unavailable": "所选分组中以下设备不可用：{{devices}}",
       "high_risk_targets": "以下操作需要明确确认：{{targets}}",
+      "knowledge_sources": "Knowledge 知识源",
       "latest_screenshot": "最新截图",
+      "lifecycle": {
+        "discard_changes": "放弃更改",
+        "duplicate_task": "复制任务",
+        "end_task": "结束任务",
+        "end_task_failed": "无法结束任务",
+        "new_task": "新建任务",
+        "no_task_to_duplicate": "请先生成任务，再进行复制。",
+        "save_and_continue": "保存并继续",
+        "task_actions": "任务操作",
+        "task_duplicated": "RPA 任务已复制为独立草稿。",
+        "task_ended": "任务已结束",
+        "task_ended_detail": "当前任务已变为只读，请新建或复制任务后继续。",
+        "unsaved_detail": "继续之前，请保存或放弃当前 DSL 更改。",
+        "unsaved_title": "RPA 任务存在未保存更改"
+      },
       "missing_artifact_count": "{{count}} 条时间线事件缺少截图证据。",
       "missing_screenshot": "截图证据不可用。",
+      "model_not_configured": "未配置",
       "model_required": "请先选择聊天模型。",
       "module": "功能模块",
       "move_down": "下移",
       "move_up": "上移",
+      "no_active_runs": "当前没有正在执行的 RPA 任务。",
+      "no_device_groups": "尚未配置设备分组。",
       "no_online_devices": "没有可用的在线设备。",
       "no_runs": "暂无 RPA 执行记录。",
+      "no_source_template": "自由规划",
+      "online_devices": "在线设备",
+      "open_evidence": "打开证据",
+      "open_knowledge": "打开 Knowledge",
+      "open_templates": "打开 Template",
+      "operations": "操作",
       "params": "参数（JSON）",
       "pause": "暂停",
+      "pinned_version": "固定版本",
       "plan_generated": "RPA 流程已生成，请检查并编辑时间轴后再执行。",
+      "planner_model": "规划模型",
+      "preserve_topic_overrides": "保留覆盖配置",
+      "profile_assets_missing": "有 {{count}} 个已绑定的自动化资产缺失。",
+      "profile_load_failed": "自动化配置加载失败。",
+      "profile_save_failed": "自动化配置保存失败。",
+      "profile_saved": "自动化配置已保存。",
       "rate_limit_delay": "限流等待时间",
       "raw_vlm_response": "VLM 原始响应",
       "realtime_events": "实时执行事件",
       "reason": "原因",
+      "recommended_templates": "推荐 Template",
       "recovery_decision": "VLM 纠偏判断",
+      "recovery_model": "纠偏模型",
+      "remap_topic_overrides": "重映射兼容资产",
       "repair_response": "格式纠偏响应",
+      "replan": {
+        "action": "重新规划",
+        "completed": "已创建新的重新规划版本。",
+        "create_revision": "创建重新规划版本",
+        "execution_evidence": "将包含失败运行、近期事件和人工介入证据。",
+        "execution_objective": "根据执行失败时的状态修复流程，并继续完成原始目标。",
+        "title": "上下文重新规划",
+        "validation_evidence": "将包含当前 DSL 及其校验错误。",
+        "validation_objective": "修复 DSL 校验错误，同时保留原始任务目标。"
+      },
       "replay": "运行回放",
+      "required_skill_dependencies_missing": "存在 {{count}} 个必需 Skill 依赖问题，解决后该 Template 才可执行。",
       "reset_sample": "示例",
       "resume": "继续",
+      "retrieved_knowledge": "已检索 Knowledge",
       "retry_after_human": "人工处理后重试",
       "risk_level": "风险等级",
       "risk_summary": "风险等级：{{risk}}",
+      "run_devices_summary": "已完成 {{completed}}/{{total}} 台设备",
       "run_history": "运行历史",
       "run_history_hint": "回放执行证据，或导出已脱敏的调试包。",
       "run_loading": "正在加载执行记录...",
@@ -1627,7 +1675,13 @@
       "safety_decision": "安全策略结论",
       "safety_target": "策略目标",
       "select_device": "请至少选择一台在线设备。",
+      "select_device_groups": "设备分组",
+      "select_execution_targets": "选择执行设备",
+      "select_knowledge_sources": "选择 Knowledge 知识源",
+      "select_templates": "选择 Template",
       "select_vision_model": "请选择支持图片输入的视觉模型。",
+      "skill_repository_unavailable": "Skill 仓库尚未开放",
+      "source_template": "来源任务流",
       "start": "开始执行",
       "started": "RPA 批量任务已启动。",
       "status": {
@@ -1643,18 +1697,43 @@
       },
       "step_name": "步骤名称",
       "step_number": "步骤 {{number}}",
+      "stop_device": "停止",
       "takeover_response": "VLM 接管复判响应",
+      "target_mode_all_online": "全部在线设备",
+      "target_mode_groups": "按分组",
+      "target_mode_manual": "手动选择",
+      "target_scan_failed": "设备扫描失败，请保留当前弹窗并重试。",
+      "target_selection_changed": "设备状态已变化。新增：{{added}}；移除：{{removed}}。请检查后再次确认。",
+      "target_status_missing": "缺失",
+      "task_flow_learning": {
+        "already_applied": "任务流学习结果已应用至 v{{version}}",
+        "created": "已创建验证任务流 v{{version}}",
+        "skipped_validation_failed": "任务流校验失败，未自动更新",
+        "skipped_version_conflict": "存在更新版本，未自动覆盖任务流",
+        "versioned": "任务流已自动升级至 v{{version}}"
+      },
       "template_created": "已生成可复用的工作流模板。",
-      "template_requires_success": "仅完整成功的运行记录可以生成模板。",
+      "template_requires_success": "仅完整成功的运行记录可以生成任务流。",
       "temporary_action": "临时纠偏动作",
       "temporary_steps": "临时纠偏步骤",
       "timeout": "超时时间（毫秒）",
       "title": "RPA 任务执行器",
+      "topic_override_assistant_changed": "助手已切换",
+      "topic_override_assistant_changed_detail": "当前话题包含来自其他助手的临时 RPA 覆盖配置。请选择保留、重映射兼容资产或清除。",
+      "topic_override_switch_cancelled": "已取消助手切换配置决策。",
       "validation_failed": "流程中存在校验错误。",
+      "verification_model": "验证模型",
       "verification_result": "验证结果",
+      "version_range": "版本范围",
+      "view_context": "详情",
+      "view_details": "查看详情",
+      "view_device_execution_progress": "查看设备执行进度",
       "vision_model": "视觉模型",
       "vision_model_required": "当前默认模型无法处理手机截图，请先选择视觉模型。",
+      "visual_model": "视觉模型",
+      "visual_model_required": "截图类操作需要配置支持视觉能力的模型。",
       "waiting_to_execute": "等待执行",
+      "workspace": "RPA 工作区",
       "workspace_hint": "在聊天框描述手机任务，当前聊天模型会生成可编辑的自动化流程。",
       "workspace_title": "RPA 流程规划"
     },
@@ -1843,9 +1922,6 @@
       "content": "删除文件会删除文件在所有消息中的引用，确定要删除此文件吗？",
       "db_error": "删除失败",
       "label": "删除",
-      "paintings": {
-        "warning": "绘图中包含该图片，暂时无法删除"
-      },
       "title": "删除文件"
     },
     "document": "文档",
@@ -1860,6 +1936,45 @@
     "preview": {
       "error": "打开文件失败"
     },
+    "rpa": {
+      "add": "添加 RPA 资产",
+      "add_failed": "添加 RPA 资产失败",
+      "all_categories": "全部分类",
+      "asset": "RPA 资产",
+      "asset_count": "共 {{count}} 项资产",
+      "categories": {
+        "app_reference_image": "应用参考图",
+        "debug_bundle": "调试包",
+        "exported_dsl": "RPA DSL",
+        "ocr_capture": "OCR 结果",
+        "other": "其他",
+        "run_log": "运行日志",
+        "screenshot": "屏幕截图",
+        "sop_import": "SOP 文档",
+        "ui_tree": "UI 树"
+      },
+      "category": "分类",
+      "empty": "暂无 RPA 资产",
+      "filtered_run": "运行 {{runId}} 关联的证据",
+      "hint": "文件仅建立引用并进行分类、脱敏和保留管理，不会重复存储。",
+      "import": "导入",
+      "import_sop": "将 SOP 导入知识库",
+      "import_sop_hint": "导入内容将保持草稿状态，需人工审核后方可使用。",
+      "knowledge_draft_created": "知识库草稿已创建",
+      "link": "关联",
+      "link_asset": "关联 RPA 资产",
+      "link_failed": "关联 RPA 资产失败",
+      "links": "关联对象",
+      "load_failed": "加载 RPA 资产失败",
+      "open_failed": "打开 RPA 资产失败",
+      "policy": "保留策略",
+      "redaction_required": "部分敏感证据需脱敏后才能共享。",
+      "remove_metadata_confirm": "删除此资产记录？底层文件不会被删除。",
+      "rpa_template_draft_ready": "已创建通过校验的 RPA 模板草稿",
+      "select_knowledge": "选择知识库",
+      "title": "RPA 证据与资产"
+    },
+    "rpa_artifacts": "RPA 证据与资产",
     "size": "大小",
     "text": "文本",
     "title": "文件",
@@ -2087,10 +2202,6 @@
     "urdu": "乌尔都文",
     "vietnamese": "越南文"
   },
-  "launchpad": {
-    "apps": "应用",
-    "minapps": "小程序"
-  },
   "lmstudio": {
     "keep_alive_time": {
       "description": "对话后模型在内存中保持的时间（默认：5 分钟）",
@@ -2312,9 +2423,6 @@
           "specified": "导出 Markdown 文件失败"
         }
       },
-      "notes": {
-        "export": "导出笔记失败"
-      },
       "notion": {
         "export": "导出 Notion 错误，请检查连接状态并对照文档检查配置",
         "no_api_key": "未配置 Notion API Key 或 Notion Database ID",
@@ -2425,9 +2533,6 @@
           "preconf": "成功导出 Markdown 文件到预先设定的路径",
           "specified": "成功导出 Markdown 文件"
         }
-      },
-      "notes": {
-        "export": "成功导出到笔记"
       },
       "notion": {
         "export": "成功导出到 Notion"
@@ -2540,61 +2645,6 @@
       "rag_failed": "RAG 失败，返回空结果..."
     }
   },
-  "minapp": {
-    "add_to_launchpad": "添加到启动台",
-    "add_to_sidebar": "添加到侧边栏",
-    "popup": {
-      "close": "关闭小程序",
-      "devtools": "开发者工具",
-      "goBack": "后退",
-      "goForward": "前进",
-      "minimize": "最小化小程序",
-      "openExternal": "在浏览器中打开",
-      "open_link_external_off": "当前：使用默认窗口打开链接",
-      "open_link_external_on": "当前：在浏览器中打开链接",
-      "refresh": "刷新",
-      "rightclick_copyurl": "右键复制 URL"
-    },
-    "remove_from_launchpad": "从启动台移除",
-    "remove_from_sidebar": "从侧边栏移除",
-    "sidebar": {
-      "close": {
-        "title": "关闭"
-      },
-      "closeall": {
-        "title": "关闭所有"
-      },
-      "hide": {
-        "title": "隐藏"
-      },
-      "remove_custom": {
-        "title": "删除自定义应用"
-      }
-    },
-    "title": "小程序"
-  },
-  "minapps": {
-    "ant-ling": "蚂蚁百灵",
-    "baichuan": "百小应",
-    "baidu-ai-search": "百度AI搜索",
-    "chatglm": "智谱清言",
-    "dangbei": "当贝AI",
-    "doubao": "豆包",
-    "hailuo": "海螺",
-    "metaso": "秘塔AI搜索",
-    "nami-ai": "纳米AI",
-    "nami-ai-search": "纳米AI搜索",
-    "qwen": "通义千问",
-    "sensechat": "商量",
-    "stepfun": "阶跃AI",
-    "tencent-yuanbao": "腾讯元宝",
-    "tiangong-ai": "天工AI",
-    "wanzhi": "万知",
-    "wenxin": "文心一言",
-    "wps-copilot": "WPS灵犀",
-    "xiaoyi": "小艺",
-    "zhihu": "知乎直答"
-  },
   "miniwindow": {
     "alert": {
       "google_login": "提示：如遇到Google登录提示\"不受信任的浏览器\"，请先在小程序列表中的Google小程序中完成账号登录，再在其它小程序使用Google登录"
@@ -2605,8 +2655,7 @@
     "feature": {
       "chat": "回答此问题",
       "explanation": "解释说明",
-      "summary": "内容总结",
-      "translate": "文本翻译"
+      "summary": "内容总结"
     },
     "footer": {
       "backspace_clear": "按 Backspace 清空",
@@ -2700,122 +2749,6 @@
   "navigate": {
     "provider_settings": "跳转到服务商设置界面"
   },
-  "notes": {
-    "auto_rename": {
-      "empty_note": "笔记为空，无法生成名称",
-      "failed": "生成笔记名称失败",
-      "label": "生成笔记名称",
-      "success": "笔记名称生成成功"
-    },
-    "characters": "字符",
-    "collapse": "收起",
-    "content_placeholder": "请输入笔记内容...",
-    "copyContent": "复制内容",
-    "crossPlatformRestoreWarning": "检测到从其他设备恢复配置，但笔记目录为空。请将笔记文件复制到: {{path}}",
-    "delete": "删除",
-    "delete_confirm": "确定要删除这个{{type}}吗？",
-    "delete_folder_confirm": "确定要删除文件夹 \"{{name}}\" 及其所有内容吗？",
-    "delete_note_confirm": "确定要删除笔记 \"{{name}}\" 吗？",
-    "drop_markdown_hint": "拖拽 .md 文件或目录到此处导入",
-    "empty": "暂无笔记",
-    "expand": "展开",
-    "exportToWord": "导出为 Word",
-    "export_failed": "导出到知识库失败",
-    "export_knowledge": "导出笔记到知识库",
-    "export_success": "成功导出到知识库",
-    "export_to_word_failed": "导出为 Word 失败",
-    "folder": "文件夹",
-    "new_folder": "新建文件夹",
-    "new_note": "新建笔记",
-    "no_content_to_copy": "没有内容可复制",
-    "no_content_to_export": "没有内容可导出",
-    "no_file_selected": "请选择要上传的文件",
-    "no_note_selected": "请先选择一个笔记",
-    "no_valid_files": "没有上传有效的文件",
-    "open_folder": "打开外部文件夹",
-    "open_outside": "从外部打开",
-    "rename": "重命名",
-    "rename_changed": "由于安全策略，文件名已从 {{original}} 更改为 {{final}}",
-    "save": "保存到笔记",
-    "search": {
-      "both": "名称+内容",
-      "content": "内容",
-      "found_results": "找到 {{count}} 个结果 (名称: {{nameCount}}, 内容: {{contentCount}})",
-      "more_matches": "个匹配",
-      "searching": "搜索中...",
-      "show_less": "收起"
-    },
-    "settings": {
-      "data": {
-        "apply": "应用",
-        "apply_path_failed": "应用路径失败",
-        "current_work_directory": "当前工作目录",
-        "invalid_directory": "选择的目录无效或无权限",
-        "path_required": "请选择工作目录",
-        "path_updated": "工作目录更新成功",
-        "reset_failed": "重置失败",
-        "reset_to_default": "重置为默认",
-        "select": "选择",
-        "select_directory_failed": "选择目录失败",
-        "title": "数据设置",
-        "work_directory_description": "工作目录是存储所有笔记文件的位置。更改工作目录不会移动现有文件，请手动迁移文件。",
-        "work_directory_placeholder": "选择笔记工作目录"
-      },
-      "display": {
-        "compress_content": "缩减栏宽",
-        "compress_content_description": "开启后将限制每行字数，使屏幕显示的内容减少",
-        "default_font": "默认字体",
-        "font_size": "字体大小",
-        "font_size_description": "调整字体大小以获得更好的阅读体验 (10-30px)",
-        "font_size_large": "大",
-        "font_size_medium": "中",
-        "font_size_small": "小",
-        "font_title": "字体设置",
-        "serif_font": "衬线字体",
-        "show_table_of_contents": "显示目录大纲",
-        "show_table_of_contents_description": "显示目录大纲侧边栏，方便文档内导航",
-        "title": "显示设置"
-      },
-      "editor": {
-        "edit_mode": {
-          "description": "在编辑视图下，新笔记默认采用的编辑模式",
-          "preview_mode": "实时预览",
-          "source_mode": "源码模式",
-          "title": "默认编辑视图"
-        },
-        "title": "编辑器设置",
-        "view_mode": {
-          "description": "新笔记默认的视图模式",
-          "edit_mode": "编辑模式",
-          "read_mode": "阅读模式",
-          "title": "默认视图"
-        },
-        "view_mode_description": "设置新标签页的默认视图模式。"
-      },
-      "title": "笔记"
-    },
-    "show_starred": "显示收藏的笔记",
-    "sort_a2z": "文件名（A-Z）",
-    "sort_created_asc": "创建时间（从旧到新）",
-    "sort_created_desc": "创建时间（从新到旧）",
-    "sort_updated_asc": "更新时间（从旧到新）",
-    "sort_updated_desc": "更新时间（从新到旧）",
-    "sort_z2a": "文件名（Z-A）",
-    "spell_check": "拼写检查",
-    "spell_check_tooltip": "启用/禁用拼写检查",
-    "star": "收藏笔记",
-    "starred_notes": "收藏的笔记",
-    "title": "笔记",
-    "unsaved_changes": "你有未保存的内容，确定要离开吗？",
-    "unstar": "取消收藏",
-    "untitled_folder": "新文件夹",
-    "untitled_note": "无标题笔记",
-    "upload_failed": "笔记上传失败",
-    "upload_files": "上传文件",
-    "upload_folder": "上传文件夹",
-    "upload_success": "笔记上传成功",
-    "uploading_files": "正在上传 {{count}} 个文件..."
-  },
   "notification": {
     "assistant": "助手响应",
     "knowledge": {
@@ -2855,91 +2788,6 @@
       "title": "保持活跃时间"
     },
     "title": "Ollama"
-  },
-  "openclaw": {
-    "checking_installation": "正在检查 OpenClaw 安装状态...",
-    "description": "使用 Cherry Studio 服务商为 OpenClaw 提供支持，OpenClaw 是您的个人 AI 助手，可在 WhatsApp、Telegram、Slack、Discord 等平台上使用。",
-    "error": {
-      "select_provider_model": "请先选择服务商和模型"
-    },
-    "gateway": {
-      "port": "端口",
-      "restart": "重启",
-      "start": "启动",
-      "status": "状态",
-      "stop": "停止",
-      "version": "版本"
-    },
-    "git_missing": {
-      "description": "OpenClaw 的部分依赖需要 Git 来安装。请先安装 Git，然后再次点击安装。",
-      "download_button": "下载 Git",
-      "hint": "macOS: brew install git | Windows: 从 git-scm.com 下载（安装时请确保勾选将 Git 添加到 PATH）",
-      "title": "需要安装 Git"
-    },
-    "install_progress": "安装进度",
-    "installed_at": "OpenClaw 安装路径",
-    "model_config": {
-      "auth_token": "认证令牌",
-      "auth_token_hint": "网关认证令牌（必填）。留空时将自动生成。",
-      "auth_token_placeholder": "输入或生成令牌",
-      "generate_token": "生成",
-      "model": "模型",
-      "provider": "服务商",
-      "select_model": "选择模型",
-      "select_provider": "选择服务商",
-      "sync_hint": "选择的服务商和模型将同步到 OpenClaw 配置文件",
-      "title": "模型配置"
-    },
-    "node_missing": {
-      "description": "OpenClaw 需要 Node.js/npm。请先安装 Node.js，然后再次点击安装。",
-      "download_button": "下载 Node.js",
-      "hint": "macOS: brew install node | Windows: 从 nodejs.org 下载 LTS 版本",
-      "title": "需要安装 Node.js"
-    },
-    "node_version_low": {
-      "description": "OpenClaw 需要 Node.js 22.0 或以上版本。当前版本为 v{{version}}，请先升级 Node.js。",
-      "hint": "nvm: nvm install 22 && nvm use 22 | mise: mise use node@22",
-      "title": "Node.js 版本过低"
-    },
-    "not_installed": {
-      "description": "OpenClaw 尚未安装在您的系统上。请先安装它以使用此功能。",
-      "install_button": "安装 OpenClaw",
-      "install_guide_title": "安装指南",
-      "macos_linux_title": "macOS / Linux",
-      "refresh": "刷新",
-      "step2_hint": "安装完成后，点击上方的刷新按钮来检测 OpenClaw",
-      "step2_title": "第二步：验证安装",
-      "title": "OpenClaw 未安装",
-      "windows_title": "Windows"
-    },
-    "quick_actions": {
-      "open_dashboard": "打开控制面板",
-      "title": "快捷操作",
-      "uninstall": "卸载",
-      "view_docs": "查看文档"
-    },
-    "status": {
-      "error": "错误",
-      "running": "运行中",
-      "starting": "启动中",
-      "stopped": "已停止"
-    },
-    "tips": {
-      "permissions": "OpenClaw 拥有较高的系统权限，建议仅在可信环境中使用",
-      "title": "温馨提示",
-      "token_usage": "AI 代理模式会消耗较多 Token，请注意用量"
-    },
-    "title": "OpenClaw",
-    "uninstall_confirm": "确定要卸载 OpenClaw 吗？点击确定继续。",
-    "uninstall_progress": "卸载进度",
-    "uninstalled": {
-      "description": "OpenClaw 已成功卸载。",
-      "title": "卸载完成"
-    },
-    "uninstalling": {
-      "description": "正在卸载 OpenClaw，请稍候...",
-      "title": "正在卸载 OpenClaw"
-    }
   },
   "ovms": {
     "action": {
@@ -2993,238 +2841,6 @@
       "unknown": "OVMS 状态未知"
     },
     "title": "Intel OVMS"
-  },
-  "paintings": {
-    "aspect_ratio": "画幅比例",
-    "aspect_ratios": {
-      "landscape": "横图",
-      "portrait": "竖图",
-      "square": "方形"
-    },
-    "auto_create_paint": "自动新建图片",
-    "auto_create_paint_tip": "在图片生成后，会自动新建图片",
-    "background": "背景",
-    "background_options": {
-      "auto": "自动",
-      "opaque": "不透明",
-      "transparent": "透明"
-    },
-    "button": {
-      "delete": {
-        "image": {
-          "confirm": "确定要删除此图片吗？",
-          "label": "删除图片"
-        }
-      },
-      "new": {
-        "image": "新建图片"
-      }
-    },
-    "custom_size": "自定义尺寸",
-    "dmxapi": {
-      "generating_tip": "正在使用官方的模型生成，预计等待2~5分钟效果最好，本次消耗金额请到DMXAPI后台日志查看",
-      "style": "，风格：",
-      "style_types": {
-        "25d_animation": "2.5D动画",
-        "3d_cartoon": "3D卡通",
-        "american_retro": "美式复古",
-        "baroque": "巴洛克",
-        "cartoon_illustration": "卡通插画",
-        "chinese_gongbi": "中国工笔",
-        "clay": "黏土",
-        "cyberpunk": "赛博朋克",
-        "felt": "毛毡",
-        "flat": "平坦",
-        "fresh_anime": "新鲜动漫",
-        "ghibli": "吉卜力",
-        "japanese_anime": "日本动漫",
-        "little_people_book": "小人书",
-        "monet_garden": "莫奈花园",
-        "oil_painting": "油画",
-        "pixar": "皮克斯",
-        "pixel_art": "像素艺术",
-        "poetic_ancient": "诗意古风",
-        "psychedelic": "迷幻",
-        "sketch": "草图",
-        "street_art": "街头艺术",
-        "texture": "纹理",
-        "ukiyo_e": "浮世绘",
-        "watercolor": "水彩",
-        "wood_carving": "木雕",
-        "yarn_doll": "纱线娃娃"
-      }
-    },
-    "edit": {
-      "image_file": "输入图片",
-      "image_required": "请先上传需要编辑的图片"
-    },
-    "generate": {
-      "height": "高度",
-      "magic_prompt_option_tip": "智能优化提示词以提升生成效果",
-      "model_tip": "模型版本：V3 为最新版本，V2 为之前版本，V2A 为快速模型、V_1 为初代模型，_TURBO 为加速版本",
-      "negative_prompt_tip": "描述不想在图像中出现的元素，仅支持 V_1、V_1_TURBO、V_2 和 V_2_TURBO 版本",
-      "number_images_tip": "单次出图数量",
-      "person_generation": "生成人物",
-      "person_generation_tip": "允许模型生成人物图像",
-      "rendering_speed_tip": "控制渲染速度与质量的平衡，仅适用于 V_3 版本",
-      "safety_tolerance": "安全容忍度",
-      "safety_tolerance_tip": "控制图像生成的安全容忍度，仅适用于 FLUX.1-Kontext-pro 版本",
-      "seed_tip": "控制图像生成的随机性，用于复现相同的生成结果",
-      "style_type_tip": "图像生成风格，仅适用于 V_2 及以上版本",
-      "width": "宽度"
-    },
-    "generate_failed": "生成图像失败",
-    "generated_image": "生成图片",
-    "go_to_settings": "去设置",
-    "guidance_scale": "引导比例",
-    "guidance_scale_tip": "无分类器指导。控制模型在寻找相关图像时对提示词的遵循程度",
-    "image": {
-      "size": "图片尺寸"
-    },
-    "image_file_required": "请先上传图片",
-    "image_file_retry": "请重新上传图片",
-    "image_handle_required": "请先上传图片",
-    "image_mix_failed": "图像混合失败",
-    "image_placeholder": "暂无图片",
-    "image_retry": "重试",
-    "image_size_options": {
-      "auto": "自动"
-    },
-    "inference_steps": "推理步数",
-    "inference_steps_tip": "要执行的推理步数。步数越多，质量越高但耗时越长",
-    "input_image": "输入图片",
-    "input_parameters": "输入参数",
-    "invalid_image_url": "无效的图片URL格式",
-    "learn_more": "了解更多",
-    "magic_prompt_option": "提示词增强",
-    "mode": {
-      "edit": "编辑",
-      "generate": "绘图",
-      "merge": "合并",
-      "remix": "混合",
-      "upscale": "高清增强"
-    },
-    "model": "模型",
-    "model_and_pricing": "模型与定价",
-    "moderation": "敏感度",
-    "moderation_options": {
-      "auto": "自动",
-      "low": "低"
-    },
-    "negative_prompt": "反向提示词",
-    "negative_prompt_tip": "描述你不想在图片中出现的内容",
-    "no_image_generation_model": "暂无可用的图片生成模型，请先新增模型并设置端点类型为 {{endpoint_type}}",
-    "number_images": "生成数量",
-    "number_images_tip": "一次生成的图片数量 (1-4)",
-    "operation_failed": "操作失败，请稍后重试",
-    "paint_course": "教程",
-    "per_image": "每张图片",
-    "per_images": "每张图片",
-    "person_generation_options": {
-      "allow_adult": "允许成人",
-      "allow_all": "允许所有",
-      "allow_none": "不允许"
-    },
-    "ppio": {
-      "edit_prompt_tip": "用于指定要从图像中移除的对象或区域，例如：'dog' 或 'hat'",
-      "mask_image": "遮罩图像",
-      "mask_image_tip": "用于指示要擦除的区域。要擦除的区域应为白色，要保留的区域应为黑色",
-      "output_format": "输出格式",
-      "resolution": "目标分辨率",
-      "seed_tip": "随机种子，相同的种子和参数可以生成相似的图片，-1 表示随机",
-      "use_pre_llm_tip": "开启文本扩写，会针对输入提示词进行扩写优化。提示词较短建议开启，较长建议关闭",
-      "watermark_tip": "是否在生成的图片上添加水印，默认不添加"
-    },
-    "pricing": "定价",
-    "prompt_enhancement": "提示词增强",
-    "prompt_enhancement_tip": "开启后将提示重写为详细的、适合模型的版本",
-    "prompt_placeholder": "描述你想创建的图片，例如：一个宁静的湖泊，夕阳西下，远处是群山",
-    "prompt_placeholder_edit": "输入你的图片描述，文本绘制用 \"双引号\" 包裹",
-    "prompt_placeholder_en": "输入 \"英文\" 图片描述，目前仅支持英文提示词",
-    "proxy_required": "打开代理并开启 \"TUN 模式\" 查看生成图片或复制到浏览器打开，后续会支持国内直连",
-    "quality": "质量",
-    "quality_options": {
-      "auto": "自动",
-      "high": "高",
-      "low": "低",
-      "medium": "中"
-    },
-    "regenerate": {
-      "confirm": "这将覆盖已生成的图片，是否继续？"
-    },
-    "remix": {
-      "image_file": "参考图",
-      "image_weight": "参考图权重",
-      "image_weight_tip": "调整参考图像的影响程度",
-      "magic_prompt_option_tip": "智能优化重混提示词",
-      "model_tip": "选择重混使用的 AI 模型版本",
-      "negative_prompt_tip": "描述不想在重混结果中出现的元素",
-      "number_images_tip": "生成的重混结果数量",
-      "rendering_speed_tip": "控制渲染速度与质量之间的平衡，仅适用于 V_3 版本",
-      "seed_tip": "控制重混结果的随机性",
-      "style_type_tip": "重混后的图像风格，仅适用于 V_2 及以上版本"
-    },
-    "rendering_speed": "渲染速度",
-    "rendering_speeds": {
-      "default": "默认",
-      "quality": "高质量",
-      "turbo": "快速"
-    },
-    "req_error_model": "获取模型失败",
-    "req_error_no_balance": "请检查令牌有效性",
-    "req_error_text": "服务器繁忙或提示词出现 \"版权词\" 和 \"敏感词\" ，请重试。",
-    "req_error_token": "请检查令牌有效性",
-    "required_field": "必填项",
-    "seed": "随机种子",
-    "seed_desc_tip": "相同的种子和提示词可以生成相似的图片，设置 -1 每次生成都不一样",
-    "seed_random": "随机",
-    "seed_tip": "相同的种子和提示词可以生成相似的图片",
-    "select_model": "选择模型",
-    "style_type": "风格",
-    "style_types": {
-      "3d": "3D",
-      "anime": "动漫",
-      "auto": "自动",
-      "design": "设计",
-      "general": "通用",
-      "realistic": "写实"
-    },
-    "text_desc_required": "请先输入图片描述",
-    "title": "图片",
-    "top_up": "充值",
-    "translating": "翻译中...",
-    "uploaded_input": "已上传输入",
-    "upscale": {
-      "detail": "细节",
-      "detail_tip": "控制放大图像的细节增强程度",
-      "image_file": "需要放大的图片",
-      "magic_prompt_option_tip": "智能优化放大提示词",
-      "number_images_tip": "生成的放大结果数量",
-      "resemblance": "相似度",
-      "resemblance_tip": "控制放大结果与原图的相似程度",
-      "seed_tip": "控制放大结果的随机性"
-    },
-    "watermark": "添加水印",
-    "zhipu": {
-      "custom_size_divisible": "自定义尺寸必须能被16整除",
-      "custom_size_hint": "长宽均需满足512px-2048px之间，需被16整除，并保证最大像素数不超过2^21px",
-      "custom_size_pixels": "自定义尺寸的总像素数不能超过2,097,152",
-      "custom_size_range": "自定义尺寸必须在512px-2048px之间",
-      "custom_size_required": "请设置自定义尺寸的宽度和高度",
-      "image_sizes": {
-        "1024x1024_default": "1024x1024（默认）",
-        "1152x864": "1152x864",
-        "1344x768": "1344x768",
-        "1440x720": "1440x720",
-        "720x1440": "720x1440",
-        "768x1344": "768×1344",
-        "864x1152": "864x1152"
-      },
-      "quality_options": {
-        "hd": "高清",
-        "standard_default": "标准（默认）"
-      }
-    }
   },
   "plugins": {
     "actions": "操作",
@@ -3349,7 +2965,6 @@
     "ocoolai": "ocoolAI",
     "ollama": "Ollama",
     "openai": "OpenAI",
-    "openclaw": "OpenClaw(龙虾)",
     "openrouter": "OpenRouter",
     "ovms": "Intel OVMS",
     "perplexity": "Perplexity",
@@ -3603,6 +3218,222 @@
       "undo": "撤销"
     }
   },
+  "rpa_roles": {
+    "actions": {
+      "back": "返回角色库",
+      "create": "创建",
+      "delete_confirm": "确定删除该角色吗？",
+      "disable": "停用",
+      "duplicate": "复制",
+      "edit": "编辑角色",
+      "enable": "启用",
+      "export": "导出",
+      "import": "导入",
+      "new_role": "新建角色",
+      "save": "保存",
+      "start_session": "新建 RPA 对话"
+    },
+    "alerts": {
+      "active_runs": "该角色存在执行中的任务，禁止进行破坏性修改",
+      "broken_bindings": "存在 {{count}} 个未解析的资产绑定"
+    },
+    "assets": {
+      "artifact": "文件与证据",
+      "knowledge": "知识库",
+      "prompt": "提示词",
+      "provider": "上下文 Provider",
+      "skill": "技能"
+    },
+    "binding": {
+      "add": "添加绑定",
+      "artifact_imported": "已导入 {{count}} 个文件资产",
+      "asset": "资产",
+      "asset_source_hint": "可先在此创建或导入资产，再从下方完成绑定。",
+      "bind_asset": "绑定资产",
+      "bind_title": "绑定{{asset}}",
+      "empty": "暂无{{asset}}绑定",
+      "enabled": "已启用",
+      "import_files": "导入文件",
+      "import_skill": "导入 Skill JSON",
+      "manage_knowledge": "创建或导入知识库",
+      "missing": "缺失：{{id}}",
+      "ownership": "归属关系",
+      "priority": "优先级",
+      "reference_hint": "角色只保存资产引用，资产内容仍保留在原始资源库中。",
+      "remove_confirm": "确定移除该绑定吗？",
+      "requirement": "依赖级别",
+      "skill_imported": "已导入 {{count}} 个 Skill 资产"
+    },
+    "columns": {
+      "actions": "操作",
+      "assets": "资产",
+      "health": "健康状态",
+      "role": "角色",
+      "updated": "更新时间"
+    },
+    "create": {
+      "name_placeholder": "美团自动化",
+      "title": "创建 RPA 角色"
+    },
+    "form": {
+      "active_runs": "执行中任务",
+      "app_packages": "应用包名",
+      "description": "描述",
+      "lifecycle": "生命周期",
+      "migration": "迁移状态",
+      "name": "名称",
+      "primary_app_package": "主要应用包名",
+      "provider_health": "已配置 {{configured}} 个 / 缺失 {{missing}} 个",
+      "providers": "模型服务",
+      "readiness": "就绪状态",
+      "recent_runs": "最近运行",
+      "role_name": "角色名称",
+      "supported_app_versions": "支持的应用版本",
+      "supporting_roles": "协作角色",
+      "system_capabilities": "系统能力",
+      "version": "版本"
+    },
+    "library": {
+      "active_runs": "{{count}} 个执行中任务",
+      "broken_bindings": "{{count}} 个异常绑定",
+      "compatibility": "兼容模式",
+      "copy_name": "{{name}} 副本",
+      "description": "统一管理应用范围、提示词、模型和经过校验的 RPA 资产。",
+      "empty": "暂无 RPA 角色",
+      "heading": "应用自动化角色",
+      "no_app_package": "未配置应用包名",
+      "no_assets": "暂无资产",
+      "search_placeholder": "搜索角色或应用包名"
+    },
+    "messages": {
+      "active_role_delete_blocked": "该角色正被执行中的任务使用，无法删除",
+      "already_exists": "角色已存在：{{id}}",
+      "import_failed": "导入角色失败",
+      "imported": "角色导入成功",
+      "invalid_json": "无效的角色 JSON",
+      "load_failed": "加载 RPA 角色失败",
+      "not_found": "未找到 RPA 角色",
+      "saved": "角色已保存",
+      "workspace_load_failed": "加载 RPA 角色工作区失败"
+    },
+    "migration": {
+      "compatibility_description": "该角色由助手 {{assistantId}} 的配置版本 {{version}} 生成。在迁移和回滚验收完成前，将继续使用兼容读取逻辑。",
+      "compatibility_title": "兼容角色",
+      "native_description": "迁移状态：{{state}}",
+      "native_title": "原生角色"
+    },
+    "model_kinds": {
+      "planner": "任务规划",
+      "recovery": "失败恢复",
+      "verification": "结果验证",
+      "vision": "视觉识别"
+    },
+    "none": "无",
+    "ownership": {
+      "linked": "引用",
+      "owned": "自有",
+      "shared": "共享"
+    },
+    "prompt_kinds": {
+      "capability": "能力",
+      "planner": "规划",
+      "recovery": "恢复",
+      "system": "系统",
+      "verification": "验证"
+    },
+    "prompts": {
+      "add": "添加提示词",
+      "add_title": "添加版本化角色提示词",
+      "capability": "能力",
+      "content": "提示词内容",
+      "delete_confirm": "确定删除该提示词版本吗？",
+      "empty": "暂无角色提示词",
+      "id": "提示词 ID",
+      "kind": "提示词类型",
+      "model_id": "模型 ID",
+      "provider": "模型服务",
+      "save": "保存提示词",
+      "versioned": "版本化提示词"
+    },
+    "provider_status": {
+      "degraded": "已降级",
+      "disabled": "已停用",
+      "healthy": "健康",
+      "needs_configuration": "不可用"
+    },
+    "readiness": {
+      "blocked": "已阻塞",
+      "degraded": "能力降级",
+      "draft": "草稿",
+      "loading": "加载中",
+      "ready": "已就绪"
+    },
+    "requirement": {
+      "optional": "可选",
+      "required": "必需"
+    },
+    "role": "RPA 角色",
+    "settings": {
+      "assets": "角色资产",
+      "bound_description": "当前对话使用创建时记录的角色版本；保存配置会生成新版本，不会改写历史运行上下文。",
+      "bound_title": "配置已绑定到当前角色",
+      "enabled_prompt_versions": "{{count}} 个启用版本",
+      "load_failed": "加载 RPA 角色配置失败",
+      "manage": "管理",
+      "model_defaults": "模型默认值",
+      "save_failed": "保存 RPA 角色配置失败",
+      "save_role": "保存角色",
+      "saved": "RPA 角色配置已保存",
+      "unbound_description": "请从 RPA 角色库中选择角色并新建任务对话。普通聊天设置不会创建自动化资产绑定。",
+      "unbound_title": "当前话题未绑定 RPA 角色",
+      "use_chat_model": "使用聊天模型"
+    },
+    "sidebar_title": "RPA 角色",
+    "status": {
+      "disabled": "已停用",
+      "draft": "草稿",
+      "enabled": "已启用"
+    },
+    "tabs": {
+      "migration": "迁移",
+      "overview": "概览",
+      "prompts": "提示词",
+      "providers": "模型服务",
+      "versions": "版本"
+    },
+    "title": "RPA 角色库",
+    "versions": {
+      "last_updated": "最后更新时间",
+      "prompt_versions": "提示词版本",
+      "role_version": "角色版本"
+    }
+  },
+  "rpa_supplements": {
+    "add_files": "添加文件",
+    "empty": "当前会话还没有补充上下文",
+    "manual_retention": "手动移除前保留",
+    "next_request": "下一次请求",
+    "no_authorized_provider": "当前工作区没有健康且已信任的检索或 MCP Provider。",
+    "no_pending_files": "尚未为下一次任务请求选择文件。",
+    "no_role_sources": "当前角色未绑定可复用来源。",
+    "optional": "可选",
+    "pending_files": "待处理文件",
+    "remote_sources": "已批准的 URL 与 MCP 来源",
+    "request_retention": "仅本次请求",
+    "required": "必需",
+    "role_sources": "角色来源",
+    "select_knowledge": "选择仅用于当前任务的知识库",
+    "select_mcp_resource": "选择 MCP Resource",
+    "select_provider": "选择 Provider",
+    "session_knowledge": "临时知识库",
+    "session_retention": "保留到会话结束",
+    "session_scope": "当前会话",
+    "session_sources": "会话来源",
+    "title": "补充上下文"
+  },
+  "rpa_templates": {
+    "title": "RPA 任务流"
+  },
   "selection": {
     "action": {
       "builtin": {
@@ -3611,16 +3442,12 @@
         "quote": "引用",
         "refine": "优化",
         "search": "搜索",
-        "summary": "总结",
-        "translate": "翻译"
+        "summary": "总结"
       },
       "prompt": {
         "explain": "请解释下面的内容。要求：使用 {{language}} 语言进行回复；请不要包含对本提示词的任何解释，直接给出回复： \n\n",
         "refine": "请对用XML标签<INPUT>包裹的用户输入内容进行优化或润色，并保持原内容的含义和完整性。要求：你的输出应当与用户输入内容的语言相同。；请不要包含对本提示词的任何解释，直接给出回复；请不要输出XML标签，直接输出优化后的内容: \n\n<INPUT>{{text}}</INPUT>",
         "summary": "请总结下面的内容。要求：使用 {{language}} 语言进行回复；请不要包含对本提示词的任何解释，直接给出回复： \n\n"
-      },
-      "translate": {
-        "smart_translate_tips": "智能翻译：内容将优先翻译为目标语言；内容已是目标语言的，将翻译为备选语言"
       },
       "window": {
         "c_copy": "C 复制",
@@ -3924,7 +3751,6 @@
         "joplin": "导出到 Joplin",
         "markdown": "导出为 Markdown",
         "markdown_reason": "导出为 Markdown（包含思考）",
-        "notes": "导出到笔记",
         "notion": "导出到 Notion",
         "obsidian": "导出到 Obsidian",
         "plain_text": "复制为纯文本",
@@ -4512,16 +4338,10 @@
         "knowledge": {
           "icon": "显示知识图标"
         },
-        "minapp": {
-          "icon": "显示小程序图标"
-        },
         "painting": {
           "icon": "显示绘画图标"
         },
         "title": "侧边栏设置",
-        "translate": {
-          "icon": "显示翻译图标"
-        },
         "visible": "显示的图标"
       },
       "title": "显示设置",
@@ -4592,13 +4412,11 @@
       "title": "禁用硬件加速"
     },
     "input": {
-      "auto_translate_with_space": "3 个空格快速翻译",
       "clear": {
         "all": "清除",
         "knowledge_base": "清除选中的知识库",
         "models": "清除@的所有模型"
       },
-      "show_translate_confirm": "显示翻译确认对话框",
       "target_language": {
         "chinese": "简体中文",
         "chinese-traditional": "繁体中文",
@@ -5069,10 +4887,6 @@
         "label": "话题命名",
         "prompt": "话题命名提示词"
       },
-      "translate_model": "翻译模型",
-      "translate_model_description": "翻译服务使用的模型",
-      "translate_model_prompt_message": "请输入翻译模型提示词",
-      "translate_model_prompt_title": "翻译模型提示词",
       "use_assistant": "使用助手",
       "use_model": "默认模型"
     },
@@ -5352,7 +5166,6 @@
       "openai": {
         "alert": "OpenAI 服务商不再支持旧的调用方式，如果使用第三方 API 请新建服务商"
       },
-      "openclaw": "[to be translated]:OpenClaw",
       "remove_duplicate_keys": "移除重复密钥",
       "remove_invalid_keys": "删除无效密钥",
       "search": "搜索模型平台...",
@@ -5622,51 +5435,6 @@
         "time": "显示话题时间"
       }
     },
-    "translate": {
-      "custom": {
-        "delete": {
-          "description": "确定要删除吗？",
-          "title": "删除自定义语言"
-        },
-        "error": {
-          "add": "添加失败",
-          "delete": "删除失败",
-          "langCode": {
-            "builtin": "该语言已内置支持",
-            "empty": "语言代码为空",
-            "exists": "该语言已存在",
-            "invalid": "无效的语言代码"
-          },
-          "update": "更新失败",
-          "value": {
-            "empty": "语言名不能为空",
-            "too_long": "语言名过长"
-          }
-        },
-        "langCode": {
-          "help": "[语言+区域]的格式，[2~3位小写字母]-[2~3位小写字母]",
-          "label": "语言代码",
-          "placeholder": "zh-cn"
-        },
-        "success": {
-          "add": "添加成功",
-          "delete": "删除成功",
-          "update": "更新成功"
-        },
-        "table": {
-          "action": {
-            "title": "操作"
-          }
-        },
-        "value": {
-          "help": "1~32个字符",
-          "label": "语言名称",
-          "placeholder": "中文"
-        }
-      },
-      "prompt": "翻译提示词",
-      "title": "翻译设置"
-    },
     "tray": {
       "onclose": "关闭时最小化到托盘",
       "show": "显示托盘图标",
@@ -5684,135 +5452,6 @@
       "title": "缩放"
     }
   },
-  "taskflow": {
-    "description": "安卓微信消息监听与自动回复任务流",
-    "deviceQueue": {
-      "actions": {
-        "cancel": "取消",
-        "pause": "暂停",
-        "resume": "继续"
-      },
-      "columns": {
-        "actions": "操作",
-        "device": "设备",
-        "goal": "目标",
-        "progress": "进度",
-        "status": "状态",
-        "updated": "更新时间"
-      },
-      "enqueue": "加入队列",
-      "enqueueSuccess": "设备任务已加入队列",
-      "goalPlaceholder": "例如：打开目标应用并点击可见的奖励按钮",
-      "localVlm": "本地 VLM",
-      "onlineDevice": "在线设备",
-      "refresh": "刷新",
-      "selectTaskLogs": "选择一个任务查看日志。",
-      "selectedLogs": "选中任务日志",
-      "title": "设备任务队列",
-      "tryDeerFlow": "尝试 DeerFlow",
-      "validation": {
-        "device": "请选择设备",
-        "goal": "请输入任务目标"
-      }
-    },
-    "editor": {
-      "back": "返回列表",
-      "create": "创建任务",
-      "createSuccess": "任务创建成功",
-      "edit": "编辑任务",
-      "editSuccess": "任务更新成功",
-      "nodePalette": "节点面板",
-      "nodeTypes": "节点类型",
-      "run": "运行任务",
-      "runError": "任务运行失败",
-      "runSuccess": "任务运行成功",
-      "save": "保存任务",
-      "saveFirst": "请先保存任务",
-      "startingTask": "正在启动任务...",
-      "taskDescription": "任务描述",
-      "taskDescriptionPlaceholder": "请输入任务描述",
-      "taskInfo": "任务信息",
-      "taskName": "任务名称",
-      "taskNamePlaceholder": "请输入任务名称",
-      "taskNameRequired": "请输入任务名称",
-      "title": "任务编辑器",
-      "updateSuccess": "任务更新成功"
-    },
-    "executionType": {
-      "manual": "手动",
-      "scheduled": "定时"
-    },
-    "list": {
-      "actions": "操作",
-      "create": "创建任务",
-      "createdAt": "创建时间",
-      "delete": "删除任务",
-      "deleteConfirm": "确定要删除此任务吗？此操作不可撤销。",
-      "edit": "编辑任务",
-      "executionType": "执行方式",
-      "lastRunAt": "最后执行",
-      "name": "任务名称",
-      "neverRun": "从未执行",
-      "run": "运行任务",
-      "runSuccess": "任务运行成功",
-      "search": "搜索任务",
-      "status": "状态",
-      "title": "任务列表",
-      "viewLogs": "查看日志"
-    },
-    "logs": {
-      "back": "返回任务列表",
-      "endTime": "结束时间",
-      "error": "错误",
-      "info": "信息",
-      "level": "级别",
-      "message": "消息",
-      "refresh": "刷新",
-      "search": "搜索日志",
-      "startTime": "开始时间",
-      "time": "时间",
-      "title": "任务日志",
-      "warn": "警告"
-    },
-    "nodeConfig": {
-      "contactName": "联系人名称",
-      "field": "字段",
-      "groupName": "群组名称",
-      "keywords": "关键词",
-      "message": "消息内容",
-      "model": "模型",
-      "operator": "操作符",
-      "prompt": "提示词",
-      "script": "脚本内容",
-      "temperature": "温度",
-      "timeout": "超时时间",
-      "useTemplate": "使用模板",
-      "value": "值"
-    },
-    "nodes": {
-      "condition": "条件判断",
-      "end": "结束",
-      "execute": "执行操作",
-      "listenMessage": "监听消息",
-      "llm": "LLM处理",
-      "sendMessage": "发送消息",
-      "start": "开始"
-    },
-    "operators": {
-      "contains": "包含",
-      "equals": "等于",
-      "greater": "大于",
-      "less": "小于"
-    },
-    "status": {
-      "completed": "已完成",
-      "created": "已创建",
-      "error": "执行失败",
-      "running": "运行中",
-      "stopped": "已停止"
-    },
-    "title": "任务流"
-  },
   "title": {
     "apps": "小程序",
     "code": "Code",
@@ -5822,12 +5461,8 @@
     "launchpad": "启动台",
     "mcp-servers": "MCP 服务器",
     "memories": "记忆",
-    "notes": "笔记",
-    "openclaw": "OpenClaw",
-    "paintings": "绘画",
     "settings": "设置",
-    "store": "助手库",
-    "translate": "翻译"
+    "store": "助手库"
   },
   "trace": {
     "backList": "返回列表",
@@ -5845,137 +5480,6 @@
     "tag": "标签",
     "tokenUsage": "Token使用量",
     "traceWindow": "调用链窗口"
-  },
-  "translate": {
-    "alter_language": "备用语言",
-    "any": {
-      "language": "任意语言"
-    },
-    "button": {
-      "translate": "翻译"
-    },
-    "close": "关闭",
-    "closed": "翻译已关闭",
-    "complete": "翻译完成",
-    "confirm": {
-      "content": "翻译后将覆盖原文，是否继续？",
-      "title": "翻译确认"
-    },
-    "copied": "翻译内容已复制",
-    "custom": {
-      "label": "自定义语言"
-    },
-    "detect": {
-      "method": {
-        "algo": {
-          "label": "算法",
-          "tip": "使用franc进行语言检测"
-        },
-        "auto": {
-          "label": "自动",
-          "tip": "自动选择合适的检测方法"
-        },
-        "label": "自动检测方法",
-        "llm": {
-          "tip": "使用快速模型进行语言检测，消耗少量token。"
-        },
-        "placeholder": "选择自动检测方法",
-        "tip": "自动检测输入语言时使用的方法"
-      }
-    },
-    "detected": {
-      "language": "自动检测"
-    },
-    "detected_source": "检测到",
-    "detecting": "检测中...",
-    "empty": "翻译内容为空",
-    "error": {
-      "chat_qwen_mt": "Qwen MT 模型不可在对话中使用，请转至翻译页面",
-      "detect": {
-        "qwen_mt": "QwenMT模型不能用于语言检测",
-        "unknown": "检测到未知语言",
-        "update_setting": "设置失败"
-      },
-      "empty": "翻译结果为空内容",
-      "failed": "翻译失败",
-      "invalid_source": "无效的源语言",
-      "not_configured": "翻译模型未配置",
-      "not_supported": "不支持的语言 {{language}}",
-      "unknown": "翻译过程中遇到未知错误"
-    },
-    "exchange": {
-      "label": "交换源语言与目标语言"
-    },
-    "files": {
-      "drag_text": "拖放到此处",
-      "error": {
-        "check_type": "检查文件类型时发生错误",
-        "multiple": "不允许上传多个文件",
-        "too_large": "文件过大",
-        "unknown": "读取文件内容失败"
-      },
-      "reading": "读取文件内容中..."
-    },
-    "history": {
-      "clear": "清空历史",
-      "clear_description": "清空历史将删除所有翻译历史记录，是否继续？",
-      "delete": "删除翻译历史",
-      "empty": "暂无翻译历史",
-      "error": {
-        "delete": "删除失败",
-        "save": "保存翻译历史失败"
-      },
-      "search": {
-        "placeholder": "搜索翻译历史"
-      },
-      "title": "翻译历史"
-    },
-    "info": {
-      "aborted": "翻译中止"
-    },
-    "input": {
-      "placeholder": "可粘贴或拖入文本、文本文件、图片（支持OCR）"
-    },
-    "language": {
-      "not_pair": "源语言与设置的语言不同",
-      "same": "源语言和目标语言相同"
-    },
-    "language_settings": "语言设置",
-    "menu": {
-      "description": "对当前输入框内容进行翻译"
-    },
-    "not": {
-      "found": "未找到翻译内容"
-    },
-    "output": {
-      "placeholder": "翻译"
-    },
-    "preferred_target": "首选目标",
-    "processing": "翻译中...",
-    "settings": {
-      "autoCopy": "翻译完成后自动复制",
-      "bidirectional": "双向翻译设置",
-      "bidirectional_tip": "开启后，仅支持在源语言和目标语言之间进行双向翻译",
-      "model": "模型设置",
-      "model_desc": "翻译服务使用的模型",
-      "model_placeholder": "选择翻译模型",
-      "no_model_warning": "未选择翻译模型",
-      "preview": "Markdown 预览",
-      "scroll_sync": "滚动同步设置",
-      "title": "翻译设置"
-    },
-    "stop": "停止翻译",
-    "success": {
-      "custom": {
-        "delete": "删除成功",
-        "update": "更新成功"
-      }
-    },
-    "target_language": "目标语言",
-    "title": "翻译",
-    "tooltip": {
-      "newline": "换行"
-    }
   },
   "tray": {
     "quit": "退出",

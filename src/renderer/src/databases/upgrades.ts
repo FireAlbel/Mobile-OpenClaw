@@ -15,7 +15,7 @@
  * --------------------------------------------------------------------------
  */
 import { loggerService } from '@logger'
-import { LanguagesEnum } from '@renderer/config/translate'
+import { LanguagesEnum } from '@renderer/config/languages'
 import type { LegacyMessage as OldMessage, Topic, TranslateLanguageCode } from '@renderer/types'
 import { FILE_TYPE, WEB_SEARCH_SOURCE } from '@renderer/types' // Import FileTypes enum
 import type {

@@ -1,5 +1,8 @@
 import { loggerService } from '@logger'
 
+import type { RpaExecutionTargetSelection } from './RpaExecutionTarget'
+import type { RpaRunContextSnapshot } from './RpaRunContextSnapshot'
+import { trySanitizeRpaRunContextSnapshot } from './RpaRunContextSnapshot'
 import type { RpaRunStepEvent, RpaTask } from './RpaTypes'
 
 const logger = loggerService.withContext('RpaRunStorage')
@@ -7,6 +10,34 @@ const logger = loggerService.withContext('RpaRunStorage')
 export type RpaDeviceRunStatus = 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled' | 'needs_human'
 
 export type RpaBatchRunStatus = 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled'
+
+export interface RpaTaskFlowLearningResult {
+  status: 'created' | 'versioned' | 'already_applied' | 'skipped_version_conflict' | 'skipped_validation_failed'
+  templateId?: string
+  sourceVersion?: number
+  appliedVersion?: number
+  usedCorrection: boolean
+  validationIssues?: string[]
+}
+
+export interface RpaTraceAnalysisRecord {
+  runId: string
+  deviceRunId: string
+  summary: string
+  failureClass?: string
+  confidence: number
+  stateIds: string[]
+  transitions: string[]
+  locatorHints: string[]
+  assertionHints: string[]
+  evidenceArtifactIds: string[]
+  failureFingerprintId?: string
+  taskFlowLearning?: RpaTaskFlowLearningResult
+  /** Historical proposal references are retained for replay compatibility. */
+  improvementProposalIds: string[]
+  redactions: string[]
+  analyzedAt: number
+}
 
 export interface RpaDeviceRunRecord {
   id: string
@@ -21,6 +52,7 @@ export interface RpaDeviceRunRecord {
   updatedAt: number
   startedAt?: number
   finishedAt?: number
+  traceAnalysis?: RpaTraceAnalysisRecord
 }
 
 export interface RpaBatchRunRecord {
@@ -33,6 +65,8 @@ export interface RpaBatchRunRecord {
   startedAt?: number
   finishedAt?: number
   deviceRuns: RpaDeviceRunRecord[]
+  targetSelection?: RpaExecutionTargetSelection
+  contextSnapshot?: RpaRunContextSnapshot
 }
 
 export interface RpaRunStorage {
@@ -80,13 +114,14 @@ function normalizeInterruptedRun(run: RpaBatchRunRecord): RpaBatchRunRecord {
   })
 
   if (run.status !== 'running') {
-    return { ...run, deviceRuns }
+    return { ...run, deviceRuns, contextSnapshot: trySanitizeRpaRunContextSnapshot(run.contextSnapshot) }
   }
 
   return {
     ...run,
     status: 'paused',
     deviceRuns,
+    contextSnapshot: trySanitizeRpaRunContextSnapshot(run.contextSnapshot),
     updatedAt: Date.now()
   }
 }

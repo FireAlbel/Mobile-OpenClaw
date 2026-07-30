@@ -2,28 +2,23 @@ import '@renderer/databases'
 
 import type { FC } from 'react'
 import { useMemo } from 'react'
-import { HashRouter, Route, Routes } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import Sidebar from './components/app/Sidebar'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import TabsContainer from './components/Tab/TabContainer'
 import NavigationHandler from './handler/NavigationHandler'
 import { useNavbarPosition } from './hooks/useSettings'
-import CodeToolsPage from './pages/code/CodeToolsPage'
 import FilesPage from './pages/files/FilesPage'
 import HomePage from './pages/home/HomePage'
 import KnowledgePage from './pages/knowledge/KnowledgePage'
-import LaunchpadPage from './pages/launchpad/LaunchpadPage'
-import MinAppPage from './pages/minapps/MinAppPage'
-import MinAppsPage from './pages/minapps/MinAppsPage'
-import NotesPage from './pages/notes/NotesPage'
-import OpenClawPage from './pages/openclaw/OpenClawPage'
-import PaintingsRoutePage from './pages/paintings/PaintingsRoutePage'
+import RpaRoleDetailPage from './pages/rpaRoles/RpaRoleDetailPage'
+import RpaRolesPage from './pages/rpaRoles/RpaRolesPage'
+import RpaTemplateEditor from './pages/rpaTemplates/RpaTemplateEditor'
+import RpaTemplatesPage from './pages/rpaTemplates/RpaTemplatesPage'
 import SettingsPage from './pages/settings/SettingsPage'
 import AssistantPresetsPage from './pages/store/assistants/presets/AssistantPresetsPage'
-import TaskFlowPage from './pages/taskflow/TaskFlowPage'
-import TranslatePage from './pages/translate/TranslatePage'
-import TaskFlowEditorPage from './plugins/taskflow/components/TaskFlowEditor'
+import RpaTaskFlowExecutionHost from './services/rpa/RpaTaskFlowExecutionHost'
 
 const Router: FC = () => {
   const { navbarPosition } = useNavbarPosition()
@@ -34,20 +29,17 @@ const Router: FC = () => {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/store" element={<AssistantPresetsPage />} />
-          <Route path="/paintings/*" element={<PaintingsRoutePage />} />
-          <Route path="/translate" element={<TranslatePage />} />
           <Route path="/files" element={<FilesPage />} />
-          <Route path="/notes" element={<NotesPage />} />
           <Route path="/knowledge" element={<KnowledgePage />} />
-          <Route path="/apps/:appId" element={<MinAppPage />} />
-          <Route path="/apps" element={<MinAppsPage />} />
-          <Route path="/code" element={<CodeToolsPage />} />
-          <Route path="/openclaw" element={<OpenClawPage />} />
-          <Route path="/taskflow/*" element={<TaskFlowPage />} />
-          <Route path="/taskflow/create" element={<TaskFlowEditorPage />} />
-          <Route path="/taskflow/edit/:id" element={<TaskFlowEditorPage />} />
+          <Route path="/rpa-workflows" element={<RpaTemplatesPage />} />
+          <Route path="/rpa-workflows/create" element={<RpaTemplateEditor />} />
+          <Route path="/rpa-workflows/edit/:id" element={<RpaTemplateEditor />} />
+          <Route path="/rpa-templates" element={<Navigate to="/rpa-workflows" replace />} />
+          <Route path="/rpa-templates/create" element={<Navigate to="/rpa-workflows/create" replace />} />
+          <Route path="/rpa-templates/edit/:id" element={<LegacyTaskFlowRedirect />} />
+          <Route path="/rpa-roles" element={<RpaRolesPage />} />
+          <Route path="/rpa-roles/:id" element={<RpaRoleDetailPage />} />
           <Route path="/settings/*" element={<SettingsPage />} />
-          <Route path="/launchpad" element={<LaunchpadPage />} />
         </Routes>
       </ErrorBoundary>
     )
@@ -56,6 +48,7 @@ const Router: FC = () => {
   if (navbarPosition === 'left') {
     return (
       <HashRouter>
+        <RpaTaskFlowExecutionHost />
         <Sidebar />
         {routes}
         <NavigationHandler />
@@ -65,10 +58,16 @@ const Router: FC = () => {
 
   return (
     <HashRouter>
+      <RpaTaskFlowExecutionHost />
       <NavigationHandler />
       <TabsContainer>{routes}</TabsContainer>
     </HashRouter>
   )
+}
+
+const LegacyTaskFlowRedirect: FC = () => {
+  const id = window.location.hash.split('/rpa-templates/edit/')[1]?.split('?')[0]
+  return <Navigate to={id ? `/rpa-workflows/edit/${id}` : '/rpa-workflows'} replace />
 }
 
 export default Router

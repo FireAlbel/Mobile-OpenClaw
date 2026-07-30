@@ -42,6 +42,7 @@ interface ScrcpyFrameSession {
   pending: ScrcpyFrameStreamPacket[]
   feed: Promise<void>
   latestFrame?: DeviceScreenshot
+  latestFramePacketCount?: number
   sequence: number
   decoderError?: Error
   restart?: Promise<ScrcpyFrameStreamHealth>
@@ -88,7 +89,7 @@ export class ScrcpyFrameService {
     const health = await this.runtime.startScrcpyFrameStream(deviceId, options)
     session.health = {
       ...health,
-      lastPacketAt: session.health.lastPacketAt ?? health.lastPacketAt,
+      lastPacketAt: health.lastPacketAt ?? session.health.lastPacketAt,
       packetCount: Math.max(session.health.packetCount, health.packetCount)
     }
     this.ensureDecoder(session)
@@ -121,6 +122,7 @@ export class ScrcpyFrameService {
     if (
       active.latestFrame?.capturedAt &&
       active.latestFrame.capturedAt >= (active.health.startedAt ?? 0) &&
+      active.latestFramePacketCount === active.health.packetCount &&
       now - active.latestFrame.capturedAt <= maxAgeMs
     ) {
       return active.latestFrame
@@ -150,6 +152,7 @@ export class ScrcpyFrameService {
       reconnectCount: active.health.reconnectCount
     }
     active.latestFrame = frame
+    active.latestFramePacketCount = active.health.packetCount
     return frame
   }
 
@@ -218,7 +221,7 @@ export class ScrcpyFrameService {
     if (!session) return
     session.health = {
       ...health,
-      lastPacketAt: session.health.lastPacketAt ?? health.lastPacketAt,
+      lastPacketAt: health.lastPacketAt ?? session.health.lastPacketAt,
       packetCount: Math.max(session.health.packetCount, health.packetCount)
     }
     if (health.status === 'running') this.ensureDecoder(session)
@@ -281,6 +284,7 @@ export class ScrcpyFrameService {
     session.feed = Promise.resolve()
     session.decoderError = undefined
     if (!retainLatestFrame) session.latestFrame = undefined
+    if (!retainLatestFrame) session.latestFramePacketCount = undefined
   }
 }
 

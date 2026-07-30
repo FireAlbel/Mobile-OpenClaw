@@ -18,8 +18,7 @@ const PopupContainer: React.FC<Props> = ({ provider: _provider, model, resolve }
   const [open, setOpen] = useState(true)
   const { provider, updateProvider, models } = useProvider(_provider.id)
   const { assistants, updateAssistants } = useAssistants()
-  const { defaultModel, setDefaultModel, translateModel, setTranslateModel, quickModel, setQuickModel } =
-    useDefaultModel()
+  const { defaultModel, setDefaultModel, quickModel, setQuickModel } = useDefaultModel()
 
   const onOk = () => {
     setOpen(false)
@@ -57,9 +56,6 @@ const PopupContainer: React.FC<Props> = ({ provider: _provider, model, resolve }
       if (defaultModel?.id === updatedModel.id && defaultModel?.provider === provider.id) {
         setDefaultModel(updatedModel)
       }
-      if (translateModel?.id === updatedModel.id && translateModel?.provider === provider.id) {
-        setTranslateModel(updatedModel)
-      }
       if (quickModel?.id === updatedModel.id && quickModel?.provider === provider.id) {
         setQuickModel(updatedModel)
       }
@@ -72,12 +68,9 @@ const PopupContainer: React.FC<Props> = ({ provider: _provider, model, resolve }
       defaultModel?.id,
       defaultModel?.provider,
       provider.id,
-      translateModel?.id,
-      translateModel?.provider,
       quickModel?.id,
       quickModel?.provider,
       setDefaultModel,
-      setTranslateModel,
       setQuickModel
     ]
   )

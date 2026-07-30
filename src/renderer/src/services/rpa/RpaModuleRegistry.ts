@@ -1,4 +1,4 @@
-import type * as z from 'zod'
+import * as z from 'zod'
 
 import type { RpaActionModule, RpaModuleMetadata } from './RpaTypes'
 
@@ -40,10 +40,10 @@ export class RpaModuleRegistry {
     return this.list().map((module) => module.metadata)
   }
 
-  listForPlanner(): Array<RpaModuleMetadata & { paramsSchemaDescription: string }> {
+  listForPlanner(): Array<RpaModuleMetadata & { paramsJsonSchema: Record<string, unknown> }> {
     return this.list().map((module) => ({
       ...module.metadata,
-      paramsSchemaDescription: describeZodSchema(module.paramsSchema)
+      paramsJsonSchema: z.toJSONSchema(module.paramsSchema) as Record<string, unknown>
     }))
   }
 
@@ -63,11 +63,6 @@ export class RpaModuleRegistry {
       issues: result.error.issues.map((issue) => `${issue.path.join('.') || 'params'}: ${issue.message}`)
     }
   }
-}
-
-function describeZodSchema(schema: z.ZodType): string {
-  const definition = (schema as z.ZodType & { def?: { type?: string } }).def
-  return definition?.type ? `zod:${definition.type}` : 'zod:schema'
 }
 
 export const rpaModuleRegistry = new RpaModuleRegistry()

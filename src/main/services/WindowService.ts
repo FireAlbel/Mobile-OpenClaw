@@ -15,7 +15,6 @@ import iconPath from '../../../build/icon.png?asset'
 import { titleBarOverlayDark, titleBarOverlayLight } from '../config'
 import { configManager } from './ConfigManager'
 import { contextMenu } from './ContextMenu'
-import { initSessionUserAgent } from './WebviewService'
 
 const DEFAULT_MINIWINDOW_WIDTH = 550
 const DEFAULT_MINIWINDOW_HEIGHT = 400
@@ -102,9 +101,6 @@ export class WindowService {
     if (enableQuickAssistant && !this.miniWindow) {
       this.miniWindow = this.createMiniWindow(true)
     }
-
-    //init the MinApp webviews' useragent
-    initSessionUserAgent()
 
     return this.mainWindow
   }

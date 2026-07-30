@@ -5,7 +5,7 @@ import TextBadge from '@renderer/components/TextBadge'
 import { isLinux, isMac, THEME_COLOR_PRESETS } from '@renderer/config/constant'
 import { DEFAULT_SIDEBAR_ICONS } from '@renderer/config/sidebar'
 import { useTheme } from '@renderer/context/ThemeProvider'
-import { useNavbarPosition, useSettings } from '@renderer/hooks/useSettings'
+import { useSettings } from '@renderer/hooks/useSettings'
 import { useTimer } from '@renderer/hooks/useTimer'
 import useUserTheme from '@renderer/hooks/useUserTheme'
 import { useAppDispatch } from '@renderer/store'
@@ -73,7 +73,6 @@ const DisplaySettings: FC = () => {
     useSystemTitleBar,
     setUseSystemTitleBar
   } = useSettings()
-  const { navbarPosition, setNavbarPosition } = useNavbarPosition()
   const { theme, settedTheme } = useTheme()
   const { t } = useTranslation()
   const dispatch = useAppDispatch()
@@ -295,24 +294,6 @@ const DisplaySettings: FC = () => {
         )}
       </SettingGroup>
       <SettingGroup theme={theme}>
-        <SettingTitle style={{ justifyContent: 'flex-start', gap: 5 }}>
-          {t('settings.display.navbar.title')} <TextBadge text="New" />
-        </SettingTitle>
-        <SettingDivider />
-        <SettingRow>
-          <SettingRowTitle>{t('settings.display.navbar.position.label')}</SettingRowTitle>
-          <Segmented
-            value={navbarPosition}
-            shape="round"
-            onChange={setNavbarPosition}
-            options={[
-              { label: t('settings.display.navbar.position.left'), value: 'left' },
-              { label: t('settings.display.navbar.position.top'), value: 'top' }
-            ]}
-          />
-        </SettingRow>
-      </SettingGroup>
-      <SettingGroup theme={theme}>
         <SettingTitle>{t('settings.display.zoom.title')}</SettingTitle>
         <SettingDivider />
         <SettingRow>
@@ -451,24 +432,22 @@ const DisplaySettings: FC = () => {
           />
         </SettingRow>
       </SettingGroup>
-      {navbarPosition === 'left' && (
-        <SettingGroup theme={theme}>
-          <SettingTitle
-            style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>{t('settings.display.sidebar.title')}</span>
-            <ResetButtonWrapper>
-              <Button onClick={handleReset}>{t('common.reset')}</Button>
-            </ResetButtonWrapper>
-          </SettingTitle>
-          <SettingDivider />
-          <SidebarIconsManager
-            visibleIcons={visibleIcons}
-            disabledIcons={disabledIcons}
-            setVisibleIcons={setVisibleIcons}
-            setDisabledIcons={setDisabledIcons}
-          />
-        </SettingGroup>
-      )}
+      <SettingGroup theme={theme}>
+        <SettingTitle
+          style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>{t('settings.display.sidebar.title')}</span>
+          <ResetButtonWrapper>
+            <Button onClick={handleReset}>{t('common.reset')}</Button>
+          </ResetButtonWrapper>
+        </SettingTitle>
+        <SettingDivider />
+        <SidebarIconsManager
+          visibleIcons={visibleIcons}
+          disabledIcons={disabledIcons}
+          setVisibleIcons={setVisibleIcons}
+          setDisabledIcons={setDisabledIcons}
+        />
+      </SettingGroup>
       <SettingGroup theme={theme}>
         <SettingTitle>
           {t('settings.display.custom.css.label')}

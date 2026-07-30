@@ -9,7 +9,7 @@ const REDACTED = '[REDACTED]'
 const MAX_EVENTS_PER_DEVICE = 2_000
 const MAX_SCREENSHOT_BYTES = 8 * 1024 * 1024
 const MAX_SCREENSHOT_TOTAL_BYTES = 32 * 1024 * 1024
-const SENSITIVE_KEY = /api[-_]?key|token|password|secret|authorization|cookie|credential|session/i
+const SENSITIVE_KEY = /api[-_]?key|token|password|secret|authorization|cookie|credential|session|prompt/i
 const SECRET_VALUE = /(bearer\s+)[a-z0-9._~+/-]+=*|\bsk-[a-z0-9_-]{12,}\b/gi
 
 export interface RpaDebugBundleBuildResult {

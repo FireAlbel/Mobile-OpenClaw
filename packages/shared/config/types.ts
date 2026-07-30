@@ -1,14 +1,5 @@
 import type { ProcessingStatus } from '@types'
 
-// =============================================================================
-// OpenClaw IPC Types
-// =============================================================================
-
-export type NodeCheckResult =
-  | { status: 'not_found' }
-  | { status: 'version_low'; version: string; path: string }
-  | { status: 'ok'; version: string; path: string }
-
 export type LoaderReturn = {
   entriesAdded: number
   uniqueId: string
@@ -38,15 +29,6 @@ export type MCPServerLogEntry = {
   message: string
   data?: any
   source?: string
-}
-
-export type WebviewKeyEvent = {
-  webviewId: number
-  key: string
-  control: boolean
-  meta: boolean
-  shift: boolean
-  alt: boolean
 }
 
 export interface WebSocketStatusResponse {

@@ -860,7 +860,6 @@
         "expand": "Επέκταση"
       },
       "topics": "Θέματα",
-      "translate": "Μετάφραση στο {{target_language}}",
       "translating": "Μετάφραση...",
       "upload": {
         "attachment": "Μεταφόρτωση συνημμένου",
@@ -1107,7 +1106,6 @@
           "label": "Εξαγωγή ως Markdown",
           "reason": "Εξαγωγή σε Markdown (περιλαμβανομένης της σκέψης)"
         },
-        "notes": "Εξαγωγή σε σημειώσεις",
         "notion": "Εξαγωγή στο Notion",
         "obsidian": "Εξαγωγή στο Obsidian",
         "obsidian_atributes": "Ρυθμίσεις σημείου σημείωσης",
@@ -1189,47 +1187,11 @@
       "title": "Θέματα",
       "unpin": "Ξεκαρφίτσωμα"
     },
-    "translate": "Μετάφραση",
     "web_search": {
       "warning": {
         "openai": "Το μοντέλο GPT5 με ελάχιστη ένταση σκέψης δεν υποστηρίζει αναζήτηση στο διαδίκτυο"
       }
     }
-  },
-  "code": {
-    "auto_update_to_latest": "Έλεγχος για ενημερώσεις και εγκατάσταση της τελευταίας έκδοσης",
-    "bun_required_message": "Για τη λειτουργία του εργαλείου CLI πρέπει να εγκαταστήσετε το περιβάλλον Bun",
-    "cli_tool": "Εργαλείο CLI",
-    "cli_tool_placeholder": "Επιλέξτε το CLI εργαλείο που θέλετε να χρησιμοποιήσετε",
-    "custom_path": "Προσαρμοσμένη διαδρομή",
-    "custom_path_error": "Η ρύθμιση της προσαρμοσμένης διαδρομής τερματικού απέτυχε",
-    "custom_path_required": "Αυτό το τερματικό απαιτεί τη ρύθμιση προσαρμοσμένης διαδρομής",
-    "custom_path_set": "Η προσαρμοσμένη διαδρομή τερματικού ορίστηκε με επιτυχία",
-    "description": "Εκκίνηση γρήγορα πολλών εργαλείων CLI κώδικα, για αύξηση της αποδοτικότητας ανάπτυξης",
-    "env_vars_help": "Εισαγάγετε προσαρμοσμένες μεταβλητές περιβάλλοντος (μία ανά γραμμή, με τη μορφή: KEY=value)",
-    "environment_variables": "Μεταβλητές περιβάλλοντος",
-    "folder_placeholder": "Επιλέξτε κατάλογο εργασίας",
-    "install_bun": "Εγκατάσταση Bun",
-    "installing_bun": "Εγκατάσταση...",
-    "launch": {
-      "bun_required": "Παρακαλώ εγκαταστήστε πρώτα το περιβάλλον Bun πριν εκκινήσετε το εργαλείο CLI",
-      "error": "Η εκκίνηση απέτυχε, παρακαλώ δοκιμάστε ξανά",
-      "label": "Εκκίνηση",
-      "success": "Επιτυχής εκκίνηση",
-      "validation_error": "Συμπληρώστε όλα τα υποχρεωτικά πεδία: εργαλείο CLI, μοντέλο και κατάλογος εργασίας"
-    },
-    "launching": "Εκκίνηση...",
-    "model": "μοντέλο",
-    "model_placeholder": "Επιλέξτε το μοντέλο που θα χρησιμοποιήσετε",
-    "model_required": "Επιλέξτε μοντέλο",
-    "select_folder": "Επιλογή φακέλου",
-    "set_custom_path": "Ρύθμιση προσαρμοσμένης διαδρομής τερματικού",
-    "supported_providers": "υποστηριζόμενοι πάροχοι",
-    "terminal": "τερματικό",
-    "terminal_placeholder": "Επιλέξτε εφαρμογή τερματικού",
-    "title": "Εργαλεία κώδικα",
-    "update_options": "Ενημέρωση επιλογών",
-    "working_directory": "κατάλογος εργασίας"
   },
   "code_block": {
     "collapse": "συμπεριληφθείς",
@@ -1394,7 +1356,6 @@
     "swap": "Εναλλαγή",
     "topics": "Θέματα",
     "total": "[to be translated]:Total",
-    "translate_text": "Μετάφραση κειμένου",
     "unknown": "Άγνωστο",
     "unnamed": "Χωρίς όνομα",
     "unsubscribe": "Απεγγραφή",
@@ -1549,26 +1510,46 @@
       "update_success": "[to be translated]:Group updated successfully"
     },
     "last_refresh": "[to be translated]:Last refresh time",
+    "management_title": "[to be translated]:Device management",
     "model": "[to be translated]:Model",
     "no_devices": "[to be translated]:No devices connected",
     "port": "[to be translated]:Port",
     "refresh": "[to be translated]:Refresh",
     "remark": "[to be translated]:Remark",
     "rpa": {
+      "active_runs": "[to be translated]:Active RPA tasks",
       "add_step": "[to be translated]:Add step",
+      "adjust_context": "[to be translated]:Adjust",
       "advanced_dsl": "[to be translated]:Advanced DSL editor",
+      "advanced_model_overrides": "[to be translated]:Advanced model overrides",
       "all_devices": "[to be translated]:All devices",
       "all_phases": "[to be translated]:All phases",
+      "any_compatible_version": "[to be translated]:Any compatible version",
       "approve_and_retry": "[to be translated]:Approve and retry",
+      "asset_status_empty": "[to be translated]:Empty",
+      "asset_status_error": "[to be translated]:Error",
+      "asset_status_legacy": "[to be translated]:Legacy",
+      "asset_status_missing": "[to be translated]:Missing",
+      "asset_status_ready": "[to be translated]:Ready",
+      "asset_status_running": "[to be translated]:Processing",
+      "assistant_profile_version": "[to be translated]:Assistant Profile",
       "attempt": "[to be translated]:Attempt {{attempt}}",
+      "automation_settings": "[to be translated]:Automation",
+      "binding_priority": "[to be translated]:Binding priority",
       "chat_placeholder": "[to be translated]:Describe the task to perform on the selected devices. Press Enter to generate the workflow.",
+      "chat_topics": "[to be translated]:Chat Topics",
+      "clear_topic_overrides": "[to be translated]:Clear overrides",
+      "compiled_skills": "[to be translated]:Compiled Skills",
       "confidence": "[to be translated]:Confidence",
       "confirm_and_execute": "[to be translated]:Confirm and execute",
       "confirm_execution": "[to be translated]:Confirm RPA execution",
       "confirm_execution_detail": "[to be translated]:This workflow will execute {{steps}} steps on {{devices}} device(s).",
       "confirm_high_risk_execution": "[to be translated]:Confirm high-risk RPA execution",
+      "confirm_partial_group": "[to be translated]:Review unavailable group devices and confirm execution with the online subset.",
       "confirm_safety_target": "[to be translated]:Approve this action for the selected device: {{target}}",
+      "continue_device": "[to be translated]:Continue",
       "continue_on_failure": "[to be translated]:Continue after failure",
+      "continue_with_online_subset": "[to be translated]:Continue with the available online devices",
       "correction_evidence": "[to be translated]:Correction evidence",
       "correction_round": "[to be translated]:Correction round {{round}}",
       "create_template": "[to be translated]:Create template",
@@ -1576,49 +1557,116 @@
       "debug_export_failed": "[to be translated]:Failed to export the debug bundle.",
       "debug_exported": "[to be translated]:Debug bundle exported.",
       "decision": "[to be translated]:Decision",
+      "default_model": "[to be translated]:Default model",
+      "degraded_generation_warning": "[to be translated]:Degraded generation warnings",
+      "device_completed_steps": "[to be translated]:{{completed}} of {{total}} steps completed",
+      "device_execution_progress": "[to be translated]:Device execution progress",
+      "device_name": "[to be translated]:Device",
+      "device_offline_cannot_continue": "[to be translated]:Reconnect the device before continuing.",
+      "device_offline_reason": "[to be translated]:Device {{device}} went offline. Execution was stopped automatically.",
+      "device_unauthorized_reason": "[to be translated]:USB debugging authorization for device {{device}} is unavailable. Execution was stopped automatically.",
       "devices": "[to be translated]:Devices",
       "draft_saved": "[to be translated]:RPA workflow draft saved.",
       "dsl": "[to be translated]:Task DSL",
+      "dsl_provenance": "[to be translated]:DSL provenance",
+      "dsl_validation_failed": "[to be translated]:DSL validation failed.",
       "emergency_stop": "[to be translated]:Stop all tasks",
       "emergency_stop_confirm": "[to be translated]:Stop all RPA tasks?",
       "emergency_stop_detail": "[to be translated]:All running and pending device tasks will be cancelled immediately.",
+      "empty_groups_selected": "[to be translated]:The following groups contain no devices: {{groups}}",
+      "enabled_skills": "[to be translated]:Enabled Skills",
       "executable_action": "[to be translated]:Executable action",
       "execute": "[to be translated]:Execute",
       "execution_details": "[to be translated]:Execution details ({{count}})",
-      "execution_progress": "[to be translated]:RPA execution progress",
+      "execution_devices": "[to be translated]:RPA execution devices",
+      "execution_failed": "[to be translated]:Failed to start RPA execution.",
+      "execution_progress": "[to be translated]:RPA execution details",
+      "execution_status": "[to be translated]:Execution status",
+      "execution_target_summary": "[to be translated]:Execution target: {{devices}} device(s) from {{groups}} group(s)",
       "export_debug_bundle": "[to be translated]:Export debug bundle",
       "fix_validation_errors": "[to be translated]:Fix validation errors before continuing.",
+      "follow_latest_version": "[to be translated]:Follow latest",
+      "format_json": "[to be translated]:Format JSON",
       "frame_captured_at": "[to be translated]:Captured at",
       "frame_codec": "[to be translated]:Codec",
       "frame_dimensions": "[to be translated]:Dimensions",
       "frame_reconnects": "[to be translated]:Reconnects",
       "frame_sequence": "[to be translated]:Frame sequence",
       "frame_source": "[to be translated]:Frame source",
+      "group_devices_unavailable": "[to be translated]:Unavailable devices in the selected groups: {{devices}}",
       "high_risk_targets": "[to be translated]:Requires explicit confirmation: {{targets}}",
+      "knowledge_sources": "[to be translated]:Knowledge sources",
       "latest_screenshot": "[to be translated]:Latest screenshot",
+      "lifecycle": {
+        "discard_changes": "[to be translated]:Discard changes",
+        "duplicate_task": "[to be translated]:Duplicate task",
+        "end_task": "[to be translated]:End task",
+        "end_task_failed": "[to be translated]:Unable to end task",
+        "new_task": "[to be translated]:New task",
+        "no_task_to_duplicate": "[to be translated]:Generate a task before duplicating it.",
+        "save_and_continue": "[to be translated]:Save and continue",
+        "task_actions": "[to be translated]:Task actions",
+        "task_duplicated": "[to be translated]:The RPA task was duplicated as an independent draft.",
+        "task_ended": "[to be translated]:Task ended",
+        "task_ended_detail": "[to be translated]:This task is now read-only. Create or duplicate a task to continue.",
+        "unsaved_detail": "[to be translated]:Save or discard the current DSL changes before continuing.",
+        "unsaved_title": "[to be translated]:Unsaved RPA task changes"
+      },
       "missing_artifact_count": "[to be translated]:{{count}} timeline events have no screenshot evidence.",
       "missing_screenshot": "[to be translated]:Screenshot evidence is unavailable.",
+      "model_not_configured": "[to be translated]:Not configured",
       "model_required": "[to be translated]:Select a chat model before planning.",
       "module": "[to be translated]:Module",
       "move_down": "[to be translated]:Move down",
       "move_up": "[to be translated]:Move up",
+      "no_active_runs": "[to be translated]:No RPA tasks are currently running.",
+      "no_device_groups": "[to be translated]:No device groups are configured.",
       "no_online_devices": "[to be translated]:No online devices are available.",
       "no_runs": "[to be translated]:No RPA runs yet.",
+      "no_source_template": "[to be translated]:Free-form planning",
+      "online_devices": "[to be translated]:Online devices",
+      "open_evidence": "[to be translated]:Open evidence",
+      "open_knowledge": "[to be translated]:Open Knowledge",
+      "open_templates": "[to be translated]:Open Templates",
+      "operations": "[to be translated]:Operations",
       "params": "[to be translated]:Parameters (JSON)",
       "pause": "[to be translated]:Pause",
+      "pinned_version": "[to be translated]:Pinned version",
       "plan_generated": "[to be translated]:The RPA workflow has been generated. Review and edit the timeline before running it.",
+      "planner_model": "[to be translated]:Planner model",
+      "preserve_topic_overrides": "[to be translated]:Preserve overrides",
+      "profile_assets_missing": "[to be translated]:{{count}} bound automation assets are missing.",
+      "profile_load_failed": "[to be translated]:Failed to load the automation profile.",
+      "profile_save_failed": "[to be translated]:Failed to save the automation profile.",
+      "profile_saved": "[to be translated]:Automation profile saved.",
       "rate_limit_delay": "[to be translated]:Rate-limit delay",
       "raw_vlm_response": "[to be translated]:Raw VLM response",
       "realtime_events": "[to be translated]:Real-time execution events",
       "reason": "[to be translated]:Reason",
+      "recommended_templates": "[to be translated]:Recommended Templates",
       "recovery_decision": "[to be translated]:VLM recovery decision",
+      "recovery_model": "[to be translated]:Recovery model",
+      "remap_topic_overrides": "[to be translated]:Remap compatible assets",
       "repair_response": "[to be translated]:Repair response",
+      "replan": {
+        "action": "[to be translated]:Replan",
+        "completed": "[to be translated]:A new Replan revision was created.",
+        "create_revision": "[to be translated]:Create Replan revision",
+        "execution_evidence": "[to be translated]:The failed run, recent events, and manual-intervention evidence will be included.",
+        "execution_objective": "[to be translated]:Repair the workflow using the failed execution state and continue toward the original goal.",
+        "title": "[to be translated]:Contextual Replan",
+        "validation_evidence": "[to be translated]:The active DSL and its validation errors will be included.",
+        "validation_objective": "[to be translated]:Repair the DSL validation errors while preserving the original task goal."
+      },
       "replay": "[to be translated]:Replay",
+      "required_skill_dependencies_missing": "[to be translated]:{{count}} required Skill dependency issue(s) must be resolved before this Template can execute.",
       "reset_sample": "[to be translated]:Sample",
       "resume": "[to be translated]:Resume",
+      "retrieved_knowledge": "[to be translated]:Retrieved Knowledge",
       "retry_after_human": "[to be translated]:Retry after manual handling",
       "risk_level": "[to be translated]:Risk level",
       "risk_summary": "[to be translated]:Risk level: {{risk}}",
+      "run_devices_summary": "[to be translated]:{{completed}}/{{total}} devices completed",
       "run_history": "[to be translated]:Run history",
       "run_history_hint": "[to be translated]:Replay evidence or export a sanitized debug bundle.",
       "run_loading": "[to be translated]:Loading execution record...",
@@ -1627,7 +1675,13 @@
       "safety_decision": "[to be translated]:Safety decision",
       "safety_target": "[to be translated]:Policy target",
       "select_device": "[to be translated]:Select at least one online device.",
+      "select_device_groups": "[to be translated]:Device groups",
+      "select_execution_targets": "[to be translated]:Select execution devices",
+      "select_knowledge_sources": "[to be translated]:Select Knowledge sources",
+      "select_templates": "[to be translated]:Select Templates",
       "select_vision_model": "[to be translated]:Select a model that supports image input.",
+      "skill_repository_unavailable": "[to be translated]:Skill repository is not available yet",
+      "source_template": "[to be translated]:Source Template",
       "start": "[to be translated]:Start",
       "started": "[to be translated]:RPA batch run started.",
       "status": {
@@ -1643,18 +1697,43 @@
       },
       "step_name": "[to be translated]:Step name",
       "step_number": "[to be translated]:Step {{number}}",
+      "stop_device": "[to be translated]:Stop",
       "takeover_response": "[to be translated]:VLM takeover response",
+      "target_mode_all_online": "[to be translated]:All online",
+      "target_mode_groups": "[to be translated]:By group",
+      "target_mode_manual": "[to be translated]:Manual",
+      "target_scan_failed": "[to be translated]:Failed to scan devices. Keep this dialog open and try again.",
+      "target_selection_changed": "[to be translated]:Device status changed. Added: {{added}}; removed: {{removed}}. Review and confirm again.",
+      "target_status_missing": "[to be translated]:Missing",
+      "task_flow_learning": {
+        "already_applied": "[to be translated]:Task flow learning already applied at v{{version}}",
+        "created": "[to be translated]:Verified task flow created at v{{version}}",
+        "skipped_validation_failed": "[to be translated]:Task flow update skipped because validation failed",
+        "skipped_version_conflict": "[to be translated]:Task flow update skipped because a newer version exists",
+        "versioned": "[to be translated]:Task flow automatically updated to v{{version}}"
+      },
       "template_created": "[to be translated]:Reusable workflow template created.",
       "template_requires_success": "[to be translated]:Only a fully successful run can become a template.",
       "temporary_action": "[to be translated]:Temporary action",
       "temporary_steps": "[to be translated]:Temporary steps",
       "timeout": "[to be translated]:Timeout (ms)",
       "title": "[to be translated]:RPA Runner",
+      "topic_override_assistant_changed": "[to be translated]:Assistant changed",
+      "topic_override_assistant_changed_detail": "[to be translated]:This topic has temporary RPA overrides from another assistant. Choose whether to preserve them, remap compatible assets, or clear them.",
+      "topic_override_switch_cancelled": "[to be translated]:Assistant switch decision was cancelled.",
       "validation_failed": "[to be translated]:The workflow contains validation errors.",
+      "verification_model": "[to be translated]:Verification model",
       "verification_result": "[to be translated]:Verification result",
+      "version_range": "[to be translated]:Version range",
+      "view_context": "[to be translated]:Details",
+      "view_details": "[to be translated]:View details",
+      "view_device_execution_progress": "[to be translated]:View device execution progress",
       "vision_model": "[to be translated]:Vision model",
       "vision_model_required": "[to be translated]:The current default model cannot process phone screenshots. Select a vision model.",
+      "visual_model": "[to be translated]:Visual model",
+      "visual_model_required": "[to be translated]:Configure a vision-capable model for screenshot-based actions.",
       "waiting_to_execute": "[to be translated]:Waiting to execute",
+      "workspace": "[to be translated]:RPA workspace",
       "workspace_hint": "[to be translated]:Describe the mobile task in the chat box. The current chat model will generate an editable workflow.",
       "workspace_title": "[to be translated]:RPA workflow planner"
     },
@@ -1843,9 +1922,6 @@
       "content": "Η διαγραφή του αρχείου θα διαγράψει την αναφορά του σε όλα τα μηνύματα. Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το αρχείο;",
       "db_error": "Αποτυχία διαγραφής",
       "label": "Διαγραφή",
-      "paintings": {
-        "warning": "Το σχεδίο περιλαμβάνει αυτή την εικόνα και δεν είναι παρόλως δυνατή η διαγραφή."
-      },
       "title": "Διαγραφή αρχείου"
     },
     "document": "Έγγραφο",
@@ -1860,6 +1936,45 @@
     "preview": {
       "error": "Αποτυχία ανοίγματος του αρχείου"
     },
+    "rpa": {
+      "add": "[to be translated]:Add RPA asset",
+      "add_failed": "[to be translated]:Failed to add RPA assets.",
+      "all_categories": "[to be translated]:All categories",
+      "asset": "[to be translated]:RPA asset",
+      "asset_count": "[to be translated]:{{count}} asset(s)",
+      "categories": {
+        "app_reference_image": "[to be translated]:App reference",
+        "debug_bundle": "[to be translated]:Debug bundle",
+        "exported_dsl": "[to be translated]:RPA DSL",
+        "ocr_capture": "[to be translated]:OCR",
+        "other": "[to be translated]:Other",
+        "run_log": "[to be translated]:Run log",
+        "screenshot": "[to be translated]:Screenshot",
+        "sop_import": "[to be translated]:SOP",
+        "ui_tree": "[to be translated]:UI tree"
+      },
+      "category": "[to be translated]:Category",
+      "empty": "[to be translated]:No RPA assets.",
+      "filtered_run": "[to be translated]:Evidence linked to run {{runId}}",
+      "hint": "[to be translated]:Files are referenced, categorized, redacted, and retained without duplicate persistence.",
+      "import": "[to be translated]:Import",
+      "import_sop": "[to be translated]:Import SOP into Knowledge",
+      "import_sop_hint": "[to be translated]:The imported entry remains a draft until a human reviews it.",
+      "knowledge_draft_created": "[to be translated]:Knowledge draft created.",
+      "link": "[to be translated]:Link",
+      "link_asset": "[to be translated]:Link RPA asset",
+      "link_failed": "[to be translated]:Failed to link RPA asset.",
+      "links": "[to be translated]:Links",
+      "load_failed": "[to be translated]:Failed to load RPA assets.",
+      "open_failed": "[to be translated]:Failed to open RPA asset.",
+      "policy": "[to be translated]:Policy",
+      "redaction_required": "[to be translated]:Some sensitive evidence requires redaction before sharing.",
+      "remove_metadata_confirm": "[to be translated]:Remove this asset record? The underlying file will not be deleted.",
+      "rpa_template_draft_ready": "[to be translated]:Validated RPA template draft created.",
+      "select_knowledge": "[to be translated]:Select Knowledge base",
+      "title": "[to be translated]:RPA evidence and assets"
+    },
+    "rpa_artifacts": "[to be translated]:RPA Evidence & Assets",
     "size": "Μέγεθος",
     "text": "Κείμενο",
     "title": "Αρχεία",
@@ -2087,10 +2202,6 @@
     "urdu": "Ουρντού",
     "vietnamese": "Βιετναμέζικα"
   },
-  "launchpad": {
-    "apps": "Εφαρμογές",
-    "minapps": "Μικρές εφαρμογές"
-  },
   "lmstudio": {
     "keep_alive_time": {
       "description": "Χρόνος που ο μοντέλος διατηρείται στη μνήμη μετά από το συνομιλητή (προεπιλογή: 5 λεπτά)",
@@ -2312,9 +2423,6 @@
           "specified": "Η εξαγωγή αρχείου Markdown απέτυχε"
         }
       },
-      "notes": {
-        "export": "απέτυχε η εξαγωγή των σημειώσεων"
-      },
       "notion": {
         "export": "Σφάλμα στην εξαγωγή του Notion, παρακαλείστε να ελέγξετε τη σύνδεση και τη διαμόρφωση κατά τη διατύπωση του χειρισμού",
         "no_api_key": "Δεν έχετε διαθέσιμο το API Key του Notion ή το ID της βάσης του Notion",
@@ -2425,9 +2533,6 @@
           "preconf": "Η εξαγωγή αρχείου Markdown στο προϋπολογισμένο μοντέλο ήταν επιτυχής",
           "specified": "Η εξαγωγή αρχείου Markdown ήταν επιτυχής"
         }
-      },
-      "notes": {
-        "export": "Επιτυχής εξαγωγή σε σημείωση"
       },
       "notion": {
         "export": "Η εξαγωγή στο Notion ήταν επιτυχής"
@@ -2540,61 +2645,6 @@
       "rag_failed": "Το RAG απέτυχε, επιστρέφεται κενό αποτέλεσμα..."
     }
   },
-  "minapp": {
-    "add_to_launchpad": "Προσθήκη στο Launchpad",
-    "add_to_sidebar": "Προσθήκη στην πλευρική μπάρα",
-    "popup": {
-      "close": "Κλείσιμο της εφαρμογής",
-      "devtools": "Εργαλεία προγραμματιστή",
-      "goBack": "Πίσω",
-      "goForward": "Μπροστά",
-      "minimize": "Ελαχιστοποίηση της εφαρμογής",
-      "openExternal": "Άνοιγμα στον περιηγητή",
-      "open_link_external_off": "Τρέχον: Άνοιγμα συνδέσμου χρησιμοποιώντας το προεπιλεγμένο παράθυρο",
-      "open_link_external_on": "Τρέχον: Άνοιγμα συνδέσμου στον περιηγητή",
-      "refresh": "Ανανέωση",
-      "rightclick_copyurl": "Αντιγραφή URL με δεξί κλικ"
-    },
-    "remove_from_launchpad": "Κατάργηση από το Launchpad",
-    "remove_from_sidebar": "Κατάργηση από την πλευρική μπάρα",
-    "sidebar": {
-      "close": {
-        "title": "Κλείσιμο"
-      },
-      "closeall": {
-        "title": "Κλείσιμο όλων"
-      },
-      "hide": {
-        "title": "Απόκρυψη"
-      },
-      "remove_custom": {
-        "title": "Διαγραφή προσαρμοσμένης εφαρμογής"
-      }
-    },
-    "title": "Μικρόπρογραμμα"
-  },
-  "minapps": {
-    "ant-ling": "Ant Ling",
-    "baichuan": "Baichuan",
-    "baidu-ai-search": "Baidu AI Search",
-    "chatglm": "ChatGLM",
-    "dangbei": "Dangbei",
-    "doubao": "Doubao",
-    "hailuo": "MINIMAX",
-    "metaso": "Metaso",
-    "nami-ai": "Nami AI",
-    "nami-ai-search": "Nami AI Search",
-    "qwen": "Qwen",
-    "sensechat": "SenseChat",
-    "stepfun": "Stepfun",
-    "tencent-yuanbao": "Yuanbao",
-    "tiangong-ai": "Skywork",
-    "wanzhi": "Wanzhi",
-    "wenxin": "ERNIE",
-    "wps-copilot": "WPS Copilot",
-    "xiaoyi": "Xiaoyi",
-    "zhihu": "Zhihu"
-  },
   "miniwindow": {
     "alert": {
       "google_login": "Υπόδειξη: Αν συναντήσετε την ειδοποίηση «Μη εμπιστευόμενος περιηγητής» κατά τη σύνδεση στο Google, πρώτα ολοκληρώστε τη σύνδεση του λογαριασμού σας μέσω της εφαρμογής Google στη λίστα μικροεφαρμογών, και στη συνέχεια χρησιμοποιήστε τη σύνδεση Google σε άλλες μικροεφαρμογές"
@@ -2605,8 +2655,7 @@
     "feature": {
       "chat": "Απάντηση σ' αυτή την ερώτηση",
       "explanation": "Εξήγηση",
-      "summary": "Σύνοψη",
-      "translate": "Μετάφραση κειμένου"
+      "summary": "Σύνοψη"
     },
     "footer": {
       "backspace_clear": "Πατήστε το πλήκτρο Backspace για να κάνετε εκκαθάριση",
@@ -2700,122 +2749,6 @@
   "navigate": {
     "provider_settings": "Μετάβαση στις ρυθμίσεις παρόχου"
   },
-  "notes": {
-    "auto_rename": {
-      "empty_note": "Το σημείωμα είναι κενό, δεν μπορεί να δημιουργηθεί όνομα",
-      "failed": "Αποτυχία δημιουργίας ονόματος σημείωσης",
-      "label": "Δημιουργία ονόματος σημείωσης",
-      "success": "Η δημιουργία του ονόματος σημειώσεων ολοκληρώθηκε με επιτυχία"
-    },
-    "characters": "χαρακτήρας",
-    "collapse": "σύμπτυξη",
-    "content_placeholder": "Παρακαλώ εισαγάγετε το περιεχόμενο των σημειώσεων...",
-    "copyContent": "αντιγραφή περιεχομένου",
-    "crossPlatformRestoreWarning": "Η διαμόρφωση πολλαπλών πλατφορμών έχει επαναφερθεί, αλλά ο κατάλογος σημειώσεων είναι κενός. Παρακαλώ αντιγράψτε τα αρχεία σημειώσεών σας στο: {{path}}",
-    "delete": "διαγραφή",
-    "delete_confirm": "Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτό το {{type}};",
-    "delete_folder_confirm": "Θέλετε να διαγράψετε τον φάκελο «{{name}}» και όλο το περιεχόμενό του;",
-    "delete_note_confirm": "Είστε βέβαιοι ότι θέλετε να διαγράψετε τη σημείωση \"{{name}}\";;",
-    "drop_markdown_hint": "Σύρετε και αποθέστε αρχεία ή φακέλους .md εδώ για εισαγωγή",
-    "empty": "δεν υπάρχει σημείωση για τώρα",
-    "expand": "να ανοίξει",
-    "exportToWord": "Εξαγωγή σε Word",
-    "export_failed": "Εξαγωγή στη βάση γνώσης απέτυχε",
-    "export_knowledge": "εξαγωγή σημειώσεων στη βάση γνώσης",
-    "export_success": "Επιτυχής εξαγωγή στην βάση γνώσης",
-    "export_to_word_failed": "Αποτυχία εξαγωγής στο Word",
-    "folder": "φάκελος",
-    "new_folder": "Νέος φάκελος",
-    "new_note": "Δημιουργία νέας σημείωσης",
-    "no_content_to_copy": "Δεν υπάρχει περιεχόμενο προς αντιγραφή",
-    "no_content_to_export": "Κανένα περιεχόμενο προς εξαγωγή",
-    "no_file_selected": "Επιλέξτε το αρχείο για μεταφόρτωση",
-    "no_note_selected": "Παρακαλώ επιλέξτε πρώτα μια σημείωση",
-    "no_valid_files": "Δεν ανέβηκε έγκυρο αρχείο",
-    "open_folder": "Άνοιγμα εξωτερικού φακέλου",
-    "open_outside": "Από το εξωτερικό",
-    "rename": "μετονομασία",
-    "rename_changed": "Λόγω πολιτικής ασφάλειας, το όνομα του αρχείου έχει αλλάξει από {{original}} σε {{final}}",
-    "save": "αποθήκευση στις σημειώσεις",
-    "search": {
-      "both": "Όνομα + Περιεχόμενο",
-      "content": "περιεχόμενο",
-      "found_results": "Βρέθηκαν {{count}} αποτελέσματα (όνομα: {{nameCount}}, περιεχόμενο: {{contentCount}})",
-      "more_matches": "Ταιριάζει",
-      "searching": "Αναζήτηση...",
-      "show_less": "Κλείσιμο"
-    },
-    "settings": {
-      "data": {
-        "apply": "εφαρμογή",
-        "apply_path_failed": "αποτυχία διαδρομής εφαρμογής",
-        "current_work_directory": "τρέχοντος κατάλογου εργασίας",
-        "invalid_directory": "ο επιλεγμένος κατάλογος είναι άκυρος ή δεν υπάρχει άδεια πρόσβασης",
-        "path_required": "Επιλέξτε τον κατάλογο εργασίας",
-        "path_updated": "Ο κατάλογος εργασίας ενημερώθηκε με επιτυχία",
-        "reset_failed": "Επαναφορά απέτυχε",
-        "reset_to_default": "επαναφορά στις προεπιλογές",
-        "select": "επιλογή",
-        "select_directory_failed": "Η επιλογή καταλόγου απέτυχε",
-        "title": "ρύθμιση δεδομένων",
-        "work_directory_description": "Ο κατάλογος εργασίας είναι η θέση όπου αποθηκεύονται όλα τα αρχεία σημειώσεων. Η αλλαγή του καταλόγου εργασίας δεν μετακινεί τα υπάρχοντα αρχεία, παρακαλώ μεταφέρετε τα αρχεία χειροκίνητα.",
-        "work_directory_placeholder": "Επιλογή καταλόγου εργασίας σημειώσεων"
-      },
-      "display": {
-        "compress_content": "μείωση πλάτους στήλης",
-        "compress_content_description": "Ενεργοποιώντας το, θα περιορίζεται ο αριθμός των χαρακτήρων ανά γραμμή, μειώνοντας την οθόνη που εμφανίζεται",
-        "default_font": "προεπιλεγμένη γραμματοσειρά",
-        "font_size": "μέγεθος γραμματοσειράς",
-        "font_size_description": "Ρυθμίστε το μέγεθος της γραμματοσειράς για καλύτερη εμπειρία ανάγνωσης (10-30px)",
-        "font_size_large": "Μεγάλος",
-        "font_size_medium": "中",
-        "font_size_small": "μικρό",
-        "font_title": "ρυθμίσεις γραμματοσειράς",
-        "serif_font": "σειρά γραμματοσειρών",
-        "show_table_of_contents": "Εμφάνιση περιεχομένων καταλόγου",
-        "show_table_of_contents_description": "Εμφάνιση πλευρικής στήλης περιεχομένων για εύκολη πλοήγηση στο έγγραφο",
-        "title": "ρυθμίσεις εμφάνισης"
-      },
-      "editor": {
-        "edit_mode": {
-          "description": "Στην προβολή επεξεργασίας, η προεπιλεγμένη λειτουργία επεξεργασίας για νέες σημειώσεις",
-          "preview_mode": "πραγματικού χρόνου προεπισκόπηση",
-          "source_mode": "λειτουργία πηγαίου κώδικα",
-          "title": "προεπιλεγμένη προβολή επεξεργασίας"
-        },
-        "title": "ρυθμίσεις επεξεργαστή",
-        "view_mode": {
-          "description": "ο προεπιλεγμένος τρόπος προβολής νέων σημειώσεων",
-          "edit_mode": "λειτουργία επεξεργασίας",
-          "read_mode": "Λειτουργία ανάγνωσης",
-          "title": "προεπιλεγμένη προβολή"
-        },
-        "view_mode_description": "Ορισμός της προεπιλεγμένης προβολής για νέες καρτέλες."
-      },
-      "title": "σημειώσεις"
-    },
-    "show_starred": "Προβολή των σημειώσεων αποθήκευσης",
-    "sort_a2z": "όνομα αρχείου (A-Z)",
-    "sort_created_asc": "χρόνος δημιουργίας (από παλιότερο σε νεότερο)",
-    "sort_created_desc": "Χρόνος δημιουργίας (από νεότερο σε παλαιότερο)",
-    "sort_updated_asc": "χρόνος ενημέρωσης (από παλιά στα νέα)",
-    "sort_updated_desc": "χρόνος ενημέρωσης (από νεώτερο σε παλαιότερο)",
-    "sort_z2a": "όνομα αρχείου (Z-A)",
-    "spell_check": "Έλεγχος ορθογραφίας",
-    "spell_check_tooltip": "Ενεργοποίηση/Απενεργοποίηση ελέγχου ορθογραφίας",
-    "star": "Αγαπημένες σημειώσεις",
-    "starred_notes": "Σημειώσεις συλλογής",
-    "title": "σημειώσεις",
-    "unsaved_changes": "Έχετε μη αποθηκευμένο περιεχόμενο, είστε βέβαιοι ότι θέλετε να φύγετε;",
-    "unstar": "Αποσπάστε το αγαπημένο",
-    "untitled_folder": "Νέος φάκελος",
-    "untitled_note": "σημείωση χωρίς τίτλο",
-    "upload_failed": "Η σημείωση δεν ανέβηκε",
-    "upload_files": "Ανέβασμα Αρχείων",
-    "upload_folder": "Ανέβασμα Φακέλου",
-    "upload_success": "Οι σημειώσεις μεταφορτώθηκαν με επιτυχία",
-    "uploading_files": "Ανεβάζονται {{count}} αρχεία..."
-  },
   "notification": {
     "assistant": "Απάντηση Βοηθού",
     "knowledge": {
@@ -2855,91 +2788,6 @@
       "title": "Χρόνος διατήρησης ενεργοποίησης"
     },
     "title": "Ollama"
-  },
-  "openclaw": {
-    "checking_installation": "Έλεγχος εγκατάστασης του OpenClaw...",
-    "description": "Ενσωματώστε τους παρόχους Cherry Studio με την πύλη OpenClaw για να ενεργοποιήσετε πράκτορες κωδικοποίησης AI όπως το Claude Code, το Qwen-Coder και άλλοι.",
-    "error": {
-      "select_provider_model": "Παρακαλώ επιλέξτε πρώτα έναν πάροχο και ένα μοντέλο"
-    },
-    "gateway": {
-      "port": "Λιμάνι",
-      "restart": "Επανεκκίνηση",
-      "start": "Έναρξη πύλης",
-      "status": "Κατάσταση",
-      "stop": "Σταμάτα",
-      "version": "Έκδοση"
-    },
-    "git_missing": {
-      "description": "Το OpenClaw απαιτεί το Git για την εγκατάσταση κάποιων εξαρτήσεων. Παρακαλούμε εγκαταστήστε πρώτα το Git και μετά κάντε κλικ ξανά στην Εγκατάσταση.",
-      "download_button": "Λήψη Git",
-      "hint": "macOS: brew install git | Windows: Κατεβάστε από το git-scm.com (βεβαιωθείτε ότι προσθέτετε το Git στο PATH κατά την εγκατάσταση)",
-      "title": "Απαιτείται Git"
-    },
-    "install_progress": "Πρόοδος Εγκατάστασης",
-    "installed_at": "Το OpenClaw εγκαταστάθηκε στο",
-    "model_config": {
-      "auth_token": "Διακριτικό Πιστοποίησης",
-      "auth_token_hint": "Διακριτικό για έλεγχο ταυτότητας πύλης. Αφήστε το κενό για να απενεργοποιήσετε τον έλεγχο ταυτότητας.",
-      "auth_token_placeholder": "Εισάγετε ή δημιουργήστε ένα διακριτικό",
-      "generate_token": "Δημιουργώ",
-      "model": "Μοντέλο",
-      "provider": "Πάροχος",
-      "select_model": "Επιλέξτε ένα μοντέλο",
-      "select_provider": "Επιλέξτε πάροχο",
-      "sync_hint": "Ο επιλεγμένος πάροχος και μοντέλο θα συγχρονιστούν στο αρχείο ρυθμίσεων του OpenClaw",
-      "title": "Διαμόρφωση Μοντέλου"
-    },
-    "node_missing": {
-      "description": "Το OpenClaw απαιτεί Node.js/npm. Παρακαλώ εγκαταστήστε πρώτα το Node.js και, στη συνέχεια, επανεκκινήστε το Cherry Studio.",
-      "download_button": "Κατεβάστε το Node.js",
-      "hint": "macOS: brew install node | Windows: Κατεβάστε την έκδοση LTS από το nodejs.org",
-      "title": "Απαιτείται Node.js"
-    },
-    "node_version_low": {
-      "description": "Το OpenClaw απαιτεί Node.js 22.0 ή νεότερη έκδοση. Η τρέχουσα έκδοσή σας είναι v{{version}}. Παρακαλούμε αναβαθμίστε πρώτα το Node.js.",
-      "hint": "nvm: nvm install 22 && nvm use 22 | mise: mise use node@22",
-      "title": "Η έκδοση του Node.js είναι πολύ χαμηλή"
-    },
-    "not_installed": {
-      "description": "Το OpenClaw δεν είναι εγκατεστημένο στο σύστημά σας. Παρακαλούμε εγκαταστήστε το πρώτα για να χρησιμοποιήσετε αυτή τη λειτουργία.",
-      "install_button": "Εγκατάσταση του OpenClaw",
-      "install_guide_title": "Οδηγός Εγκατάστασης",
-      "macos_linux_title": "macOS / Linux",
-      "refresh": "Ανανέωση",
-      "step2_hint": "Μετά την εγκατάσταση, κάντε κλικ στο κουμπί Ανανέωση παραπάνω για να εντοπίσετε το OpenClaw",
-      "step2_title": "Βήμα 2: Επαληθεύστε την εγκατάσταση",
-      "title": "Το OpenClaw δεν είναι εγκατεστημένο",
-      "windows_title": "Windows"
-    },
-    "quick_actions": {
-      "open_dashboard": "Άνοιγμα Πίνακα Ελέγχου",
-      "title": "Γρήγορες Ενέργειες",
-      "uninstall": "Απεγκατάσταση",
-      "view_docs": "Δείτε την Τεκμηρίωση"
-    },
-    "status": {
-      "error": "Σφάλμα",
-      "running": "Τρέξιμο",
-      "starting": "Έναρξη",
-      "stopped": "Σταμάτησε"
-    },
-    "tips": {
-      "permissions": "Το OpenClaw έχει αυξημένα δικαιώματα συστήματος. Χρησιμοποιήστε το μόνο σε αξιόπιστα περιβάλλοντα",
-      "title": "Συμβουλές",
-      "token_usage": "Η λειτουργία πράκτορα AI μπορεί να καταναλώσει περισσότερα tokens. Παρακαλώ παρακολουθήστε τη χρήση σας"
-    },
-    "title": "OpenClaw",
-    "uninstall_confirm": "Είστε βέβαιοι ότι θέλετε να απεγκαταστήσετε το OpenClaw; Πατήστε OK για επιβεβαίωση.",
-    "uninstall_progress": "Πρόοδος Απεγκατάστασης",
-    "uninstalled": {
-      "description": "Το OpenClaw απεγκαταστάθηκε με επιτυχία.",
-      "title": "Η απεγκατάσταση ολοκληρώθηκε"
-    },
-    "uninstalling": {
-      "description": "Παρακαλώ περιμένετε ενώ γίνεται η απεγκατάσταση του OpenClaw...",
-      "title": "Απεγκατάσταση του OpenClaw"
-    }
   },
   "ovms": {
     "action": {
@@ -2993,238 +2841,6 @@
       "unknown": "Άγνωστη κατάσταση OVMS"
     },
     "title": "Intel OVMS"
-  },
-  "paintings": {
-    "aspect_ratio": "Λόγος διαστάσεων",
-    "aspect_ratios": {
-      "landscape": "Οριζόντια εικόνα",
-      "portrait": "Κάθετη εικόνα",
-      "square": "Τετράγωνο"
-    },
-    "auto_create_paint": "Αυτόματη δημιουργία εικόνας",
-    "auto_create_paint_tip": "Μετά τη δημιουργία της εικόνας, θα δημιουργηθεί αυτόματα νέα εικόνα",
-    "background": "Φόντο",
-    "background_options": {
-      "auto": "Αυτόματο",
-      "opaque": "Αδιαφανές",
-      "transparent": "Διαφανές"
-    },
-    "button": {
-      "delete": {
-        "image": {
-          "confirm": "Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή την εικόνα;",
-          "label": "Διαγραφή εικόνας"
-        }
-      },
-      "new": {
-        "image": "Νέα εικόνα"
-      }
-    },
-    "custom_size": "Προσαρμοσμένο μέγεθος",
-    "dmxapi": {
-      "generating_tip": "Η δημιουργία γίνεται με το επίσημο μοντέλο, ο εκτιμώμενος χρόνος αναμονής είναι 2-5 λεπτά για τα καλύτερα αποτελέσματα. Ελέγξτε τα αρχεία καταγραφής του διακομιστή DMXAPI για το κόστος αυτής της λειτουργίας.",
-      "style": ", Στυλ:",
-      "style_types": {
-        "25d_animation": "Κινούμενα Σχέδια 2.5D",
-        "3d_cartoon": "3D Καρτούν",
-        "american_retro": "Αμερικανικό Ρετρό",
-        "baroque": "Μπαρόκ",
-        "cartoon_illustration": "Κινούμενη εικονογράφηση",
-        "chinese_gongbi": "Κινέζικο Γκόνγκμπι",
-        "clay": "Πηλός",
-        "cyberpunk": "Κυβερνοπάνκ",
-        "felt": "Ύφασμα",
-        "flat": "Flat",
-        "fresh_anime": "Φρέσκο Anime",
-        "ghibli": "Γκίμπλι",
-        "japanese_anime": "Ιαπωνικό Άνιμε",
-        "little_people_book": "Βιβλίο για τους Μικρούς Ανθρώπους",
-        "monet_garden": "Κήπος Μονέ",
-        "oil_painting": "Ζωγραφική με λάδι",
-        "pixar": "Pixar",
-        "pixel_art": "Τέχνη των Πίξελ",
-        "poetic_ancient": "Ποιητικό Αρχαίο",
-        "psychedelic": "Ψυχεδελικό",
-        "sketch": "Σχέδιο",
-        "street_art": "Τέχνη του Δρόμου",
-        "texture": "Υφή",
-        "ukiyo_e": "Ουκιγιό-ε",
-        "watercolor": "Νερομπογιά",
-        "wood_carving": "Ξυλογλυπτική",
-        "yarn_doll": "Κούκλα από κλωστή"
-      }
-    },
-    "edit": {
-      "image_file": "Επεξεργασμένη εικόνα",
-      "image_required": "Παρακαλώ ανεβάστε πρώτα μια εικόνα για επεξεργασία"
-    },
-    "generate": {
-      "height": "Ύψος",
-      "magic_prompt_option_tip": "Έξυπνη βελτιστοποίηση της προτροπής για βελτίωση των αποτελεσμάτων",
-      "model_tip": "Έκδοση μοντέλου: Το V2 είναι το τελευταίο μοντέλο διεπαφής, το V2A είναι γρήγορο μοντέλο, το V_1 είναι το αρχικό μοντέλο και το _TURBO είναι η επιταχυνόμενη έκδοση",
-      "negative_prompt_tip": "Περιγράψτε στοιχεία που δεν θέλετε να εμφανίζονται στην εικόνα, υποστηρίζεται μόνο στις εκδόσεις V_1, V_1_TURBO, V_2 και V_2_TURBO",
-      "number_images_tip": "Αριθμός εικόνων ανά παραγωγή",
-      "person_generation": "Δημιουργία προσώπου",
-      "person_generation_tip": "Επιτρέπει στο μοντέλο να δημιουργεί εικόνες προσώπων",
-      "rendering_speed_tip": "Ελέγχει την ισορροπία μεταξύ ταχύτητας και ποιότητας απόδοσης, ισχύει μόνο για την έκδοση V_3",
-      "safety_tolerance": "Ασφάλεια",
-      "safety_tolerance_tip": "Έλεγχος της ασφάλειας της δημιουργίας εικόνας, ισχύει μόνο για την έκδοση FLUX.1-Kontext-pro",
-      "seed_tip": "Ελέγχει την τυχαιότητα της δημιουργίας εικόνας, χρησιμοποιείται για να επαναληφθεί το ίδιο αποτέλεσμα",
-      "style_type_tip": "Στυλ δημιουργίας εικόνας, ισχύει μόνο για την έκδοση V_2 και μεταγενέστερες",
-      "width": "Πλάτος"
-    },
-    "generate_failed": "Αποτυχία δημιουργίας εικόνας",
-    "generated_image": "Δημιουργία εικόνας",
-    "go_to_settings": "Πηγαίνετε στις ρυθμίσεις",
-    "guidance_scale": "Κλίμακα προσαρμογής",
-    "guidance_scale_tip": "Χωρίς κλάσικο προσαρμογής. Ελέγχει την προσαρμογή του μοντέλου στην αναζήτηση παρόμοιων εικόνων για το σχόλιο.",
-    "image": {
-      "size": "Μέγεθος εικόνας"
-    },
-    "image_file_required": "Παρακαλώ ανεβάστε πρώτα μια εικόνα",
-    "image_file_retry": "Παρακαλώ ανεβάστε ξανά την εικόνα",
-    "image_handle_required": "Παρακαλώ ανεβάστε πρώτα μια εικόνα",
-    "image_mix_failed": "Αποτυχία ανάμειξης εικόνων",
-    "image_placeholder": "Δεν υπάρχει εικόνα για τη στιγμή",
-    "image_retry": "Δοκιμάστε ξανά",
-    "image_size_options": {
-      "auto": "Αυτόματο"
-    },
-    "inference_steps": "Βήματα επεξεργασίας",
-    "inference_steps_tip": "Το πλήθος των βημάτων επεξεργασίας που πρέπει να εκτελεστούν. Περισσότερα βήματα = χαμηλότερη ποιότητα και μεγαλύτερος χρόνος εκτέλεσης",
-    "input_image": "Εικόνα εισόδου",
-    "input_parameters": "Παράμετροι εισόδου",
-    "invalid_image_url": "Μη έγκυρη μορφή διεύθυνσης URL εικόνας",
-    "learn_more": "Μάθετε περισσότερα",
-    "magic_prompt_option": "Ενίσχυση προτροπής",
-    "mode": {
-      "edit": "Επεξεργασία",
-      "generate": "Δημιουργία",
-      "merge": "συγχώνευση",
-      "remix": "Ανάμειξη",
-      "upscale": "Μεγέθυνση"
-    },
-    "model": "Έκδοση",
-    "model_and_pricing": "Μοντέλο και τιμές",
-    "moderation": "Ευαισθησία",
-    "moderation_options": {
-      "auto": "Αυτόματο",
-      "low": "Χαμηλό"
-    },
-    "negative_prompt": "Αντίστροφη προσδοκία",
-    "negative_prompt_tip": "Περιγράψτε τα πράγματα που δεν θέλετε να εμφανίζονται στην εικόνα",
-    "no_image_generation_model": "Δεν υπάρχει διαθέσιμο μοντέλο δημιουργίας εικόνας. Προσθέστε ένα μοντέλο και ορίστε τον τύπο τερματικού σημείου ως {{endpoint_type}}",
-    "number_images": "Ποσότητα δημιουργιών",
-    "number_images_tip": "Ποσότητα εικόνων που θα δημιουργηθούν μια φορά (1-4)",
-    "operation_failed": "Η λειτουργία απέτυχε, παρακαλώ δοκιμάστε ξανά αργότερα",
-    "paint_course": "Εκπαίδευση",
-    "per_image": "Ανά εικόνα",
-    "per_images": "Ανά εικόνα",
-    "person_generation_options": {
-      "allow_adult": "Να επιτρέπεται ενήλικας",
-      "allow_all": "Να επιτρέπονται όλα",
-      "allow_none": "Να μην επιτρέπεται τίποτα"
-    },
-    "ppio": {
-      "edit_prompt_tip": "Καθορίζει το αντικείμενο ή την περιοχή προς αφαίρεση από την εικόνα, π.χ. 'σκύλος' ή 'καπέλο'",
-      "mask_image": "Εικόνα μάσκας",
-      "mask_image_tip": "Υποδεικνύει την περιοχή προς διαγραφή. Οι περιοχές διαγραφής πρέπει να είναι λευκές, οι περιοχές διατήρησης μαύρες",
-      "output_format": "Μορφή εξόδου",
-      "resolution": "Ανάλυση στόχου",
-      "seed_tip": "Τυχαίος σπόρος, ίδιος σπόρος και παράμετροι παράγουν παρόμοιες εικόνες, -1 σημαίνει τυχαίο",
-      "use_pre_llm_tip": "Ενεργοποιεί επέκταση κειμένου για βελτιστοποίηση του prompt. Συνιστάται για σύντομα prompts, απενεργοποιήστε για μεγάλα",
-      "watermark_tip": "Αν θα προστεθεί υδατογράφημα στις δημιουργημένες εικόνες, απενεργοποιημένο από προεπιλογή"
-    },
-    "pricing": "Τιμολόγηση",
-    "prompt_enhancement": "Βελτιστοποίηση σχόλιου",
-    "prompt_enhancement_tip": "Όταν ενεργοποιηθεί, η προσδοκία προσαρμόζεται για να γίνει περισσότερο λεπτομερής και συμβατή με το μοντέλο",
-    "prompt_placeholder": "Περιγράψτε την εικόνα που θέλετε να δημιουργήσετε, για παράδειγμα: ένα ηρωϊκό λιμάνι, το δείπνο του θεού, με απέναντι την ορεινή περιοχή",
-    "prompt_placeholder_edit": "Εισάγετε την περιγραφή της εικόνας σας, χρησιμοποιήστε διπλά εισαγωγικά \"\" για κείμενο",
-    "prompt_placeholder_en": "Εισαγάγετε την περιγραφή εικόνας στα «Αγγλικά», η Imagen υποστηρίζει μόνο αγγλικές εντολές προς το παρόν",
-    "proxy_required": "Αυτή τη στιγμή χρειάζεται να ενεργοποιήσετε τον μεσολαβητή (proxy) για να δείτε τις δημιουργημένες εικόνες. Στο μέλλον θα υποστηρίζεται η άμεση σύνδεση στην Κίνα",
-    "quality": "Ποιότητα",
-    "quality_options": {
-      "auto": "Αυτόματο",
-      "high": "Υψηλό",
-      "low": "Χαμηλό",
-      "medium": "Μεσαίο"
-    },
-    "regenerate": {
-      "confirm": "Αυτό θα επιβάλει τις δημιουργίες που έχετε κάνει, θέλετε να συνεχίσετε;"
-    },
-    "remix": {
-      "image_file": "Εικόνα αναφοράς",
-      "image_weight": "Βάρος εικόνας αναφοράς",
-      "image_weight_tip": "Ρυθμίστε την επίδραση της εικόνας αναφοράς",
-      "magic_prompt_option_tip": "Έξυπνη βελτιστοποίηση της προτροπής remix",
-      "model_tip": "Επιλέξτε την έκδοση του AI μοντέλου για χρήση σε remix",
-      "negative_prompt_tip": "Περιγράψτε στοιχεία που δεν θέλετε να εμφανιστούν στο αποτέλεσμα remix",
-      "number_images_tip": "Αριθμός αποτελεσμάτων remix που θα δημιουργηθούν",
-      "rendering_speed_tip": "Ελέγχει την ισορροπία μεταξύ ταχύτητας και ποιότητας απόδοσης, εφαρμόζεται μόνο στην έκδοση V_3",
-      "seed_tip": "Έλεγχος τυχαιότητας των αποτελεσμάτων remix",
-      "style_type_tip": "Στυλ εικόνας μετά το remix, διαθέσιμο μόνο για εκδόσεις V_2 και νεότερες"
-    },
-    "rendering_speed": "Ταχύτητα απόδοσης",
-    "rendering_speeds": {
-      "default": "Προεπιλογή",
-      "quality": "Υψηλή ποιότητα",
-      "turbo": "Γρήγορα"
-    },
-    "req_error_model": "Αποτυχία λήψης μοντέλου",
-    "req_error_no_balance": "Ελέγξτε την εγκυρότητα του token",
-    "req_error_text": "Ο διακομιστής είναι απασχολημένος ή η εντολή περιέχει «λέξεις πνευματικής ιδιοκτησίας» ή «ευαίσθητες λέξεις». Παρακαλούμε δοκιμάστε ξανά.",
-    "req_error_token": "Ελέγξτε την εγκυρότητα του token",
-    "required_field": "Υποχρεωτικό πεδίο",
-    "seed": "Τυχαίος παράγοντας",
-    "seed_desc_tip": "Οι ίδιοι σπόρος και εντολή μπορούν να δημιουργήσουν παρόμοιες εικόνες. Ορίστε -1 για διαφορετική εικόνα κάθε φορά",
-    "seed_random": "Τυχαίο",
-    "seed_tip": "Η χρήση του ίδιου παραγόντα και του σχολίου μπορεί να δημιουργήσει παρόμοιες εικόνες",
-    "select_model": "Επιλέξτε μοντέλο",
-    "style_type": "Στυλ",
-    "style_types": {
-      "3d": "3D",
-      "anime": "Άνιμε",
-      "auto": "Αυτόματο",
-      "design": "Σχεδιασμός",
-      "general": "Γενικό",
-      "realistic": "Ρεαλιστικό"
-    },
-    "text_desc_required": "Παρακαλούμε εισάγετε πρώτα την περιγραφή της εικόνας",
-    "title": "Εικόνα",
-    "top_up": "Επαναφόρτωση",
-    "translating": "Μετάφραση...",
-    "uploaded_input": "Ανέβηκε η είσοδος",
-    "upscale": {
-      "detail": "Λεπτομέρεια",
-      "detail_tip": "Ρυθμίστε την ένταση των λεπτομερειών στην μεγεθυσμένη εικόνα",
-      "image_file": "Εικόνα που χρειάζεται μεγέθυνση",
-      "magic_prompt_option_tip": "Έξυπνη βελτιστοποίηση της προτροπής μεγέθυνσης",
-      "number_images_tip": "Αριθμός των αποτελεσμάτων μεγέθυνσης που θα δημιουργηθούν",
-      "resemblance": "Ομοιότητα",
-      "resemblance_tip": "Ρυθμίστε την ομοιότητα της μεγεθυσμένης εικόνας με την αρχική",
-      "seed_tip": "Ελέγχει την τυχαιότητα του αποτελέσματος μεγέθυνσης"
-    },
-    "watermark": "Προσθήκη υδατογραφήματος",
-    "zhipu": {
-      "custom_size_divisible": "Το προσαρμοσμένο μέγεθος πρέπει να διαιρείται με το 16",
-      "custom_size_hint": "Το πλάτος και το ύψος πρέπει να είναι μεταξύ 512px-2048px, να διαιρούνται με το 16 και τα συνολικά pixel να μην υπερβαίνουν τα 2^21px.",
-      "custom_size_pixels": "Το συνολικό πλήθος εικονοστοιχείων προσαρμοσμένου μεγέθους δεν μπορεί να υπερβαίνει τα 2.097.152",
-      "custom_size_range": "Το προσαρμοσμένο μέγεθος πρέπει να είναι μεταξύ 512px-2048px",
-      "custom_size_required": "Παρακαλώ ορίστε προσαρμοσμένο πλάτος και ύψος",
-      "image_sizes": {
-        "1024x1024_default": "1024x1024 (Προεπιλογή)",
-        "1152x864": "1152x864",
-        "1344x768": "1344x768",
-        "1440x720": "1440x720",
-        "720x1440": "720x1440",
-        "768x1344": "768x1344",
-        "864x1152": "864x1152"
-      },
-      "quality_options": {
-        "hd": "HD",
-        "standard_default": "Πρότυπο (Προεπιλογή)"
-      }
-    }
   },
   "plugins": {
     "actions": "Λειτουργία",
@@ -3349,7 +2965,6 @@
     "ocoolai": "ocoolAI",
     "ollama": "Ollama",
     "openai": "OpenAI",
-    "openclaw": "[to be translated]:OpenClaw",
     "openrouter": "OpenRouter",
     "ovms": "Intel OVMS",
     "perplexity": "Perplexity",
@@ -3603,6 +3218,222 @@
       "undo": "ακύρωση"
     }
   },
+  "rpa_roles": {
+    "actions": {
+      "back": "[to be translated]:Back to Role Library",
+      "create": "[to be translated]:Create",
+      "delete_confirm": "[to be translated]:Delete this Role?",
+      "disable": "[to be translated]:Disable",
+      "duplicate": "[to be translated]:Duplicate",
+      "edit": "[to be translated]:Edit Role",
+      "enable": "[to be translated]:Enable",
+      "export": "[to be translated]:Export",
+      "import": "[to be translated]:Import",
+      "new_role": "[to be translated]:New Role",
+      "save": "[to be translated]:Save",
+      "start_session": "[to be translated]:Start new RPA session"
+    },
+    "alerts": {
+      "active_runs": "[to be translated]:Destructive changes are restricted while this Role has active runs",
+      "broken_bindings": "[to be translated]:{{count}} unresolved asset binding(s)"
+    },
+    "assets": {
+      "artifact": "[to be translated]:Files and Evidence",
+      "knowledge": "[to be translated]:Knowledge",
+      "prompt": "[to be translated]:Prompts",
+      "provider": "[to be translated]:Providers",
+      "skill": "[to be translated]:Skills"
+    },
+    "binding": {
+      "add": "[to be translated]:Add binding",
+      "artifact_imported": "[to be translated]:Imported {{count}} file asset(s)",
+      "asset": "[to be translated]:Asset",
+      "asset_source_hint": "[to be translated]:Create or import an asset here, then select it below.",
+      "bind_asset": "[to be translated]:Bind asset",
+      "bind_title": "[to be translated]:Bind {{asset}}",
+      "empty": "[to be translated]:No {{asset}} bindings",
+      "enabled": "[to be translated]:Enabled",
+      "import_files": "[to be translated]:Import files",
+      "import_skill": "[to be translated]:Import Skill JSON",
+      "manage_knowledge": "[to be translated]:Create or import knowledge",
+      "missing": "[to be translated]:Missing: {{id}}",
+      "ownership": "[to be translated]:Ownership",
+      "priority": "[to be translated]:Priority",
+      "reference_hint": "[to be translated]:References are stored on the Role; asset content remains in its original repository.",
+      "remove_confirm": "[to be translated]:Remove this binding?",
+      "requirement": "[to be translated]:Requirement",
+      "skill_imported": "[to be translated]:Imported {{count}} Skill asset(s)"
+    },
+    "columns": {
+      "actions": "[to be translated]:Actions",
+      "assets": "[to be translated]:Assets",
+      "health": "[to be translated]:Health",
+      "role": "[to be translated]:Role",
+      "updated": "[to be translated]:Updated"
+    },
+    "create": {
+      "name_placeholder": "[to be translated]:Meituan automation",
+      "title": "[to be translated]:Create RPA Role"
+    },
+    "form": {
+      "active_runs": "[to be translated]:Active runs",
+      "app_packages": "[to be translated]:App packages",
+      "description": "[to be translated]:Description",
+      "lifecycle": "[to be translated]:Lifecycle",
+      "migration": "[to be translated]:Migration",
+      "name": "[to be translated]:Name",
+      "primary_app_package": "[to be translated]:Primary app package",
+      "provider_health": "[to be translated]:{{configured}} configured / {{missing}} missing",
+      "providers": "[to be translated]:Providers",
+      "readiness": "[to be translated]:Readiness",
+      "recent_runs": "[to be translated]:Recent runs",
+      "role_name": "[to be translated]:Role name",
+      "supported_app_versions": "[to be translated]:Supported app versions",
+      "supporting_roles": "[to be translated]:Supporting Roles",
+      "system_capabilities": "[to be translated]:System capabilities",
+      "version": "[to be translated]:Version"
+    },
+    "library": {
+      "active_runs": "[to be translated]:{{count}} active runs",
+      "broken_bindings": "[to be translated]:{{count}} broken bindings",
+      "compatibility": "[to be translated]:compatibility",
+      "copy_name": "[to be translated]:{{name}} Copy",
+      "description": "[to be translated]:Manage app scope, prompts, models and qualified RPA assets.",
+      "empty": "[to be translated]:No RPA Roles",
+      "heading": "[to be translated]:App Automation Roles",
+      "no_app_package": "[to be translated]:No app package configured",
+      "no_assets": "[to be translated]:No assets",
+      "search_placeholder": "[to be translated]:Search Roles or packages"
+    },
+    "messages": {
+      "active_role_delete_blocked": "[to be translated]:This Role is used by an active run and cannot be deleted",
+      "already_exists": "[to be translated]:Role already exists: {{id}}",
+      "import_failed": "[to be translated]:Failed to import Role",
+      "imported": "[to be translated]:Role imported",
+      "invalid_json": "[to be translated]:Invalid Role JSON",
+      "load_failed": "[to be translated]:Failed to load RPA Roles",
+      "not_found": "[to be translated]:RPA Role not found",
+      "saved": "[to be translated]:Role saved",
+      "workspace_load_failed": "[to be translated]:Failed to load RPA Role workspace"
+    },
+    "migration": {
+      "compatibility_description": "[to be translated]:Generated from Assistant {{assistantId}}, profile version {{version}}. Continue using the compatibility reader until migration and rollback acceptance pass.",
+      "compatibility_title": "[to be translated]:Compatibility Role",
+      "native_description": "[to be translated]:Migration state: {{state}}",
+      "native_title": "[to be translated]:Native Role"
+    },
+    "model_kinds": {
+      "planner": "[to be translated]:Planner",
+      "recovery": "[to be translated]:Recovery",
+      "verification": "[to be translated]:Verification",
+      "vision": "[to be translated]:Vision"
+    },
+    "none": "[to be translated]:None",
+    "ownership": {
+      "linked": "[to be translated]:Linked",
+      "owned": "[to be translated]:Owned",
+      "shared": "[to be translated]:Shared"
+    },
+    "prompt_kinds": {
+      "capability": "[to be translated]:Capability",
+      "planner": "[to be translated]:Planner",
+      "recovery": "[to be translated]:Recovery",
+      "system": "[to be translated]:System",
+      "verification": "[to be translated]:Verification"
+    },
+    "prompts": {
+      "add": "[to be translated]:Add prompt",
+      "add_title": "[to be translated]:Add versioned Role prompt",
+      "capability": "[to be translated]:Capability",
+      "content": "[to be translated]:Prompt",
+      "delete_confirm": "[to be translated]:Delete this prompt version?",
+      "empty": "[to be translated]:No Role prompts",
+      "id": "[to be translated]:Prompt ID",
+      "kind": "[to be translated]:Prompt kind",
+      "model_id": "[to be translated]:Model ID",
+      "provider": "[to be translated]:Provider",
+      "save": "[to be translated]:Save prompt",
+      "versioned": "[to be translated]:Versioned prompts"
+    },
+    "provider_status": {
+      "degraded": "[to be translated]:Degraded",
+      "disabled": "[to be translated]:Disabled",
+      "healthy": "[to be translated]:Healthy",
+      "needs_configuration": "[to be translated]:Unavailable"
+    },
+    "readiness": {
+      "blocked": "[to be translated]:Blocked",
+      "degraded": "[to be translated]:Degraded",
+      "draft": "[to be translated]:Draft",
+      "loading": "[to be translated]:Loading",
+      "ready": "[to be translated]:Ready"
+    },
+    "requirement": {
+      "optional": "[to be translated]:Optional",
+      "required": "[to be translated]:Required"
+    },
+    "role": "[to be translated]:RPA Role",
+    "settings": {
+      "assets": "[to be translated]:Role assets",
+      "bound_description": "[to be translated]:This conversation uses the Role version recorded when it was created. Saving creates a new version without rewriting historical run context.",
+      "bound_title": "[to be translated]:Configuration is bound to the current Role",
+      "enabled_prompt_versions": "[to be translated]:{{count}} enabled versions",
+      "load_failed": "[to be translated]:Failed to load RPA Role settings",
+      "manage": "[to be translated]:Manage",
+      "model_defaults": "[to be translated]:Model defaults",
+      "save_failed": "[to be translated]:Failed to save RPA Role settings",
+      "save_role": "[to be translated]:Save Role",
+      "saved": "[to be translated]:RPA Role settings saved",
+      "unbound_description": "[to be translated]:Choose a Role from RPA Roles and start a new task conversation. Normal chat settings do not create automation asset bindings.",
+      "unbound_title": "[to be translated]:The current topic is not bound to an RPA Role",
+      "use_chat_model": "[to be translated]:Use chat model"
+    },
+    "sidebar_title": "[to be translated]:RPA Roles",
+    "status": {
+      "disabled": "[to be translated]:Disabled",
+      "draft": "[to be translated]:Draft",
+      "enabled": "[to be translated]:Enabled"
+    },
+    "tabs": {
+      "migration": "[to be translated]:Migration",
+      "overview": "[to be translated]:Overview",
+      "prompts": "[to be translated]:Prompts",
+      "providers": "[to be translated]:Providers",
+      "versions": "[to be translated]:Versions"
+    },
+    "title": "[to be translated]:RPA Role Library",
+    "versions": {
+      "last_updated": "[to be translated]:Last updated",
+      "prompt_versions": "[to be translated]:Prompt versions",
+      "role_version": "[to be translated]:Role version"
+    }
+  },
+  "rpa_supplements": {
+    "add_files": "[to be translated]:Add files",
+    "empty": "[to be translated]:No Session Supplements yet",
+    "manual_retention": "[to be translated]:Until removed",
+    "next_request": "[to be translated]:Next request",
+    "no_authorized_provider": "[to be translated]:No healthy trusted workspace retrieval or MCP Provider is available.",
+    "no_pending_files": "[to be translated]:No files selected for the next task request.",
+    "no_role_sources": "[to be translated]:No reusable sources are bound to this Role.",
+    "optional": "[to be translated]:Optional",
+    "pending_files": "[to be translated]:Pending files",
+    "remote_sources": "[to be translated]:Approved URL and MCP sources",
+    "request_retention": "[to be translated]:Request only",
+    "required": "[to be translated]:Required",
+    "role_sources": "[to be translated]:Role sources",
+    "select_knowledge": "[to be translated]:Select task-specific Knowledge",
+    "select_mcp_resource": "[to be translated]:Select an MCP Resource",
+    "select_provider": "[to be translated]:Select Provider",
+    "session_knowledge": "[to be translated]:Temporary Knowledge",
+    "session_retention": "[to be translated]:Until session ends",
+    "session_scope": "[to be translated]:Session",
+    "session_sources": "[to be translated]:Session sources",
+    "title": "[to be translated]:Supplemental Context"
+  },
+  "rpa_templates": {
+    "title": "[to be translated]:RPA Templates"
+  },
   "selection": {
     "action": {
       "builtin": {
@@ -3611,16 +3442,12 @@
         "quote": "Παράθεση",
         "refine": "Βελτίωση",
         "search": "Αναζήτηση",
-        "summary": "Σύνοψη",
-        "translate": "Μετάφραση"
+        "summary": "Σύνοψη"
       },
       "prompt": {
         "explain": "Παρακαλώ εξήγησε το ακόλουθο περιεχόμενο.",
         "refine": "Παρακαλώ βελτιστοποιήστε ή γυαλίστε το περιεχόμενο που δίνει ο χρήστης, περιτριγυρισμένο με την ετικέτα XML <INPUT>, διατηρώντας το νόημα και την ακεραιότητα του αρχικού περιεχομένου. Απαιτήσεις: Η έξοδός σας πρέπει να είναι στην ίδια γλώσσα με την είσοδο του χρήστη· μην συμπεριλάβετε καμία εξήγηση αυτής της οδηγίας, δώστε απλώς την απάντηση· μην εκτυπώνετε ετικέτες XML, εκτυπώστε απευθείας το βελτιστοποιημένο περιεχόμενο.",
         "summary": "Παρακαλώ συνοψίστε το ακόλουθο περιεχόμενο. Απαιτήσεις: Απαντήστε στα ελληνικά· μη συμπεριλάβετε καμία εξήγηση αυτού του προτρόπου, δώστε απευθείας την απάντηση:"
-      },
-      "translate": {
-        "smart_translate_tips": "Έξυπνη μετάφραση: το περιεχόμενο θα μεταφραστεί προτεραιακά στη στόχος γλώσσα· αν το περιεχόμενο είναι ήδη στη στόχος γλώσσα, θα μεταφραστεί στην εναλλακτική γλώσσα"
       },
       "window": {
         "c_copy": "Αντιγραφή C",
@@ -3924,7 +3751,6 @@
         "joplin": "Εξαγωγή στο Joplin",
         "markdown": "Εξαγωγή σε Markdown",
         "markdown_reason": "Εξαγωγή σε Markdown (περιλαμβάνει σκέψη)",
-        "notes": "εξαγωγή στις σημειώσεις",
         "notion": "Εξαγωγή στο Notion",
         "obsidian": "Εξαγωγή στο Obsidian",
         "plain_text": "Αντιγραφή ως απλό κείμενο",
@@ -4512,16 +4338,10 @@
         "knowledge": {
           "icon": "Εμφάνιση εικονιδίου γνώσης"
         },
-        "minapp": {
-          "icon": "Εμφάνιση εικονιδίου μικροπρογραμμάτων"
-        },
         "painting": {
           "icon": "Εμφάνιση εικονιδίου ζωγραφικής"
         },
         "title": "Ρυθμίσεις πλευρικού μενού",
-        "translate": {
-          "icon": "Εμφάνιση εικονιδίου μετάφρασης"
-        },
         "visible": "Εμφανιζόμενα εικονίδια"
       },
       "title": "Ρυθμίσεις εμφάνισης",
@@ -4592,13 +4412,11 @@
       "title": "Απενεργοποίηση επιτάχυνσης υλικού"
     },
     "input": {
-      "auto_translate_with_space": "Μετάφραση με τρεις γρήγορες πιστώσεις",
       "clear": {
         "all": "Εκκαθάριση",
         "knowledge_base": "Εκκαθάριση επιλεγμένων βάσεων γνώσης",
         "models": "Εκκαθάριση όλων των μοντέλων"
       },
-      "show_translate_confirm": "Εμφάνιση παραθύρου επιβεβαίωσης μετάφρασης",
       "target_language": {
         "chinese": "Σινογραμματικό",
         "chinese-traditional": "Επιτυχημένο Σινογραμματικό",
@@ -5069,10 +4887,6 @@
         "label": "Ονομασία θέματος",
         "prompt": "Προσδιορισμός προκαθορισμένου θέματος"
       },
-      "translate_model": "Μοντέλο μετάφρασης",
-      "translate_model_description": "Το μοντέλο που χρησιμοποιείται για τη μετάφραση",
-      "translate_model_prompt_message": "Εισάγετε την προσδιορισμένη προειδοποίηση μετάφρασης",
-      "translate_model_prompt_title": "Προσδιορισμός προκαθορισμένου θέματος μετάφρασης",
       "use_assistant": "Χρήση Βοηθού",
       "use_model": "Προεπιλεγμένο Μοντέλο"
     },
@@ -5352,7 +5166,6 @@
       "openai": {
         "alert": "Ο πάροχος OpenAI δεν υποστηρίζει πλέον την παλιά μέθοδο κλήσης, παρακαλώ δημιουργήστε έναν νέο πάροχο API αν χρησιμοποιείτε τρίτους"
       },
-      "openclaw": "[to be translated]:OpenClaw",
       "remove_duplicate_keys": "Αφαίρεση Επαναλαμβανόμενων Κλειδιών",
       "remove_invalid_keys": "Διαγραφή Ακυρωμένων Κλειδιών",
       "search": "Αναζήτηση πλατφόρμας μονάδων...",
@@ -5622,51 +5435,6 @@
         "time": "Εμφάνιση ώρας θέματος"
       }
     },
-    "translate": {
-      "custom": {
-        "delete": {
-          "description": "Είστε βέβαιοι ότι θέλετε να το διαγράψετε;",
-          "title": "Διαγραφή προσαρμοσμένης γλώσσας"
-        },
-        "error": {
-          "add": "Αποτυχία προσθήκης",
-          "delete": "Αποτυχία διαγραφής",
-          "langCode": {
-            "builtin": "Η γλώσσα υποστηρίζεται εξ' ορισμού",
-            "empty": "Ο κωδικός γλώσσας είναι κενός",
-            "exists": "Η γλώσσα υπάρχει ήδη",
-            "invalid": "Μη έγκυρος κωδικός γλώσσας"
-          },
-          "update": "Η ενημέρωση απέτυχε",
-          "value": {
-            "empty": "Το όνομα της γλώσσας δεν μπορεί να είναι κενό",
-            "too_long": "Το όνομα της γλώσσας είναι πολύ μεγάλο"
-          }
-        },
-        "langCode": {
-          "help": "[γλώσσα+περιοχή] σε μορφή, [2-3 πεζά γράμματα]-[2-3 πεζά γράμματα]",
-          "label": "Κωδικός γλώσσας",
-          "placeholder": "el-gr"
-        },
-        "success": {
-          "add": "Επιτυχής προσθήκη",
-          "delete": "Η διαγραφή ολοκληρώθηκε επιτυχώς",
-          "update": "Επιτυχής ενημέρωση"
-        },
-        "table": {
-          "action": {
-            "title": "Λειτουργία"
-          }
-        },
-        "value": {
-          "help": "1~32 χαρακτήρες",
-          "label": "Όνομα γλώσσας",
-          "placeholder": "Ελληνικά"
-        }
-      },
-      "prompt": "Ακολουθήστε την οδηγία συστήματος",
-      "title": "Ρυθμίσεις μετάφρασης"
-    },
     "tray": {
       "onclose": "Μειωμένο στη συνδρομή κατά την κλεισιά",
       "show": "Εμφάνιση εικονιδίου συνδρομής",
@@ -5684,135 +5452,6 @@
       "title": "Κλίμακα"
     }
   },
-  "taskflow": {
-    "description": "[to be translated]:Android WeChat message monitoring and auto-reply task flow",
-    "deviceQueue": {
-      "actions": {
-        "cancel": "[to be translated]:Cancel",
-        "pause": "[to be translated]:Pause",
-        "resume": "[to be translated]:Resume"
-      },
-      "columns": {
-        "actions": "[to be translated]:Actions",
-        "device": "[to be translated]:Device",
-        "goal": "[to be translated]:Goal",
-        "progress": "[to be translated]:Progress",
-        "status": "[to be translated]:Status",
-        "updated": "[to be translated]:Updated"
-      },
-      "enqueue": "[to be translated]:Enqueue",
-      "enqueueSuccess": "[to be translated]:Device task enqueued",
-      "goalPlaceholder": "[to be translated]:Example: open the target app and tap the visible reward button",
-      "localVlm": "[to be translated]:Local VLM",
-      "onlineDevice": "[to be translated]:Online device",
-      "refresh": "[to be translated]:Refresh",
-      "selectTaskLogs": "[to be translated]:Select a task to view logs.",
-      "selectedLogs": "[to be translated]:Selected task logs",
-      "title": "[to be translated]:Device task queue",
-      "tryDeerFlow": "[to be translated]:Try DeerFlow",
-      "validation": {
-        "device": "[to be translated]:Select a device",
-        "goal": "[to be translated]:Input task goal"
-      }
-    },
-    "editor": {
-      "back": "[to be translated]:Back to List",
-      "create": "[to be translated]:Create Task",
-      "createSuccess": "[to be translated]:Task created successfully",
-      "edit": "[to be translated]:Edit Task",
-      "editSuccess": "[to be translated]:Task updated successfully",
-      "nodePalette": "[to be translated]:Node Palette",
-      "nodeTypes": "[to be translated]:Node Types",
-      "run": "[to be translated]:Run Task",
-      "runError": "[to be translated]:Task run failed",
-      "runSuccess": "[to be translated]:Task run successfully",
-      "save": "[to be translated]:Save Task",
-      "saveFirst": "[to be translated]:Please save the task first",
-      "startingTask": "[to be translated]:Starting task...",
-      "taskDescription": "[to be translated]:Task Description",
-      "taskDescriptionPlaceholder": "[to be translated]:Enter task description",
-      "taskInfo": "[to be translated]:Task Information",
-      "taskName": "[to be translated]:Task Name",
-      "taskNamePlaceholder": "[to be translated]:Enter task name",
-      "taskNameRequired": "[to be translated]:Please enter task name",
-      "title": "[to be translated]:Task Editor",
-      "updateSuccess": "[to be translated]:Task updated successfully"
-    },
-    "executionType": {
-      "manual": "[to be translated]:Manual",
-      "scheduled": "[to be translated]:Scheduled"
-    },
-    "list": {
-      "actions": "[to be translated]:Actions",
-      "create": "[to be translated]:Create Task",
-      "createdAt": "[to be translated]:Created At",
-      "delete": "[to be translated]:Delete Task",
-      "deleteConfirm": "[to be translated]:Are you sure you want to delete this task? This action cannot be undone.",
-      "edit": "[to be translated]:Edit Task",
-      "executionType": "[to be translated]:Execution Type",
-      "lastRunAt": "[to be translated]:Last Run",
-      "name": "[to be translated]:Task Name",
-      "neverRun": "[to be translated]:Never run",
-      "run": "[to be translated]:Run Task",
-      "runSuccess": "[to be translated]:Task run successfully",
-      "search": "[to be translated]:Search Tasks",
-      "status": "[to be translated]:Status",
-      "title": "[to be translated]:Task List",
-      "viewLogs": "[to be translated]:View Logs"
-    },
-    "logs": {
-      "back": "[to be translated]:Back to Task List",
-      "endTime": "[to be translated]:End Time",
-      "error": "[to be translated]:Error",
-      "info": "[to be translated]:Info",
-      "level": "[to be translated]:Level",
-      "message": "[to be translated]:Message",
-      "refresh": "[to be translated]:Refresh",
-      "search": "[to be translated]:Search Logs",
-      "startTime": "[to be translated]:Start Time",
-      "time": "[to be translated]:Time",
-      "title": "[to be translated]:Task Logs",
-      "warn": "[to be translated]:Warning"
-    },
-    "nodeConfig": {
-      "contactName": "[to be translated]:Contact Name",
-      "field": "[to be translated]:Field",
-      "groupName": "[to be translated]:Group Name",
-      "keywords": "[to be translated]:Keywords",
-      "message": "[to be translated]:Message Content",
-      "model": "[to be translated]:Model",
-      "operator": "[to be translated]:Operator",
-      "prompt": "[to be translated]:Prompt",
-      "script": "[to be translated]:Script Content",
-      "temperature": "[to be translated]:Temperature",
-      "timeout": "[to be translated]:Timeout",
-      "useTemplate": "[to be translated]:Use Template",
-      "value": "[to be translated]:Value"
-    },
-    "nodes": {
-      "condition": "[to be translated]:Condition",
-      "end": "[to be translated]:End",
-      "execute": "[to be translated]:Execute Action",
-      "listenMessage": "[to be translated]:Listen Message",
-      "llm": "[to be translated]:LLM Processing",
-      "sendMessage": "[to be translated]:Send Message",
-      "start": "[to be translated]:Start"
-    },
-    "operators": {
-      "contains": "[to be translated]:Contains",
-      "equals": "[to be translated]:Equals",
-      "greater": "[to be translated]:Greater Than",
-      "less": "[to be translated]:Less Than"
-    },
-    "status": {
-      "completed": "[to be translated]:Completed",
-      "created": "[to be translated]:Created",
-      "error": "[to be translated]:Failed",
-      "running": "[to be translated]:Running",
-      "stopped": "[to be translated]:Stopped"
-    },
-    "title": "[to be translated]:Task Flow"
-  },
   "title": {
     "apps": "Εφαρμογές",
     "code": "Κώδικας",
@@ -5822,12 +5461,8 @@
     "launchpad": "Πίνακας Εκκίνησης",
     "mcp-servers": "Διακομιστές MCP",
     "memories": "Μνήμες",
-    "notes": "σημειώσεις",
-    "openclaw": "OpenClaw",
-    "paintings": "Ζωγραφική",
     "settings": "Ρυθμίσεις",
-    "store": "Βιβλιοθήκη βοηθών",
-    "translate": "Μετάφραση"
+    "store": "Βιβλιοθήκη βοηθών"
   },
   "trace": {
     "backList": "Επιστροφή στη λίστα",
@@ -5845,137 +5480,6 @@
     "tag": "Ετικέτα",
     "tokenUsage": "Χρήση token",
     "traceWindow": "Παράθυρο αλυσίδας κλήσης"
-  },
-  "translate": {
-    "alter_language": "Εναλλακτική γλώσσα",
-    "any": {
-      "language": " οποιαδήποτε γλώσσα"
-    },
-    "button": {
-      "translate": "Μετάφραση"
-    },
-    "close": "Κλείσιμο",
-    "closed": "Η μετάφραση έχει απενεργοποιηθεί",
-    "complete": "Η μετάφραση ολοκληρώθηκε",
-    "confirm": {
-      "content": "Μετάφραση θα επικαλύψει το αρχικό κείμενο, συνεχίζει;",
-      "title": "Επιβεβαίωση μετάφρασης"
-    },
-    "copied": "Το μεταφρασμένο κείμενο αντιγράφηκε",
-    "custom": {
-      "label": "Προσαρμοσμένη γλώσσα"
-    },
-    "detect": {
-      "method": {
-        "algo": {
-          "label": "αλγόριθμος",
-          "tip": "Χρήση του αλγορίθμου franc για ανίχνευση γλώσσας"
-        },
-        "auto": {
-          "label": "αυτόματα",
-          "tip": "Αυτόματη επιλογή της κατάλληλης μεθόδου ανίχνευσης"
-        },
-        "label": "Αυτόματη μέθοδος ανίχνευσης",
-        "llm": {
-          "tip": "Χρησιμοποιήστε γρήγορο μοντέλο για την ανίχνευση γλώσσας, με ελάχιστη κατανάλωση token."
-        },
-        "placeholder": "Επιλέξτε τη μέθοδο αυτόματης ανίχνευσης",
-        "tip": "Η μέθοδος που χρησιμοποιείται για την αυτόματη ανίχνευση της γλώσσας εισόδου"
-      }
-    },
-    "detected": {
-      "language": "Αυτόματη ανίχνευση"
-    },
-    "detected_source": "Εντοπίστηκε",
-    "detecting": "Ανίχνευση...",
-    "empty": "Το μεταφρασμένο κείμενο είναι κενό",
-    "error": {
-      "chat_qwen_mt": "Τα μοντέλα Qwen MT δεν είναι διαθέσιμα για χρήση σε διαλόγους, παρακαλώ μεταβείτε στη σελίδα μετάφρασης",
-      "detect": {
-        "qwen_mt": "Το μοντέλο QwenMT δεν μπορεί να χρησιμοποιηθεί για εντοπισμό γλώσσας",
-        "unknown": "Ανιχνεύθηκε άγνωστη γλώσσα",
-        "update_setting": "Η ρύθμιση απέτυχε"
-      },
-      "empty": "το αποτέλεσμα της μετάφρασης είναι κενό περιεχόμενο",
-      "failed": "Η μετάφραση απέτυχε",
-      "invalid_source": "Ακύρωση γλώσσας πηγής",
-      "not_configured": "Το μοντέλο μετάφρασης δεν είναι ρυθμισμένο",
-      "not_supported": "Μη υποστηριζόμενη γλώσσα {{language}}",
-      "unknown": "κατά τη μετάφραση παρουσιάστηκε άγνωστο σφάλμα"
-    },
-    "exchange": {
-      "label": "Ανταλλαγή γλώσσας πηγής και γλώσσας προορισμού"
-    },
-    "files": {
-      "drag_text": "Σύρετε και αφήστε εδώ",
-      "error": {
-        "check_type": "Παρουσιάστηκε σφάλμα κατά τον έλεγχο του τύπου αρχείου",
-        "multiple": "Δεν επιτρέπεται η μεταφόρτωση πολλαπλών αρχείων",
-        "too_large": "Το αρχείο είναι πολύ μεγάλο",
-        "unknown": "Αποτυχία ανάγνωσης του περιεχομένου του αρχείου"
-      },
-      "reading": "Διαβάζοντας το περιεχόμενο του αρχείου..."
-    },
-    "history": {
-      "clear": "Καθαρισμός ιστορικού",
-      "clear_description": "Η διαγραφή του ιστορικού θα διαγράψει όλα τα απομνημονεύματα μετάφρασης. Θέλετε να συνεχίσετε;",
-      "delete": "Διαγραφή του ιστορικού μετάφρασης",
-      "empty": "δεν υπάρχουν απομνημονεύματα μετάφρασης",
-      "error": {
-        "delete": "Αποτυχία διαγραφής",
-        "save": "Αποτυχία αποθήκευσης του ιστορικού μεταφράσεων"
-      },
-      "search": {
-        "placeholder": "Αναζήτηση ιστορικού μεταφράσεων"
-      },
-      "title": "Ιστορικό μετάφρασης"
-    },
-    "info": {
-      "aborted": "Η μετάφραση διακόπηκε"
-    },
-    "input": {
-      "placeholder": "Μπορείτε να επικολλήσετε ή να σύρετε κείμενο, αρχεία κειμένου, εικόνες (υποστηρίζεται η OCR)"
-    },
-    "language": {
-      "not_pair": "Η γλώσσα πηγής διαφέρει από την οριζόμενη γλώσσα",
-      "same": "Η γλώσσα πηγής και η γλώσσα προορισμού είναι ίδιες"
-    },
-    "language_settings": "Ρυθμίσεις Γλώσσας",
-    "menu": {
-      "description": "Μεταφράστε το περιεχόμενο του τρέχοντος πεδίου εισαγωγής"
-    },
-    "not": {
-      "found": "Δεν βρέθηκε μετάφραση"
-    },
-    "output": {
-      "placeholder": "Μετάφραση"
-    },
-    "preferred_target": "Προτιμώμενος Στόχος",
-    "processing": "Μεταφράζεται...",
-    "settings": {
-      "autoCopy": "Μετά τη μετάφραση, αντιγράφεται αυτόματα",
-      "bidirectional": "Ρύθμιση διπλής κατεύθυνσης μετάφρασης",
-      "bidirectional_tip": "Όταν ενεργοποιηθεί, υποστηρίζεται μόνο διπλής κατεύθυνσης μετάφραση μεταξύ της πηγαίας και της στόχου γλώσσας",
-      "model": "Ρύθμιση μοντέλου",
-      "model_desc": "Μοντέλο που χρησιμοποιείται από την υπηρεσία μετάφρασης",
-      "model_placeholder": "Επιλέξτε μοντέλο μετάφρασης",
-      "no_model_warning": "Δεν έχει επιλεγεί μοντέλο μετάφρασης",
-      "preview": "Προεπισκόπηση Markdown",
-      "scroll_sync": "Ρύθμιση συγχρονισμού κύλισης",
-      "title": "Ρυθμίσεις μετάφρασης"
-    },
-    "stop": "Σταματήστε τη μετάφραση",
-    "success": {
-      "custom": {
-        "delete": "Η διαγραφή ολοκληρώθηκε με επιτυχία",
-        "update": "Επιτυχής ενημέρωση"
-      }
-    },
-    "target_language": "Γλώσσα προορισμού",
-    "title": "Μετάφραση",
-    "tooltip": {
-      "newline": "Αλλαγή γραμμής"
-    }
   },
   "tray": {
     "quit": "Έξοδος",

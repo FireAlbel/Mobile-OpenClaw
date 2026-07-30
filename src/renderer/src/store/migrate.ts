@@ -22,7 +22,6 @@ import {
   DEFAULT_TEMPERATURE,
   isMac
 } from '@renderer/config/constant'
-import { allMinApps } from '@renderer/config/minapps'
 import {
   isFunctionCallingModel,
   isNotSupportTextDeltaModel,
@@ -31,7 +30,6 @@ import {
   SYSTEM_MODELS
 } from '@renderer/config/models'
 import { BUILTIN_OCR_PROVIDERS, BUILTIN_OCR_PROVIDERS_MAP, DEFAULT_OCR_PROVIDER } from '@renderer/config/ocr'
-import { TRANSLATE_PROMPT } from '@renderer/config/prompts'
 import { SYSTEM_PROVIDERS } from '@renderer/config/providers'
 import { DEFAULT_SIDEBAR_ICONS } from '@renderer/config/sidebar'
 import db from '@renderer/databases'
@@ -45,7 +43,6 @@ import type {
   Model,
   Provider,
   ProviderApiOptions,
-  TranslateLanguageCode,
   WebSearchProvider
 } from '@renderer/types'
 import { isBuiltinMCPServer, isSystemProvider, SystemProviderIds } from '@renderer/types'
@@ -64,50 +61,12 @@ import type { RootState } from '.'
 import { DEFAULT_TOOL_ORDER, DEFAULT_TOOL_ORDER_BY_SCOPE } from './inputTools'
 import { initialState as llmInitialState, moveProvider } from './llm'
 import { mcpSlice } from './mcp'
-import { initialState as notesInitialState } from './note'
 import { defaultActionItems } from './selectionStore'
 import { initialState as settingsInitialState } from './settings'
 import { initialState as shortcutsInitialState } from './shortcuts'
 import { defaultWebSearchProviders } from './websearch'
 
 const logger = loggerService.withContext('Migrate')
-
-// remove logo base64 data to reduce the size of the state
-function removeMiniAppIconsFromState(state: RootState) {
-  if (state.minapps) {
-    state.minapps.enabled = state.minapps.enabled.map((app) => ({
-      ...app,
-      logo: undefined
-    }))
-    state.minapps.disabled = state.minapps.disabled.map((app) => ({
-      ...app,
-      logo: undefined
-    }))
-    state.minapps.pinned = state.minapps.pinned.map((app) => ({
-      ...app,
-      logo: undefined
-    }))
-  }
-}
-
-function removeMiniAppFromState(state: RootState, id: string) {
-  if (state.minapps) {
-    state.minapps.pinned = state.minapps.pinned.filter((app) => app.id !== id)
-    state.minapps.enabled = state.minapps.enabled.filter((app) => app.id !== id)
-    state.minapps.disabled = state.minapps.disabled.filter((app) => app.id !== id)
-  }
-}
-
-function addMiniApp(state: RootState, id: string) {
-  if (state.minapps) {
-    const app = allMinApps.find((app) => app.id === id)
-    if (app) {
-      if (!state.minapps.enabled.find((app) => app.id === id)) {
-        state.minapps.enabled.push(app)
-      }
-    }
-  }
-}
 
 // add provider to state
 function addProvider(state: RootState, id: string) {
@@ -762,7 +721,6 @@ const migrateConfig = {
   },
   '44': (state: RootState) => {
     try {
-      state.settings.translateModelPrompt = TRANSLATE_PROMPT
       return state
     } catch (error) {
       return state
@@ -774,13 +732,6 @@ const migrateConfig = {
   },
   '46': (state: RootState) => {
     try {
-      if (
-        state.settings?.translateModelPrompt?.includes(
-          'If the target language is the same as the source language, do not translate'
-        )
-      ) {
-        state.settings.translateModelPrompt = TRANSLATE_PROMPT
-      }
       return state
     } catch (error) {
       return state
@@ -943,7 +894,6 @@ const migrateConfig = {
   },
   '59': (state: RootState) => {
     try {
-      addMiniApp(state, 'flowith')
       return state
     } catch (error) {
       return state
@@ -977,7 +927,6 @@ const migrateConfig = {
           provider.type = 'azure-openai'
         }
       })
-      state.settings.translateModelPrompt = TRANSLATE_PROMPT
       return state
     } catch (error) {
       return state
@@ -985,7 +934,6 @@ const migrateConfig = {
   },
   '63': (state: RootState) => {
     try {
-      addMiniApp(state, '3mintop')
       return state
     } catch (error) {
       return state
@@ -1002,8 +950,6 @@ const migrateConfig = {
   },
   '65': (state: RootState) => {
     try {
-      // @ts-ignore expect error
-      state.settings.targetLanguage = 'english'
       return state
     } catch (error) {
       return state
@@ -1013,7 +959,6 @@ const migrateConfig = {
     try {
       addProvider(state, 'gitee-ai')
       addProvider(state, 'ppio')
-      addMiniApp(state, 'aistudio')
       state.llm.providers = state.llm.providers.filter((provider) => provider.id !== 'graphrag-kylin-mountain')
 
       return state
@@ -1023,7 +968,6 @@ const migrateConfig = {
   },
   '67': (state: RootState) => {
     try {
-      addMiniApp(state, 'xiaoyi')
       addProvider(state, 'modelscope')
       addProvider(state, 'lmstudio')
       addProvider(state, 'perplexity')
@@ -1041,7 +985,6 @@ const migrateConfig = {
   },
   '68': (state: RootState) => {
     try {
-      addMiniApp(state, 'notebooklm')
       addProvider(state, 'modelscope')
       addProvider(state, 'lmstudio')
       return state
@@ -1051,7 +994,6 @@ const migrateConfig = {
   },
   '69': (state: RootState) => {
     try {
-      addMiniApp(state, 'coze')
       state.settings.gridColumns = 2
       state.settings.gridPopoverTrigger = 'hover'
       return state
@@ -1073,20 +1015,6 @@ const migrateConfig = {
   },
   '71': (state: RootState) => {
     try {
-      const appIds = ['dify', 'wpslingxi', 'lechat', 'abacus', 'lambdachat', 'baidu-ai-search']
-
-      if (state.minapps) {
-        appIds.forEach((id) => {
-          const app = allMinApps.find((app) => app.id === id)
-          if (app) {
-            state.minapps.enabled.push(app)
-          }
-        })
-        // remove zhihu-zhiada
-        state.minapps.enabled = state.minapps.enabled.filter((app) => app.id !== 'zhihu-zhiada')
-        state.minapps.disabled = state.minapps.disabled.filter((app) => app.id !== 'zhihu-zhiada')
-      }
-
       state.settings.thoughtAutoCollapse = true
 
       return state
@@ -1096,8 +1024,6 @@ const migrateConfig = {
   },
   '72': (state: RootState) => {
     try {
-      addMiniApp(state, 'monica')
-
       // remove duplicate lmstudio providers
       const emptyLmStudioProviderIndex = state.llm.providers.findLastIndex(
         (provider) => provider.id === 'lmstudio' && provider.models.length === 0
@@ -1165,9 +1091,6 @@ const migrateConfig = {
   },
   '75': (state: RootState) => {
     try {
-      addMiniApp(state, 'you')
-      addMiniApp(state, 'cici')
-      addMiniApp(state, 'zhihu')
       return state
     } catch (error) {
       return state
@@ -1200,7 +1123,6 @@ const migrateConfig = {
     try {
       state.llm.providers = moveProvider(state.llm.providers, 'ppio', 9)
       state.llm.providers = moveProvider(state.llm.providers, 'infini', 10)
-      removeMiniAppIconsFromState(state)
       return state
     } catch (error) {
       return state
@@ -1299,8 +1221,6 @@ const migrateConfig = {
   },
   '87': (state: RootState) => {
     try {
-      state.settings.maxKeepAliveMinapps = 3
-      state.settings.showOpenedMinappsInSidebar = true
       return state
     } catch (error) {
       return state
@@ -1322,7 +1242,6 @@ const migrateConfig = {
   },
   '89': (state: RootState) => {
     try {
-      removeMiniAppFromState(state, 'aistudio')
       return state
     } catch (error) {
       return state
@@ -1354,7 +1273,6 @@ const migrateConfig = {
   },
   '92': (state: RootState) => {
     try {
-      addMiniApp(state, 'dangbei')
       state.llm.providers = moveProvider(state.llm.providers, 'qiniu', 12)
       return state
     } catch (error) {
@@ -1414,7 +1332,6 @@ const migrateConfig = {
   },
   '97': (state: RootState) => {
     try {
-      addMiniApp(state, 'zai')
       state.settings.webdavMaxBackups = 0
       if (state.websearch && state.websearch.providers) {
         state.websearch.providers.forEach((provider) => {
@@ -1614,7 +1531,6 @@ const migrateConfig = {
   '105': (state: RootState) => {
     try {
       state.settings.notification = settingsInitialState.notification
-      addMiniApp(state, 'google')
       if (!state.settings.openAI) {
         state.settings.openAI = {
           // @ts-expect-error it's a removed type. migrated on 177
@@ -1641,9 +1557,6 @@ const migrateConfig = {
   },
   '107': (state: RootState) => {
     try {
-      if (state.paintings && !state.paintings.dmxapi_paintings) {
-        state.paintings.dmxapi_paintings = []
-      }
       return state
     } catch (error) {
       logger.error('migrate 107 error', error as Error)
@@ -1672,9 +1585,6 @@ const migrateConfig = {
   },
   '110': (state: RootState) => {
     try {
-      if (state.paintings && !state.paintings.tokenflux_paintings) {
-        state.paintings.tokenflux_paintings = []
-      }
       state.settings.testPlan = false
       return state
     } catch (error) {
@@ -1685,13 +1595,6 @@ const migrateConfig = {
   '111': (state: RootState) => {
     try {
       addSelectionAction(state, 'quote')
-      if (
-        state.llm.translateModel.provider === 'silicon' &&
-        state.llm.translateModel.id === 'meta-llama/Llama-3.3-70B-Instruct'
-      ) {
-        state.llm.translateModel = SYSTEM_MODELS.defaultModel[2]
-      }
-
       // add selection_assistant_toggle and selection_assistant_select_text shortcuts after mini_window
       addShortcuts(state, ['selection_assistant_toggle', 'selection_assistant_select_text'], 'mini_window')
 
@@ -1898,19 +1801,6 @@ const migrateConfig = {
         state.settings.s3 = settingsInitialState.s3
       }
 
-      const langMap: Record<string, TranslateLanguageCode> = {
-        english: 'en-us',
-        chinese: 'zh-cn',
-        'chinese-traditional': 'zh-tw',
-        japanese: 'ja-jp',
-        russian: 'ru-ru'
-      }
-
-      const origin = state.settings.targetLanguage
-      const newLang = langMap[origin]
-      if (newLang) state.settings.targetLanguage = newLang
-      else state.settings.targetLanguage = 'en-us'
-
       state.llm.providers.forEach((provider) => {
         if (provider.id === 'azure-openai') {
           provider.type = 'azure-openai'
@@ -2030,7 +1920,6 @@ const migrateConfig = {
 
       updateModelTextDelta(state.llm.defaultModel)
       updateModelTextDelta(state.llm.topicNamingModel)
-      updateModelTextDelta(state.llm.translateModel)
 
       if (state.assistants.defaultAssistant.model) {
         updateModelTextDelta(state.assistants.defaultAssistant.model)
@@ -2221,14 +2110,6 @@ const migrateConfig = {
   },
   '133': (state: RootState) => {
     try {
-      state.settings.sidebarIcons.visible.push('code_tools')
-      if (state.codeTools) {
-        state.codeTools.environmentVariables = {
-          'qwen-code': '',
-          'claude-code': '',
-          'gemini-cli': ''
-        }
-      }
       return state
     } catch (error) {
       logger.error('migrate 133 error', error as Error)
@@ -2278,7 +2159,6 @@ const migrateConfig = {
         providers: BUILTIN_OCR_PROVIDERS,
         imageProviderId: DEFAULT_OCR_PROVIDER.image.id
       }
-      state.translate.translateInput = ''
       return state
     } catch (error) {
       logger.error('migrate 137 error', error as Error)
@@ -2312,9 +2192,6 @@ const migrateConfig = {
           zhipuProvider.models = SYSTEM_MODELS.zhipu
         }
 
-        // Update default painting provider to zhipu
-        state.settings.defaultPaintingProvider = 'zhipu'
-
         // Add zhipu web search provider
         addWebSearchProvider(state, 'zhipu')
 
@@ -2336,28 +2213,6 @@ const migrateConfig = {
   },
   '140': (state: RootState) => {
     try {
-      // @ts-ignore
-      state.paintings = {
-        // @ts-ignore paintings
-        siliconflow_paintings: state?.paintings?.paintings || [],
-        // @ts-ignore DMXAPIPaintings
-        dmxapi_paintings: state?.paintings?.DMXAPIPaintings || [],
-        // @ts-ignore tokenFluxPaintings
-        tokenflux_paintings: state?.paintings?.tokenFluxPaintings || [],
-        zhipu_paintings: [],
-        // @ts-ignore generate
-        aihubmix_image_generate: state?.paintings?.generate || [],
-        // @ts-ignore remix
-        aihubmix_image_remix: state?.paintings?.remix || [],
-        // @ts-ignore edit
-        aihubmix_image_edit: state?.paintings?.edit || [],
-        // @ts-ignore upscale
-        aihubmix_image_upscale: state?.paintings?.upscale || [],
-        openai_image_generate: state?.paintings?.openai_image_generate || [],
-        openai_image_edit: state?.paintings?.openai_image_edit || [],
-        ovms_paintings: []
-      }
-
       return state
     } catch (error) {
       logger.error('migrate 140 error', error as Error)
@@ -2366,12 +2221,6 @@ const migrateConfig = {
   },
   '141': (state: RootState) => {
     try {
-      if (state.settings && state.settings.sidebarIcons) {
-        // Check if 'notes' is not already in visible icons
-        if (!state.settings.sidebarIcons.visible.includes('notes')) {
-          state.settings.sidebarIcons.visible = [...state.settings.sidebarIcons.visible, 'notes']
-        }
-      }
       return state
     } catch (error) {
       logger.error('migrate 141 error', error as Error)
@@ -2380,10 +2229,6 @@ const migrateConfig = {
   },
   '142': (state: RootState) => {
     try {
-      // Initialize notes settings if not present
-      if (!state.note) {
-        state.note = notesInitialState
-      }
       return state
     } catch (error) {
       logger.error('migrate 142 error', error as Error)
@@ -2392,7 +2237,6 @@ const migrateConfig = {
   },
   '143': (state: RootState) => {
     try {
-      addMiniApp(state, 'longcat')
       return state
     } catch (error) {
       return state
@@ -2425,21 +2269,6 @@ const migrateConfig = {
   },
   '146': (state: RootState) => {
     try {
-      // Migrate showWorkspace from settings to note store
-      if (state.settings && state.note) {
-        const showWorkspaceValue = (state.settings as any)?.showWorkspace
-        if (showWorkspaceValue !== undefined) {
-          // @ts-ignore eslint-disable-next-line
-          state.note.settings.showWorkspace = showWorkspaceValue
-          // Remove from settings
-          delete (state.settings as any).showWorkspace
-          // @ts-ignore eslint-disable-next-line
-        } else if (state.note.settings.showWorkspace === undefined) {
-          // Set default value if not exists
-          // @ts-ignore eslint-disable-next-line
-          state.note.settings.showWorkspace = true
-        }
-      }
       return state
     } catch (error) {
       logger.error('migrate 146 error', error as Error)
@@ -2504,9 +2333,6 @@ const migrateConfig = {
   },
   '152': (state: RootState) => {
     try {
-      state.translate.settings = {
-        autoCopy: false
-      }
       return state
     } catch (error) {
       logger.error('migrate 152 error', error as Error)
@@ -2515,10 +2341,6 @@ const migrateConfig = {
   },
   '153': (state: RootState) => {
     try {
-      if (state.note.settings) {
-        state.note.settings.fontSize = notesInitialState.settings.fontSize
-        state.note.settings.showTableOfContents = notesInitialState.settings.showTableOfContents
-      }
       return state
     } catch (error) {
       logger.error('migrate 153 error', error as Error)
@@ -2587,10 +2409,6 @@ const migrateConfig = {
         state.llm.quickModel.provider = 'cherryai'
       }
 
-      if (state.llm.translateModel?.provider === 'cherryin') {
-        state.llm.translateModel.provider = 'cherryai'
-      }
-
       state.assistants.assistants.forEach((assistant) => {
         if (assistant.model?.provider === 'cherryin') {
           assistant.model.provider = 'cherryai'
@@ -2639,9 +2457,6 @@ const migrateConfig = {
   },
   '161': (state: RootState) => {
     try {
-      removeMiniAppFromState(state, 'nm-search')
-      removeMiniAppFromState(state, 'hika')
-      removeMiniAppFromState(state, 'hugging-chat')
       addProvider(state, 'cherryin')
       state.llm.providers = moveProvider(state.llm.providers, 'cherryin', 1)
       return state
@@ -2689,7 +2504,6 @@ const migrateConfig = {
     try {
       addProvider(state, 'sophnet')
       state.llm.providers = moveProvider(state.llm.providers, 'sophnet', 17)
-      state.settings.defaultPaintingProvider = 'cherryin'
       return state
     } catch (error) {
       logger.error('migrate 170 error', error as Error)
@@ -2722,14 +2536,9 @@ const migrateConfig = {
   '172': (state: RootState) => {
     try {
       // Add ling and huggingchat mini apps
-      addMiniApp(state, 'ling')
-      addMiniApp(state, 'huggingchat')
 
-      // Add ovocr provider and clear ovms paintings
+      // Add ovocr provider
       addOcrProvider(state, BUILTIN_OCR_PROVIDERS_MAP.ovocr)
-      if (isEmpty(state.paintings.ovms_paintings)) {
-        state.paintings.ovms_paintings = []
-      }
 
       // Migrate agents to assistants presets
       // @ts-ignore
@@ -3174,9 +2983,6 @@ const migrateConfig = {
       if (state.llm.quickModel?.provider === 'cherryai' && state.llm.quickModel?.id === GLM_4_5_FLASH_MODEL) {
         state.llm.quickModel = qwen38bModel
       }
-      if (state.llm.translateModel?.provider === 'cherryai' && state.llm.translateModel?.id === GLM_4_5_FLASH_MODEL) {
-        state.llm.translateModel = qwen3Next80BModel
-      }
       state.assistants.assistants.forEach((assistant) => {
         if (assistant.model?.provider === 'cherryai' && assistant.model?.id === GLM_4_5_FLASH_MODEL) {
           assistant.model = qwen3Next80BModel
@@ -3186,7 +2992,6 @@ const migrateConfig = {
         }
       })
       // Initialize mini app region filter setting
-      state.settings.minAppRegion ??= 'auto'
       return state
     } catch (error) {
       logger.error('migrate 194 error', error as Error)
@@ -3195,12 +3000,6 @@ const migrateConfig = {
   },
   '195': (state: RootState) => {
     try {
-      if (state.settings && state.settings.sidebarIcons) {
-        // Add 'openclaw' to visible icons if not already present
-        if (!state.settings.sidebarIcons.visible.includes('openclaw')) {
-          state.settings.sidebarIcons.visible = [...state.settings.sidebarIcons.visible, 'openclaw']
-        }
-      }
       logger.info('migrate 195 success')
       return state
     } catch (error) {
@@ -3210,12 +3009,6 @@ const migrateConfig = {
   },
   '196': (state: RootState) => {
     try {
-      if (state.paintings && !state.paintings.ppio_draw) {
-        state.paintings.ppio_draw = []
-      }
-      if (state.paintings && !state.paintings.ppio_edit) {
-        state.paintings.ppio_edit = []
-      }
       return state
     } catch (error) {
       logger.error('migrate 196 error', error as Error)
@@ -3224,9 +3017,6 @@ const migrateConfig = {
   },
   '197': (state: RootState) => {
     try {
-      if (state.openclaw.gatewayPort === 18789) {
-        state.openclaw.gatewayPort = 18790
-      }
       return state
     } catch (error) {
       logger.error('migrate 197 error', error as Error)
@@ -3258,8 +3048,6 @@ const migrateConfig = {
   },
   '200': (state: RootState) => {
     try {
-      // Add openclaw provider if not exists
-      addProvider(state, 'openclaw')
       logger.info('migrate 200 success')
       return state
     } catch (error) {
@@ -3280,6 +3068,68 @@ const migrateConfig = {
       return state
     } catch (error) {
       logger.error('migrate 201 error', error as Error)
+      return state
+    }
+  },
+  '202': (state: RootState) => {
+    try {
+      if (state.settings?.sidebarIcons) {
+        state.settings.sidebarIcons.visible = state.settings.sidebarIcons.visible.filter(
+          (icon) => icon !== ('notes' as any)
+        )
+        state.settings.sidebarIcons.disabled = state.settings.sidebarIcons.disabled.filter(
+          (icon) => icon !== ('notes' as any)
+        )
+      }
+      delete (state.settings?.exportMenuOptions as any)?.notes
+      delete (state as any).note
+      logger.info('migrate 202 success')
+      return state
+    } catch (error) {
+      logger.error('migrate 202 error', error as Error)
+      return state
+    }
+  },
+  '203': (state: RootState) => {
+    try {
+      if (state.settings?.sidebarIcons) {
+        state.settings.sidebarIcons.visible = [
+          ...new Set(
+            state.settings.sidebarIcons.visible.map((icon) =>
+              icon === ('taskflow' as any) ? ('rpa_templates' as any) : icon
+            )
+          )
+        ]
+        state.settings.sidebarIcons.disabled = [
+          ...new Set(
+            state.settings.sidebarIcons.disabled.map((icon) =>
+              icon === ('taskflow' as any) ? ('rpa_templates' as any) : icon
+            )
+          )
+        ]
+      }
+      logger.info('migrate 203 success')
+      return state
+    } catch (error) {
+      logger.error('migrate 203 error', error as Error)
+      return state
+    }
+  },
+  '204': (state: RootState) => {
+    try {
+      if (state.inputTools?.toolOrder) {
+        const removedChatTools = new Set(['new_topic', 'mention_models'])
+        state.inputTools.toolOrder.visible = state.inputTools.toolOrder.visible.filter(
+          (tool) => !removedChatTools.has(tool)
+        )
+        state.inputTools.toolOrder.hidden = state.inputTools.toolOrder.hidden.filter(
+          (tool) => !removedChatTools.has(tool)
+        )
+      }
+      logger.info('migrate 204 success')
+      return state
+    } catch (error) {
+      logger.error('migrate 204 error', error as Error)
       return state
     }
   }

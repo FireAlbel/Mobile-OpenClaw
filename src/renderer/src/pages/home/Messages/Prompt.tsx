@@ -17,7 +17,9 @@ const Prompt: FC<Props> = ({ assistant, topic }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
-  const prompt = assistant.prompt || t('chat.default.description')
+  const prompt = topic?.rpaRoleId
+    ? topic.rpaRoleDescription || topic.prompt || t('rpa_roles.settings.bound_description')
+    : assistant.prompt || t('chat.default.description')
   const topicPrompt = topic?.prompt || ''
   const isDark = theme === 'dark'
 

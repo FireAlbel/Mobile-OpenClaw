@@ -18,6 +18,23 @@ function createRun(): RpaBatchRunRecord {
     status: 'completed',
     createdAt: 1,
     updatedAt: 3,
+    contextSnapshot: {
+      schemaVersion: 1,
+      createdAt: 1,
+      topicId: 'topic-1',
+      assistantId: 'assistant-1',
+      assistantProfileVersion: 7,
+      models: {
+        planner: { providerId: 'provider-1', modelId: 'model-1' },
+        vision: { providerId: 'provider-1', modelId: 'model-1' },
+        verification: { providerId: 'provider-1', modelId: 'model-1' },
+        recovery: { providerId: 'provider-1', modelId: 'model-1' }
+      },
+      skills: [],
+      knowledge: [],
+      appPackages: [],
+      resolutionWarnings: []
+    },
     deviceRuns: [
       {
         id: 'device-run-1',
@@ -75,5 +92,27 @@ describe('RpaReplayService', () => {
 
     expect(replay.frames[1].artifactStatus).toBe('missing')
     expect(replay.missingArtifactCount).toBe(1)
+  })
+
+  it('uses the historical context snapshot without resolving current assistant assets', () => {
+    const replay = new RpaReplayService().load(createRun())
+
+    expect(replay.contextSnapshot).toMatchObject({ assistantId: 'assistant-1', assistantProfileVersion: 7 })
+  })
+
+  it('preserves deterministic recovery phases in replay', () => {
+    const run = createRun()
+    run.deviceRuns[0].events[0].phase = 'deterministic_recovery_verification'
+
+    const replay = new RpaReplayService().load(run)
+
+    expect(replay.phases).toContain('deterministic_recovery_verification')
+  })
+
+  it('ignores a corrupt historical context snapshot', () => {
+    const run = createRun()
+    Object.assign(run, { contextSnapshot: { schemaVersion: 1, privatePrompt: 'invalid' } })
+
+    expect(new RpaReplayService().load(run).contextSnapshot).toBeUndefined()
   })
 })

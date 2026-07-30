@@ -7,7 +7,6 @@ import { useTheme } from '@renderer/context/ThemeProvider'
 import { useAgent } from '@renderer/hooks/agents/useAgent'
 import useAvatar from '@renderer/hooks/useAvatar'
 import { useChatContext } from '@renderer/hooks/useChatContext'
-import { useMinappPopup } from '@renderer/hooks/useMinappPopup'
 import { useRuntime } from '@renderer/hooks/useRuntime'
 import { useMessageStyle, useSettings } from '@renderer/hooks/useSettings'
 import { getMessageModelId } from '@renderer/services/MessagesService'
@@ -41,14 +40,13 @@ const getAvatarSource = (isLocalAi: boolean, modelId: string | undefined) => {
 const MessageHeader: FC<Props> = memo(({ assistant, model, message, topic, isGroupContextMessage }) => {
   const avatar = useAvatar()
   const { theme } = useTheme()
-  const { userName, sidebarIcons } = useSettings()
+  const { userName } = useSettings()
   const { chat } = useRuntime()
   const { activeTopicOrSession, activeAgentId } = chat
   const { agent } = useAgent(activeAgentId)
   const isAgentView = activeTopicOrSession === 'session'
   const { t } = useTranslation()
   const { isBubbleStyle } = useMessageStyle()
-  const { openMinappById } = useMinappPopup()
 
   const { isMultiSelectMode, selectedMessageIds, handleSelectMessage } = useChatContext(topic)
 
@@ -74,16 +72,8 @@ const MessageHeader: FC<Props> = memo(({ assistant, model, message, topic, isGro
 
   const isAssistantMessage = message.role === 'assistant'
   const isUserMessage = message.role === 'user'
-  const showMinappIcon = sidebarIcons.visible.includes('minapp')
-
   const avatarName = useMemo(() => firstLetter(assistant?.name).toUpperCase(), [assistant?.name])
   const username = useMemo(() => removeLeadingEmoji(getUserName()), [getUserName])
-
-  const showMiniApp = useCallback(() => {
-    showMinappIcon && model?.provider && openMinappById(model.provider)
-    // because don't need openMinappById to be a dependency
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [model?.provider, showMinappIcon])
 
   const userNameJustifyContent = useMemo(() => {
     if (!isBubbleStyle) return 'flex-start'
@@ -99,11 +89,10 @@ const MessageHeader: FC<Props> = memo(({ assistant, model, message, topic, isGro
           size={35}
           style={{
             borderRadius: '25%',
-            cursor: showMinappIcon ? 'pointer' : 'default',
+            cursor: 'default',
             border: isLocalAi ? '1px solid var(--color-border-soft)' : 'none',
             filter: theme === 'dark' ? 'invert(0.05)' : undefined
-          }}
-          onClick={showMiniApp}>
+          }}>
           {avatarName}
         </Avatar>
       ) : (

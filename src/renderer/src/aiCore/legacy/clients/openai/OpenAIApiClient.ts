@@ -20,7 +20,6 @@ import {
   isOpenAIOpenWeightModel,
   isOpenAIReasoningModel,
   isQwenAlwaysThinkModel,
-  isQwenMTModel,
   isQwenReasoningModel,
   isReasoningModel,
   isSupportedReasoningEffortModel,
@@ -35,7 +34,6 @@ import {
   isVisionModel,
   ZHIPU_RESULT_TOKENS
 } from '@renderer/config/models'
-import { mapLanguageToQwenMTModel } from '@renderer/config/translate'
 import { processPostsuffixQwen3Model, processReqMessages } from '@renderer/services/ModelMessageService'
 import { estimateTextTokens } from '@renderer/services/TokenService'
 // For Copilot token
@@ -49,14 +47,7 @@ import type {
   Provider,
   ToolCallResponse
 } from '@renderer/types'
-import {
-  EFFORT_RATIO,
-  FILE_TYPE,
-  isSystemProvider,
-  isTranslateAssistant,
-  SystemProviderIds,
-  WEB_SEARCH_SOURCE
-} from '@renderer/types'
+import { EFFORT_RATIO, FILE_TYPE, isSystemProvider, SystemProviderIds, WEB_SEARCH_SOURCE } from '@renderer/types'
 import type { TextStartChunk, ThinkingStartChunk } from '@renderer/types/chunk'
 import { ChunkType } from '@renderer/types/chunk'
 import type { Message } from '@renderer/types/newMessage'
@@ -597,22 +588,6 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
         }
 
         const extra_body: OpenAIExtraBody = {}
-
-        if (isQwenMTModel(model)) {
-          if (isTranslateAssistant(assistant)) {
-            const targetLanguage = mapLanguageToQwenMTModel(assistant.targetLanguage)
-            if (!targetLanguage) {
-              throw new Error(t('translate.error.not_supported', { language: assistant.targetLanguage.value }))
-            }
-            const translationOptions = {
-              source_lang: 'auto',
-              target_lang: targetLanguage
-            } as const
-            extra_body.translation_options = translationOptions
-          } else {
-            throw new Error(t('translate.error.chat_qwen_mt'))
-          }
-        }
 
         // 1. 处理系统消息
         const systemMessage = { role: 'system', content: assistant.prompt || '' }

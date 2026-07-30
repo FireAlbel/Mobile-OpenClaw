@@ -12,4 +12,5 @@ export interface RpaDebugExportPayload {
 export interface RpaDebugExportResult {
   cancelled: boolean
   filePath?: string
+  fileSize?: number
 }

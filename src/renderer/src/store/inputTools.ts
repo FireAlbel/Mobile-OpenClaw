@@ -26,17 +26,7 @@ type ToolOrder = {
 }
 
 export const DEFAULT_TOOL_ORDER: ToolOrder = {
-  visible: [
-    'new_topic',
-    'attachment',
-    'thinking',
-    'web_search',
-    'url_context',
-    'knowledge_base',
-    'mcp_tools',
-    'generate_image',
-    'mention_models'
-  ],
+  visible: ['attachment', 'thinking', 'web_search', 'url_context', 'knowledge_base', 'mcp_tools', 'generate_image'],
   hidden: ['quick_phrases', 'clear_topic', 'toggle_expand', 'new_context']
 }
 
@@ -50,7 +40,7 @@ export const DEFAULT_TOOL_ORDER_BY_SCOPE: Record<InputbarScope, ToolOrder> = {
     hidden: []
   },
   'mini-window': {
-    visible: ['attachment', 'mention_models', 'quick_phrases'],
+    visible: ['attachment', 'quick_phrases'],
     hidden: []
   }
 }

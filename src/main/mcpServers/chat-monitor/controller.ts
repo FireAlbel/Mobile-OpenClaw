@@ -91,20 +91,15 @@ export class ChatMonitorController {
 
   private getWeChatAutomationScriptPath(): string | null {
     const candidates = [
-      // 开发态
-      join(process.cwd(), 'src', 'renderer', 'src', 'plugins', 'taskflow', 'python', 'wechat_automation.py'),
-      // 运行时 appPath
-      join(app.getAppPath(), 'src', 'renderer', 'src', 'plugins', 'taskflow', 'python', 'wechat_automation.py'),
-      // 打包后常见解包目录
+      join(process.cwd(), 'src', 'main', 'mcpServers', 'chat-monitor', 'wechat_automation.py'),
+      join(app.getAppPath(), 'src', 'main', 'mcpServers', 'chat-monitor', 'wechat_automation.py'),
       join(
         process.resourcesPath,
         'app.asar.unpacked',
         'src',
-        'renderer',
-        'src',
-        'plugins',
-        'taskflow',
-        'python',
+        'main',
+        'mcpServers',
+        'chat-monitor',
         'wechat_automation.py'
       )
     ]

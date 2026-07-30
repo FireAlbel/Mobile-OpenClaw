@@ -3,21 +3,47 @@ import type { Model } from '@renderer/types'
 
 import { type DeviceActionRequest, type DeviceActionResult, deviceActionRuntime } from '../DeviceActionRuntime'
 import { deviceServiceProxy } from '../DeviceServiceProxy'
-import type { RpaCorrectionAction, RpaDeviceRuntime, RpaDeviceRuntimeResult } from './RpaTypes'
+import { rpaHumanizedInputPolicy } from './RpaHumanizedInputPolicy'
+import type {
+  RpaCorrectionAction,
+  RpaDeviceRuntime,
+  RpaDeviceRuntimeResult,
+  RpaHumanizedInputOptions,
+  RpaHumanizedSwipeTrace,
+  RpaHumanizedTapTrace
+} from './RpaTypes'
 import { RpaVisualCorrectionService } from './RpaVisualCorrectionService'
 
 const logger = loggerService.withContext('RpaDeviceActionRuntimeAdapter')
+const SWIPE_SETTLE_MS = 300
+
+interface ScreenFingerprint {
+  screenshot?: string
+  uiTree?: string
+}
 
 export class RpaDeviceActionRuntimeAdapter implements RpaDeviceRuntime {
   private readonly locks = new Map<string, Promise<unknown>>()
   private readonly visualCorrectionService = new RpaVisualCorrectionService()
 
   screenshot(deviceId: string): Promise<RpaDeviceRuntimeResult> {
-    return this.runAction(deviceId, { type: 'screenshot', params: { requireScrcpy: true, maxAgeMs: 1_000 } })
+    return this.runAction(deviceId, { type: 'screenshot', params: { requireScrcpy: false, maxAgeMs: 1_000 } })
   }
 
-  tap(deviceId: string, x: number, y: number): Promise<RpaDeviceRuntimeResult> {
-    return this.runAction(deviceId, { type: 'tap', params: { x, y } })
+  tap(
+    deviceId: string,
+    x: number,
+    y: number,
+    options: RpaHumanizedInputOptions = {}
+  ): Promise<RpaDeviceRuntimeResult<RpaHumanizedTapTrace | unknown>> {
+    return this.withDeviceLock(deviceId, async () => {
+      const trace = rpaHumanizedInputPolicy.createTap(deviceId, { x, y }, options)
+      await delay(trace.delayBeforeMs)
+      const result = this.fromDeviceActionResult(
+        await deviceActionRuntime.execute(deviceId, { type: 'tap', params: { x: trace.actual.x, y: trace.actual.y } })
+      )
+      return { ...result, data: { result: result.data, humanization: trace } }
+    })
   }
 
   swipe(
@@ -26,9 +52,59 @@ export class RpaDeviceActionRuntimeAdapter implements RpaDeviceRuntime {
     y1: number,
     x2: number,
     y2: number,
-    duration: number = 500
-  ): Promise<RpaDeviceRuntimeResult> {
-    return this.runAction(deviceId, { type: 'swipe', params: { x1, y1, x2, y2, duration } })
+    duration: number = 500,
+    options: RpaHumanizedInputOptions = {}
+  ): Promise<RpaDeviceRuntimeResult<RpaHumanizedSwipeTrace | unknown>> {
+    return this.withDeviceLock(deviceId, async () => {
+      const startedAt = Date.now()
+      const trace = rpaHumanizedInputPolicy.createSwipe(deviceId, { x: x1, y: y1 }, { x: x2, y: y2 }, duration, options)
+      await delay(trace.delayBeforeMs)
+      const beforeFingerprint = await this.captureScreenFingerprint(deviceId)
+      try {
+        await deviceServiceProxy.executeAdbCommand(deviceId, buildBezierMotionEventCommand(trace))
+        await delay(SWIPE_SETTLE_MS)
+        const afterFingerprint = await this.captureScreenFingerprint(deviceId)
+        if (screenChanged(beforeFingerprint, afterFingerprint)) {
+          return {
+            success: true,
+            message: 'Humanized Bezier swipe completed and changed the screen',
+            data: { transport: 'adb_motionevent_bezier', humanization: trace, screenChanged: true },
+            startedAt,
+            finishedAt: Date.now()
+          }
+        }
+        logger.warn('Bezier motion events did not produce an observable screen change; falling back to ADB swipe', {
+          deviceId
+        })
+      } catch (error) {
+        logger.warn('Bezier motion events unavailable, falling back to ADB swipe', { error, deviceId })
+      }
+
+      const result = this.fromDeviceActionResult(
+        await deviceActionRuntime.execute(deviceId, {
+          type: 'swipe',
+          params: { x1, y1, x2, y2, duration: trace.durationMs }
+        })
+      )
+      if (!result.success) {
+        return { ...result, data: { result: result.data, transport: 'adb_swipe_fallback', humanization: trace } }
+      }
+
+      await delay(SWIPE_SETTLE_MS)
+      const fallbackFingerprint = await this.captureScreenFingerprint(deviceId)
+      const changed = screenChanged(beforeFingerprint, fallbackFingerprint)
+      return {
+        ...result,
+        success: changed !== false,
+        message: changed === false ? 'ADB swipe completed without an observable screen change' : result.message,
+        data: {
+          result: result.data,
+          transport: 'adb_swipe_fallback',
+          humanization: trace,
+          screenChanged: changed
+        }
+      }
+    })
   }
 
   key(deviceId: string, keyCode: number): Promise<RpaDeviceRuntimeResult> {
@@ -37,6 +113,10 @@ export class RpaDeviceActionRuntimeAdapter implements RpaDeviceRuntime {
 
   startApp(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult> {
     return this.runAction(deviceId, { type: 'start_app', params: { packageName } })
+  }
+
+  restartApp(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult> {
+    return this.runAction(deviceId, { type: 'restart_app', params: { packageName } })
   }
 
   handlePermissionDialog(
@@ -182,6 +262,27 @@ export class RpaDeviceActionRuntimeAdapter implements RpaDeviceRuntime {
     })
   }
 
+  async getUiTree(deviceId: string): Promise<RpaDeviceRuntimeResult<string>> {
+    return this.withDeviceLock(deviceId, async () => {
+      const startedAt = Date.now()
+      try {
+        const remotePath = `/sdcard/mobile_openclaw_rpa_${sanitizeDeviceId(deviceId)}.xml`
+        await deviceServiceProxy.executeAdbCommand(deviceId, `shell uiautomator dump ${remotePath}`)
+        const data = await deviceServiceProxy.executeAdbCommand(deviceId, `shell cat ${remotePath}`)
+        return {
+          success: true,
+          message: 'UI tree captured',
+          data,
+          startedAt,
+          finishedAt: Date.now()
+        }
+      } catch (error) {
+        logger.error('Failed to capture UI tree', { error, deviceId })
+        return this.toFailureResult<string>(error, startedAt)
+      }
+    })
+  }
+
   async executeCorrectionAction(
     deviceId: string,
     action: RpaCorrectionAction,
@@ -254,6 +355,31 @@ export class RpaDeviceActionRuntimeAdapter implements RpaDeviceRuntime {
     }
   }
 
+  private async captureScreenFingerprint(deviceId: string): Promise<ScreenFingerprint> {
+    const [screenshot, uiTree] = await Promise.all([
+      deviceActionRuntime.execute(deviceId, {
+        type: 'screenshot',
+        params: { requireScrcpy: false, maxAgeMs: 1_000 }
+      }),
+      this.captureUiTreeFingerprint(deviceId)
+    ])
+    return {
+      screenshot: screenshot.success ? screenshotFingerprint(screenshot.data) : undefined,
+      uiTree
+    }
+  }
+
+  private async captureUiTreeFingerprint(deviceId: string): Promise<string | undefined> {
+    try {
+      const remotePath = `/sdcard/mobile_openclaw_swipe_${sanitizeDeviceId(deviceId)}.xml`
+      await deviceServiceProxy.executeAdbCommand(deviceId, `shell uiautomator dump ${remotePath}`)
+      const xml = await deviceServiceProxy.executeAdbCommand(deviceId, `shell cat ${remotePath}`)
+      return normalizeUiTreeFingerprint(xml)
+    } catch {
+      return undefined
+    }
+  }
+
   private toFailureResult<TData = unknown>(error: unknown, startedAt: number): RpaDeviceRuntimeResult<TData> {
     return {
       success: false,
@@ -289,6 +415,45 @@ const CORRECTION_KEY_CODES: Record<Extract<RpaCorrectionAction, { type: 'key' }>
   home: 3,
   enter: 66,
   recent_apps: 187
+}
+
+function buildBezierMotionEventCommand(trace: RpaHumanizedSwipeTrace): string {
+  const segmentDurationSeconds = Math.max(0.005, trace.durationMs / Math.max(1, trace.path.length - 1) / 1_000)
+  const commands = trace.path.map((point, index) => {
+    const action = index === 0 ? 'DOWN' : index === trace.path.length - 1 ? 'UP' : 'MOVE'
+    return `input touchscreen motionevent ${action} ${point.x} ${point.y}`
+  })
+  const script = commands.join(`; sleep ${segmentDurationSeconds.toFixed(3)}; `)
+  return `shell sh -c "${script}"`
+}
+
+function screenshotFingerprint(value: unknown): string | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || !('imageBase64' in value)) return undefined
+  const imageBase64 = String(value.imageBase64)
+  if (!imageBase64) return undefined
+  return `${imageBase64.length}:${imageBase64.slice(0, 256)}:${imageBase64.slice(-256)}`
+}
+
+function screenChanged(before: ScreenFingerprint, after: ScreenFingerprint): boolean | undefined {
+  if (before.uiTree && after.uiTree) return before.uiTree !== after.uiTree
+  if (!before.screenshot || !after.screenshot) return undefined
+  return before.screenshot !== after.screenshot
+}
+
+function normalizeUiTreeFingerprint(xml: string): string | undefined {
+  const normalized = xml
+    .replace(/\s+(?:focused|selected|checked)="(?:true|false)"/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return normalized || undefined
+}
+
+function sanitizeDeviceId(deviceId: string): string {
+  return deviceId.replace(/[^A-Za-z0-9_.-]/g, '_')
+}
+
+function delay(durationMs: number): Promise<void> {
+  return durationMs > 0 ? new Promise((resolve) => setTimeout(resolve, durationMs)) : Promise.resolve()
 }
 
 export const rpaDeviceRuntime = new RpaDeviceActionRuntimeAdapter()

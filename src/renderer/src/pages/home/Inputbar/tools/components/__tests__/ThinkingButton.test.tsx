@@ -174,7 +174,6 @@ const createAssistant = (overrides: Partial<Assistant> = {}): Assistant => ({
   regularPhrases: [],
   tags: [],
   enableMemory: false,
-  content: '',
   ...overrides
 })
 

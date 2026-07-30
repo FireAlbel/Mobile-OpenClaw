@@ -6,7 +6,6 @@ const attachmentTool = defineTool({
   label: (t) => t('chat.input.upload.image_or_document'),
 
   visibleInScopes: [TopicType.Chat, TopicType.Session, 'mini-window'],
-
   dependencies: {
     state: ['files', 'couldAddImageFile', 'extensions'] as const,
     actions: ['setFiles'] as const

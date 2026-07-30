@@ -1,10 +1,9 @@
 import { NavbarHeader } from '@renderer/components/app/Navbar'
 import SearchPopup from '@renderer/components/Popups/SearchPopup'
 import { useAssistant } from '@renderer/hooks/useAssistant'
-import { useNavbarPosition, useSettings } from '@renderer/hooks/useSettings'
+import { useNavbarPosition } from '@renderer/hooks/useSettings'
 import { useShortcut } from '@renderer/hooks/useShortcuts'
-import { useShowAssistants, useShowTopics } from '@renderer/hooks/useStore'
-import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
+import { useShowAssistants } from '@renderer/hooks/useStore'
 import type { Assistant, Topic } from '@renderer/types'
 import { Tooltip } from 'antd'
 import { t } from 'i18next'
@@ -22,24 +21,17 @@ interface Props {
   setActiveTopic: (topic: Topic) => void
   setActiveAssistant: (assistant: Assistant) => void
   position: 'left' | 'right'
+  onOpenDeviceManagement: () => void
 }
 
-const HeaderNavbar: FC<Props> = ({ activeAssistant, setActiveAssistant, activeTopic, setActiveTopic }) => {
+const HeaderNavbar: FC<Props> = ({ activeAssistant, activeTopic, setActiveTopic, onOpenDeviceManagement }) => {
   const { assistant } = useAssistant(activeAssistant.id)
   const { showAssistants, toggleShowAssistants } = useShowAssistants()
-  const { topicPosition } = useSettings()
-  const { toggleShowTopics } = useShowTopics()
   const { isTopNavbar } = useNavbarPosition()
 
   useShortcut('toggle_show_assistants', toggleShowAssistants)
 
-  useShortcut('toggle_show_topics', () => {
-    if (topicPosition === 'right') {
-      toggleShowTopics()
-    } else {
-      EventEmitter.emit(EVENT_NAMES.SHOW_TOPIC_SIDEBAR)
-    }
-  })
+  useShortcut('toggle_show_topics', toggleShowAssistants)
 
   useShortcut('search_message', () => {
     SearchPopup.show()
@@ -48,9 +40,9 @@ const HeaderNavbar: FC<Props> = ({ activeAssistant, setActiveAssistant, activeTo
   const onShowAssistantsDrawer = () => {
     AssistantsDrawer.show({
       activeAssistant,
-      setActiveAssistant,
       activeTopic,
-      setActiveTopic
+      setActiveTopic,
+      onOpenDeviceManagement
     })
   }
 

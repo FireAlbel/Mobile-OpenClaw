@@ -860,7 +860,6 @@
         "expand": "展開"
       },
       "topics": "話題",
-      "translate": "翻譯成 {{target_language}}",
       "translating": "翻譯中...",
       "upload": {
         "attachment": "上傳附件",
@@ -1107,7 +1106,6 @@
           "label": "匯出為 Markdown",
           "reason": "匯出為 Markdown (包含思考)"
         },
-        "notes": "匯出到筆記",
         "notion": "匯出到 Notion",
         "obsidian": "匯出到 Obsidian",
         "obsidian_atributes": "設定筆記屬性",
@@ -1189,47 +1187,11 @@
       "title": "話題",
       "unpin": "取消固定"
     },
-    "translate": "翻譯",
     "web_search": {
       "warning": {
         "openai": "GPT-5 模型的最小推理力度不支援網路搜尋。"
       }
     }
-  },
-  "code": {
-    "auto_update_to_latest": "檢查更新並安裝最新版本",
-    "bun_required_message": "運作 CLI 工具需要安裝 Bun 環境",
-    "cli_tool": "CLI 工具",
-    "cli_tool_placeholder": "選擇要使用的 CLI 工具",
-    "custom_path": "自訂路徑",
-    "custom_path_error": "設定自訂終端機路徑失敗",
-    "custom_path_required": "此終端機需要設定自訂路徑",
-    "custom_path_set": "自訂終端機路徑設定成功",
-    "description": "快速啟動多個程式碼 CLI 工具，提高開發效率",
-    "env_vars_help": "輸入自訂環境變數（每行一個，格式：KEY=value）",
-    "environment_variables": "環境變數",
-    "folder_placeholder": "選擇工作目錄",
-    "install_bun": "安裝 Bun",
-    "installing_bun": "安裝中...",
-    "launch": {
-      "bun_required": "請先安裝 Bun 環境再啟動 CLI 工具",
-      "error": "啟動失敗，請重試",
-      "label": "啟動",
-      "success": "啟動成功",
-      "validation_error": "請完成所有必填欄位：CLI 工具、模型和工作目錄"
-    },
-    "launching": "啟動中...",
-    "model": "模型",
-    "model_placeholder": "選擇要使用的模型",
-    "model_required": "請選擇模型",
-    "select_folder": "選擇資料夾",
-    "set_custom_path": "設定自訂終端機路徑",
-    "supported_providers": "支援的供應商",
-    "terminal": "終端機",
-    "terminal_placeholder": "選擇終端機應用程式",
-    "title": "程式碼工具",
-    "update_options": "更新選項",
-    "working_directory": "工作目錄"
   },
   "code_block": {
     "collapse": "收合",
@@ -1394,7 +1356,6 @@
     "swap": "交換",
     "topics": "話題",
     "total": "共",
-    "translate_text": "翻譯文字",
     "unknown": "未知",
     "unnamed": "未命名",
     "unsubscribe": "取消訂閱",
@@ -1549,26 +1510,46 @@
       "update_success": "[to be translated]:Group updated successfully"
     },
     "last_refresh": "[to be translated]:Last refresh time",
+    "management_title": "[to be translated]:Device management",
     "model": "[to be translated]:Model",
     "no_devices": "暫無裝置連接",
     "port": "[to be translated]:Port",
     "refresh": "[to be translated]:Refresh",
     "remark": "[to be translated]:Remark",
     "rpa": {
+      "active_runs": "[to be translated]:Active RPA tasks",
       "add_step": "[to be translated]:Add step",
+      "adjust_context": "[to be translated]:Adjust",
       "advanced_dsl": "[to be translated]:Advanced DSL editor",
+      "advanced_model_overrides": "[to be translated]:Advanced model overrides",
       "all_devices": "全部裝置",
       "all_phases": "全部階段",
+      "any_compatible_version": "[to be translated]:Any compatible version",
       "approve_and_retry": "[to be translated]:Approve and retry",
+      "asset_status_empty": "[to be translated]:Empty",
+      "asset_status_error": "[to be translated]:Error",
+      "asset_status_legacy": "[to be translated]:Legacy",
+      "asset_status_missing": "[to be translated]:Missing",
+      "asset_status_ready": "[to be translated]:Ready",
+      "asset_status_running": "[to be translated]:Processing",
+      "assistant_profile_version": "[to be translated]:Assistant Profile",
       "attempt": "[to be translated]:Attempt {{attempt}}",
+      "automation_settings": "[to be translated]:Automation",
+      "binding_priority": "[to be translated]:Binding priority",
       "chat_placeholder": "[to be translated]:Describe the task to perform on the selected devices. Press Enter to generate the workflow.",
+      "chat_topics": "[to be translated]:Chat Topics",
+      "clear_topic_overrides": "[to be translated]:Clear overrides",
+      "compiled_skills": "[to be translated]:Compiled Skills",
       "confidence": "[to be translated]:Confidence",
       "confirm_and_execute": "[to be translated]:Confirm and execute",
       "confirm_execution": "[to be translated]:Confirm RPA execution",
       "confirm_execution_detail": "[to be translated]:This workflow will execute {{steps}} steps on {{devices}} device(s).",
       "confirm_high_risk_execution": "[to be translated]:Confirm high-risk RPA execution",
+      "confirm_partial_group": "[to be translated]:Review unavailable group devices and confirm execution with the online subset.",
       "confirm_safety_target": "[to be translated]:Approve this action for the selected device: {{target}}",
+      "continue_device": "[to be translated]:Continue",
       "continue_on_failure": "[to be translated]:Continue after failure",
+      "continue_with_online_subset": "[to be translated]:Continue with the available online devices",
       "correction_evidence": "[to be translated]:Correction evidence",
       "correction_round": "第 {{round}} 輪糾偏",
       "create_template": "建立範本",
@@ -1576,49 +1557,116 @@
       "debug_export_failed": "偵錯套件匯出失敗。",
       "debug_exported": "偵錯套件已匯出。",
       "decision": "[to be translated]:Decision",
+      "default_model": "[to be translated]:Default model",
+      "degraded_generation_warning": "[to be translated]:Degraded generation warnings",
+      "device_completed_steps": "[to be translated]:{{completed}} of {{total}} steps completed",
+      "device_execution_progress": "[to be translated]:Device execution progress",
+      "device_name": "[to be translated]:Device",
+      "device_offline_cannot_continue": "[to be translated]:Reconnect the device before continuing.",
+      "device_offline_reason": "[to be translated]:Device {{device}} went offline. Execution was stopped automatically.",
+      "device_unauthorized_reason": "[to be translated]:USB debugging authorization for device {{device}} is unavailable. Execution was stopped automatically.",
       "devices": "[to be translated]:Devices",
       "draft_saved": "[to be translated]:RPA workflow draft saved.",
       "dsl": "[to be translated]:Task DSL",
+      "dsl_provenance": "[to be translated]:DSL provenance",
+      "dsl_validation_failed": "[to be translated]:DSL validation failed.",
       "emergency_stop": "[to be translated]:Stop all tasks",
       "emergency_stop_confirm": "[to be translated]:Stop all RPA tasks?",
       "emergency_stop_detail": "[to be translated]:All running and pending device tasks will be cancelled immediately.",
+      "empty_groups_selected": "[to be translated]:The following groups contain no devices: {{groups}}",
+      "enabled_skills": "[to be translated]:Enabled Skills",
       "executable_action": "可執行動作",
       "execute": "[to be translated]:Execute",
       "execution_details": "[to be translated]:Execution details ({{count}})",
-      "execution_progress": "[to be translated]:RPA execution progress",
+      "execution_devices": "[to be translated]:RPA execution devices",
+      "execution_failed": "[to be translated]:Failed to start RPA execution.",
+      "execution_progress": "[to be translated]:RPA execution details",
+      "execution_status": "[to be translated]:Execution status",
+      "execution_target_summary": "[to be translated]:Execution target: {{devices}} device(s) from {{groups}} group(s)",
       "export_debug_bundle": "匯出偵錯套件",
       "fix_validation_errors": "[to be translated]:Fix validation errors before continuing.",
+      "follow_latest_version": "[to be translated]:Follow latest",
+      "format_json": "[to be translated]:Format JSON",
       "frame_captured_at": "[to be translated]:Captured at",
       "frame_codec": "[to be translated]:Codec",
       "frame_dimensions": "[to be translated]:Dimensions",
       "frame_reconnects": "[to be translated]:Reconnects",
       "frame_sequence": "[to be translated]:Frame sequence",
       "frame_source": "[to be translated]:Frame source",
+      "group_devices_unavailable": "[to be translated]:Unavailable devices in the selected groups: {{devices}}",
       "high_risk_targets": "[to be translated]:Requires explicit confirmation: {{targets}}",
+      "knowledge_sources": "[to be translated]:Knowledge sources",
       "latest_screenshot": "[to be translated]:Latest screenshot",
+      "lifecycle": {
+        "discard_changes": "[to be translated]:Discard changes",
+        "duplicate_task": "[to be translated]:Duplicate task",
+        "end_task": "[to be translated]:End task",
+        "end_task_failed": "[to be translated]:Unable to end task",
+        "new_task": "[to be translated]:New task",
+        "no_task_to_duplicate": "[to be translated]:Generate a task before duplicating it.",
+        "save_and_continue": "[to be translated]:Save and continue",
+        "task_actions": "[to be translated]:Task actions",
+        "task_duplicated": "[to be translated]:The RPA task was duplicated as an independent draft.",
+        "task_ended": "[to be translated]:Task ended",
+        "task_ended_detail": "[to be translated]:This task is now read-only. Create or duplicate a task to continue.",
+        "unsaved_detail": "[to be translated]:Save or discard the current DSL changes before continuing.",
+        "unsaved_title": "[to be translated]:Unsaved RPA task changes"
+      },
       "missing_artifact_count": "{{count}} 筆時間軸事件缺少截圖證據。",
       "missing_screenshot": "截圖證據無法使用。",
+      "model_not_configured": "[to be translated]:Not configured",
       "model_required": "[to be translated]:Select a chat model before planning.",
       "module": "[to be translated]:Module",
       "move_down": "[to be translated]:Move down",
       "move_up": "[to be translated]:Move up",
+      "no_active_runs": "[to be translated]:No RPA tasks are currently running.",
+      "no_device_groups": "[to be translated]:No device groups are configured.",
       "no_online_devices": "[to be translated]:No online devices are available.",
       "no_runs": "[to be translated]:No RPA runs yet.",
+      "no_source_template": "[to be translated]:Free-form planning",
+      "online_devices": "[to be translated]:Online devices",
+      "open_evidence": "開啟證據",
+      "open_knowledge": "[to be translated]:Open Knowledge",
+      "open_templates": "[to be translated]:Open Templates",
+      "operations": "[to be translated]:Operations",
       "params": "[to be translated]:Parameters (JSON)",
       "pause": "[to be translated]:Pause",
+      "pinned_version": "[to be translated]:Pinned version",
       "plan_generated": "[to be translated]:The RPA workflow has been generated. Review and edit the timeline before running it.",
+      "planner_model": "[to be translated]:Planner model",
+      "preserve_topic_overrides": "[to be translated]:Preserve overrides",
+      "profile_assets_missing": "[to be translated]:{{count}} bound automation assets are missing.",
+      "profile_load_failed": "[to be translated]:Failed to load the automation profile.",
+      "profile_save_failed": "[to be translated]:Failed to save the automation profile.",
+      "profile_saved": "[to be translated]:Automation profile saved.",
       "rate_limit_delay": "[to be translated]:Rate-limit delay",
       "raw_vlm_response": "[to be translated]:Raw VLM response",
       "realtime_events": "[to be translated]:Real-time execution events",
       "reason": "[to be translated]:Reason",
+      "recommended_templates": "[to be translated]:Recommended Templates",
       "recovery_decision": "[to be translated]:VLM recovery decision",
+      "recovery_model": "[to be translated]:Recovery model",
+      "remap_topic_overrides": "[to be translated]:Remap compatible assets",
       "repair_response": "[to be translated]:Repair response",
+      "replan": {
+        "action": "[to be translated]:Replan",
+        "completed": "[to be translated]:A new Replan revision was created.",
+        "create_revision": "[to be translated]:Create Replan revision",
+        "execution_evidence": "[to be translated]:The failed run, recent events, and manual-intervention evidence will be included.",
+        "execution_objective": "[to be translated]:Repair the workflow using the failed execution state and continue toward the original goal.",
+        "title": "[to be translated]:Contextual Replan",
+        "validation_evidence": "[to be translated]:The active DSL and its validation errors will be included.",
+        "validation_objective": "[to be translated]:Repair the DSL validation errors while preserving the original task goal."
+      },
       "replay": "執行回放",
+      "required_skill_dependencies_missing": "[to be translated]:{{count}} required Skill dependency issue(s) must be resolved before this Template can execute.",
       "reset_sample": "[to be translated]:Sample",
       "resume": "[to be translated]:Resume",
+      "retrieved_knowledge": "[to be translated]:Retrieved Knowledge",
       "retry_after_human": "[to be translated]:Retry after manual handling",
       "risk_level": "[to be translated]:Risk level",
       "risk_summary": "[to be translated]:Risk level: {{risk}}",
+      "run_devices_summary": "[to be translated]:{{completed}}/{{total}} devices completed",
       "run_history": "執行歷史",
       "run_history_hint": "回放執行證據，或匯出已遮蔽敏感資訊的偵錯套件。",
       "run_loading": "[to be translated]:Loading execution record...",
@@ -1627,7 +1675,13 @@
       "safety_decision": "[to be translated]:Safety decision",
       "safety_target": "[to be translated]:Policy target",
       "select_device": "[to be translated]:Select at least one online device.",
+      "select_device_groups": "[to be translated]:Device groups",
+      "select_execution_targets": "[to be translated]:Select execution devices",
+      "select_knowledge_sources": "[to be translated]:Select Knowledge sources",
+      "select_templates": "[to be translated]:Select Templates",
       "select_vision_model": "[to be translated]:Select a model that supports image input.",
+      "skill_repository_unavailable": "[to be translated]:Skill repository is not available yet",
+      "source_template": "[to be translated]:Source Task Flow",
       "start": "[to be translated]:Start",
       "started": "[to be translated]:RPA batch run started.",
       "status": {
@@ -1643,18 +1697,43 @@
       },
       "step_name": "[to be translated]:Step name",
       "step_number": "[to be translated]:Step {{number}}",
+      "stop_device": "[to be translated]:Stop",
       "takeover_response": "[to be translated]:VLM takeover response",
+      "target_mode_all_online": "[to be translated]:All online",
+      "target_mode_groups": "[to be translated]:By group",
+      "target_mode_manual": "[to be translated]:Manual",
+      "target_scan_failed": "[to be translated]:Failed to scan devices. Keep this dialog open and try again.",
+      "target_selection_changed": "[to be translated]:Device status changed. Added: {{added}}; removed: {{removed}}. Review and confirm again.",
+      "target_status_missing": "[to be translated]:Missing",
+      "task_flow_learning": {
+        "already_applied": "[to be translated]:Task flow learning already applied at v{{version}}",
+        "created": "[to be translated]:Verified task flow created at v{{version}}",
+        "skipped_validation_failed": "[to be translated]:Task flow update skipped because validation failed",
+        "skipped_version_conflict": "[to be translated]:Task flow update skipped because a newer version exists",
+        "versioned": "[to be translated]:Task flow automatically updated to v{{version}}"
+      },
       "template_created": "已建立可重複使用的工作流程範本。",
       "template_requires_success": "只有完整成功的執行紀錄可以建立範本。",
       "temporary_action": "臨時糾偏動作",
       "temporary_steps": "[to be translated]:Temporary steps",
       "timeout": "[to be translated]:Timeout (ms)",
       "title": "[to be translated]:RPA Runner",
+      "topic_override_assistant_changed": "[to be translated]:Assistant changed",
+      "topic_override_assistant_changed_detail": "[to be translated]:This topic has temporary RPA overrides from another assistant. Choose whether to preserve them, remap compatible assets, or clear them.",
+      "topic_override_switch_cancelled": "[to be translated]:Assistant switch decision was cancelled.",
       "validation_failed": "[to be translated]:The workflow contains validation errors.",
+      "verification_model": "[to be translated]:Verification model",
       "verification_result": "驗證結果",
+      "version_range": "[to be translated]:Version range",
+      "view_context": "[to be translated]:Details",
+      "view_details": "[to be translated]:View details",
+      "view_device_execution_progress": "[to be translated]:View device execution progress",
       "vision_model": "[to be translated]:Vision model",
       "vision_model_required": "[to be translated]:The current default model cannot process phone screenshots. Select a vision model.",
+      "visual_model": "[to be translated]:Visual model",
+      "visual_model_required": "[to be translated]:Configure a vision-capable model for screenshot-based actions.",
       "waiting_to_execute": "[to be translated]:Waiting to execute",
+      "workspace": "[to be translated]:RPA workspace",
       "workspace_hint": "[to be translated]:Describe the mobile task in the chat box. The current chat model will generate an editable workflow.",
       "workspace_title": "[to be translated]:RPA workflow planner"
     },
@@ -1843,9 +1922,6 @@
       "content": "刪除檔案會刪除檔案在所有訊息中的引用，確定要刪除此檔案嗎？",
       "db_error": "刪除失敗",
       "label": "刪除",
-      "paintings": {
-        "warning": "繪圖中包含該圖片，暫時無法刪除"
-      },
       "title": "刪除檔案"
     },
     "document": "文件",
@@ -1860,6 +1936,45 @@
     "preview": {
       "error": "開啟檔案失敗"
     },
+    "rpa": {
+      "add": "新增 RPA 資產",
+      "add_failed": "新增 RPA 資產失敗",
+      "all_categories": "全部分類",
+      "asset": "RPA 資產",
+      "asset_count": "共 {{count}} 項資產",
+      "categories": {
+        "app_reference_image": "應用參考圖",
+        "debug_bundle": "偵錯包",
+        "exported_dsl": "RPA DSL",
+        "ocr_capture": "OCR 結果",
+        "other": "其他",
+        "run_log": "執行日誌",
+        "screenshot": "螢幕截圖",
+        "sop_import": "SOP 文件",
+        "ui_tree": "UI 樹"
+      },
+      "category": "分類",
+      "empty": "暫無 RPA 資產",
+      "filtered_run": "執行 {{runId}} 關聯的證據",
+      "hint": "檔案僅建立引用並進行分類、脫敏和保留管理，不會重複儲存。",
+      "import": "匯入",
+      "import_sop": "將 SOP 匯入知識庫",
+      "import_sop_hint": "匯入內容將保持草稿狀態，需人工審核後方可使用。",
+      "knowledge_draft_created": "知識庫草稿已建立",
+      "link": "關聯",
+      "link_asset": "關聯 RPA 資產",
+      "link_failed": "關聯 RPA 資產失敗",
+      "links": "關聯對象",
+      "load_failed": "載入 RPA 資產失敗",
+      "open_failed": "開啟 RPA 資產失敗",
+      "policy": "保留策略",
+      "redaction_required": "部分敏感證據需脫敏後才能分享。",
+      "remove_metadata_confirm": "刪除此資產記錄？底層檔案不會被刪除。",
+      "rpa_template_draft_ready": "已建立通過驗證的 RPA 範本草稿",
+      "select_knowledge": "選擇知識庫",
+      "title": "RPA 證據與資產"
+    },
+    "rpa_artifacts": "RPA 證據與資產",
     "size": "大小",
     "text": "文字",
     "title": "檔案",
@@ -2087,10 +2202,6 @@
     "urdu": "烏爾都文",
     "vietnamese": "越南文"
   },
-  "launchpad": {
-    "apps": "應用",
-    "minapps": "小程式"
-  },
   "lmstudio": {
     "keep_alive_time": {
       "description": "對話後模型在記憶體中保持的時間（預設為 5 分鐘）",
@@ -2312,9 +2423,6 @@
           "specified": "匯出 Markdown 檔案失敗"
         }
       },
-      "notes": {
-        "export": "匯出筆記失敗"
-      },
       "notion": {
         "export": "匯出 Notion 失敗，請檢查連線狀態並參考說明文件確認設定",
         "no_api_key": "未設定 Notion API Key 或 Notion Database ID",
@@ -2425,9 +2533,6 @@
           "preconf": "成功匯出 Markdown 檔案到預先設定的路徑",
           "specified": "成功匯出 Markdown 檔案"
         }
-      },
-      "notes": {
-        "export": "成功匯出到筆記"
       },
       "notion": {
         "export": "成功匯出到 Notion"
@@ -2540,61 +2645,6 @@
       "rag_failed": "RAG 失敗，回傳空結果..."
     }
   },
-  "minapp": {
-    "add_to_launchpad": "新增到啟動台",
-    "add_to_sidebar": "新增到側邊欄",
-    "popup": {
-      "close": "關閉小工具",
-      "devtools": "開發者工具",
-      "goBack": "上一頁",
-      "goForward": "下一頁",
-      "minimize": "最小化小工具",
-      "openExternal": "在瀏覽器中開啟",
-      "open_link_external_off": "目前：使用預設視窗開啟連結",
-      "open_link_external_on": "目前：在瀏覽器中開啟連結",
-      "refresh": "重新整理",
-      "rightclick_copyurl": "右鍵複製 URL"
-    },
-    "remove_from_launchpad": "從啟動台移除",
-    "remove_from_sidebar": "從側邊欄移除",
-    "sidebar": {
-      "close": {
-        "title": "關閉"
-      },
-      "closeall": {
-        "title": "關閉所有"
-      },
-      "hide": {
-        "title": "隱藏"
-      },
-      "remove_custom": {
-        "title": "刪除自訂小工具"
-      }
-    },
-    "title": "小工具"
-  },
-  "minapps": {
-    "ant-ling": "Ant Ling",
-    "baichuan": "百小應",
-    "baidu-ai-search": "百度 AI 搜尋",
-    "chatglm": "智譜清言",
-    "dangbei": "當貝 AI",
-    "doubao": "豆包",
-    "hailuo": "海螺",
-    "metaso": "秘塔 AI 搜尋",
-    "nami-ai": "奈米 AI",
-    "nami-ai-search": "奈米 AI 搜尋",
-    "qwen": "通義千問",
-    "sensechat": "商量",
-    "stepfun": "階躍 AI",
-    "tencent-yuanbao": "騰訊元寶",
-    "tiangong-ai": "天工 AI",
-    "wanzhi": "萬知",
-    "wenxin": "文心一言",
-    "wps-copilot": "WPS 靈犀",
-    "xiaoyi": "小藝",
-    "zhihu": "知乎直答"
-  },
   "miniwindow": {
     "alert": {
       "google_login": "提示：若 Google 登入時顯示「不受信任的瀏覽器」，請先在小程式清單中的 Google 小程式完成帳號登入，再到其他小程式使用 Google 登入。"
@@ -2605,8 +2655,7 @@
     "feature": {
       "chat": "回答此問題",
       "explanation": "解釋說明",
-      "summary": "內容總結",
-      "translate": "文字翻譯"
+      "summary": "內容總結"
     },
     "footer": {
       "backspace_clear": "按 Backspace 清空",
@@ -2700,122 +2749,6 @@
   "navigate": {
     "provider_settings": "前往供應商設定頁面"
   },
-  "notes": {
-    "auto_rename": {
-      "empty_note": "筆記為空，無法產生名稱",
-      "failed": "產生筆記名稱失敗",
-      "label": "產生筆記名稱",
-      "success": "已成功產生筆記名稱"
-    },
-    "characters": "字元",
-    "collapse": "收合",
-    "content_placeholder": "請輸入筆記內容...",
-    "copyContent": "複製內容",
-    "crossPlatformRestoreWarning": "偵測到從其他裝置恢復設定，但筆記目錄為空。請將筆記檔案複製到：{{path}}",
-    "delete": "刪除",
-    "delete_confirm": "確定要刪除此 {{type}} 嗎？",
-    "delete_folder_confirm": "確定要刪除資料夾 \"{{name}}\" 及其所有內容嗎？",
-    "delete_note_confirm": "確定要刪除筆記 \"{{name}}\" 嗎？",
-    "drop_markdown_hint": "拖曳 .md 檔案或資料夾到此處匯入",
-    "empty": "暫無筆記",
-    "expand": "展開",
-    "exportToWord": "匯出為 Word",
-    "export_failed": "匯出至知識庫失敗",
-    "export_knowledge": "匯出筆記至知識庫",
-    "export_success": "成功匯出至知識庫",
-    "export_to_word_failed": "匯出為 Word 失敗",
-    "folder": "資料夾",
-    "new_folder": "新增資料夾",
-    "new_note": "新增筆記",
-    "no_content_to_copy": "沒有內容可複製",
-    "no_content_to_export": "沒有內容可匯出",
-    "no_file_selected": "請選擇要上傳的檔案",
-    "no_note_selected": "請先選擇一個筆記",
-    "no_valid_files": "沒有上傳有效的檔案",
-    "open_folder": "開啟外部資料夾",
-    "open_outside": "從外部開啟",
-    "rename": "重新命名",
-    "rename_changed": "基於安全性考量，檔名已從 {{original}} 變更為 {{final}}",
-    "save": "儲存到筆記",
-    "search": {
-      "both": "名稱 + 內容",
-      "content": "內容",
-      "found_results": "找到 {{count}} 個結果（名稱：{{nameCount}}，內容：{{contentCount}}）",
-      "more_matches": "更多符合結果",
-      "searching": "搜尋中...",
-      "show_less": "收合"
-    },
-    "settings": {
-      "data": {
-        "apply": "套用",
-        "apply_path_failed": "套用路徑失敗",
-        "current_work_directory": "目前工作目錄",
-        "invalid_directory": "選擇的目錄無效或無權限",
-        "path_required": "請選擇工作目錄",
-        "path_updated": "工作目錄更新成功",
-        "reset_failed": "重設失敗",
-        "reset_to_default": "重設為預設值",
-        "select": "選擇",
-        "select_directory_failed": "選擇目錄失敗",
-        "title": "資料設定",
-        "work_directory_description": "工作目錄是儲存所有筆記檔案的位置。\n變更工作目錄不會移動現有檔案，請手動移轉檔案。",
-        "work_directory_placeholder": "選擇筆記工作目錄"
-      },
-      "display": {
-        "compress_content": "內容壓縮",
-        "compress_content_description": "啟用後會限制每行字數，減少畫面顯示的內容，但讓長段落更好閱讀。",
-        "default_font": "預設字型",
-        "font_size": "字型大小",
-        "font_size_description": "調整字型大小以獲得更好的閱讀體驗 (10-30px)",
-        "font_size_large": "大",
-        "font_size_medium": "中",
-        "font_size_small": "小",
-        "font_title": "字型設定",
-        "serif_font": "襯線字型",
-        "show_table_of_contents": "顯示目錄大綱",
-        "show_table_of_contents_description": "顯示目錄大綱側邊欄，方便在檔案內導覽",
-        "title": "顯示設定"
-      },
-      "editor": {
-        "edit_mode": {
-          "description": "在編輯檢視中，新筆記的預設編輯模式",
-          "preview_mode": "即時預覽",
-          "source_mode": "原始碼模式",
-          "title": "預設編輯檢視"
-        },
-        "title": "編輯器設定",
-        "view_mode": {
-          "description": "新筆記的預設檢視模式",
-          "edit_mode": "編輯模式",
-          "read_mode": "閱讀模式",
-          "title": "預設檢視"
-        },
-        "view_mode_description": "設定新標籤頁的預設檢視模式。"
-      },
-      "title": "更多選項"
-    },
-    "show_starred": "顯示收藏的筆記",
-    "sort_a2z": "檔名（A-Z）",
-    "sort_created_asc": "建立時間（從舊到新）",
-    "sort_created_desc": "建立時間（從新到舊）",
-    "sort_updated_asc": "更新時間（從舊到新）",
-    "sort_updated_desc": "更新時間（從新到舊）",
-    "sort_z2a": "檔名（Z-A）",
-    "spell_check": "拼字檢查",
-    "spell_check_tooltip": "啟用/停用拼字檢查",
-    "star": "收藏筆記",
-    "starred_notes": "收藏的筆記",
-    "title": "筆記",
-    "unsaved_changes": "尚有未儲存的內容，確定要離開嗎？",
-    "unstar": "取消收藏",
-    "untitled_folder": "新資料夾",
-    "untitled_note": "無標題筆記",
-    "upload_failed": "筆記上傳失敗",
-    "upload_files": "上傳檔案",
-    "upload_folder": "上傳資料夾",
-    "upload_success": "筆記上傳成功",
-    "uploading_files": "正在上傳 {{count}} 個檔案..."
-  },
   "notification": {
     "assistant": "助手回應",
     "knowledge": {
@@ -2855,91 +2788,6 @@
       "title": "保持活躍時間"
     },
     "title": "Ollama"
-  },
-  "openclaw": {
-    "checking_installation": "正在檢查 OpenClaw 安裝狀態...",
-    "description": "使用 Cherry Studio 服務商為 OpenClaw 提供支援，OpenClaw 是您的個人 AI 助手，可在 WhatsApp、Telegram、Slack、Discord 等平台上使用。",
-    "error": {
-      "select_provider_model": "請先選擇服務商和模型"
-    },
-    "gateway": {
-      "port": "連接埠",
-      "restart": "重新啟動",
-      "start": "啟動",
-      "status": "狀態",
-      "stop": "停止",
-      "version": "版本"
-    },
-    "git_missing": {
-      "description": "OpenClaw 的部分依賴需要 Git 來安裝。請先安裝 Git，然後再次點擊安裝。",
-      "download_button": "下載 Git",
-      "hint": "macOS：brew install git | Windows：從 git-scm.com 下載（安裝時請確保勾選將 Git 添加到 PATH）",
-      "title": "需要安裝 Git"
-    },
-    "install_progress": "安裝進度",
-    "installed_at": "OpenClaw 安裝路徑",
-    "model_config": {
-      "auth_token": "認證令牌",
-      "auth_token_hint": "閘道認證令牌（必填）。留空時將自動產生。",
-      "auth_token_placeholder": "輸入或產生令牌",
-      "generate_token": "產生",
-      "model": "模型",
-      "provider": "服務商",
-      "select_model": "選擇模型",
-      "select_provider": "選擇服務商",
-      "sync_hint": "選擇的服務商和模型將同步到 OpenClaw 設定檔",
-      "title": "模型設定"
-    },
-    "node_missing": {
-      "description": "OpenClaw 需要 Node.js/npm。請先安裝 Node.js，然後重新啟動 Cherry Studio。",
-      "download_button": "下載 Node.js",
-      "hint": "macOS：brew install node | Windows：從 nodejs.org 下載 LTS 版本",
-      "title": "需要 Node.js"
-    },
-    "node_version_low": {
-      "description": "OpenClaw 需要 Node.js 22.0 或以上版本。您目前的版本是 v{{version}}。請先升級 Node.js。",
-      "hint": "nvm: nvm install 22 && nvm use 22 | mise: mise use node@22",
-      "title": "Node.js 版本過低"
-    },
-    "not_installed": {
-      "description": "OpenClaw 尚未安裝在您的系統上。請先安裝它以使用此功能。",
-      "install_button": "安裝 OpenClaw",
-      "install_guide_title": "安裝指南",
-      "macos_linux_title": "macOS / Linux",
-      "refresh": "重新整理",
-      "step2_hint": "安裝完成後，點擊上方的重新整理按鈕來偵測 OpenClaw",
-      "step2_title": "第二步：驗證安裝",
-      "title": "OpenClaw 未安裝",
-      "windows_title": "Windows"
-    },
-    "quick_actions": {
-      "open_dashboard": "開啟控制面板",
-      "title": "快捷操作",
-      "uninstall": "解除安裝",
-      "view_docs": "檢視文件"
-    },
-    "status": {
-      "error": "錯誤",
-      "running": "執行中",
-      "starting": "啟動中",
-      "stopped": "已停止"
-    },
-    "tips": {
-      "permissions": "OpenClaw 擁有較高的系統權限，建議僅在可信環境中使用",
-      "title": "溫馨提示",
-      "token_usage": "AI 代理模式會消耗較多 Token，請注意用量"
-    },
-    "title": "OpenClaw",
-    "uninstall_confirm": "您確定要解除安裝 OpenClaw 嗎？按下「確定」以確認。",
-    "uninstall_progress": "解除安裝進度",
-    "uninstalled": {
-      "description": "OpenClaw 已成功解除安裝。",
-      "title": "解除安裝完成"
-    },
-    "uninstalling": {
-      "description": "請稍候，正在解除安裝 OpenClaw...",
-      "title": "解除安裝 OpenClaw"
-    }
   },
   "ovms": {
     "action": {
@@ -2993,238 +2841,6 @@
       "unknown": "OVMS 狀態未知"
     },
     "title": "Intel OVMS"
-  },
-  "paintings": {
-    "aspect_ratio": "畫幅比例",
-    "aspect_ratios": {
-      "landscape": "橫圖",
-      "portrait": "豎圖",
-      "square": "方形"
-    },
-    "auto_create_paint": "自動新增圖片",
-    "auto_create_paint_tip": "圖片產生後會自動新增圖片",
-    "background": "背景",
-    "background_options": {
-      "auto": "自動",
-      "opaque": "不透明",
-      "transparent": "透明"
-    },
-    "button": {
-      "delete": {
-        "image": {
-          "confirm": "確定要刪除此繪圖嗎？",
-          "label": "刪除繪圖"
-        }
-      },
-      "new": {
-        "image": "新繪圖"
-      }
-    },
-    "custom_size": "自訂尺寸",
-    "dmxapi": {
-      "generating_tip": "使用官方模型生成，預計等待時間為 2–5 分鐘以獲得最佳結果。請查看 DMXAPI 後端日誌以了解此操作的成本。",
-      "style": "，風格：",
-      "style_types": {
-        "25d_animation": "2.5D動畫",
-        "3d_cartoon": "3D卡通",
-        "american_retro": "美式復古",
-        "baroque": "巴洛克",
-        "cartoon_illustration": "卡通插圖",
-        "chinese_gongbi": "中國工筆",
-        "clay": "黏土",
-        "cyberpunk": "賽博龐克",
-        "felt": "氈",
-        "flat": "平的",
-        "fresh_anime": "新鮮動漫",
-        "ghibli": "吉卜力",
-        "japanese_anime": "日本動畫",
-        "little_people_book": "小小人書",
-        "monet_garden": "莫內花園",
-        "oil_painting": "油畫",
-        "pixar": "皮克斯",
-        "pixel_art": "像素藝術",
-        "poetic_ancient": "詩意的古代",
-        "psychedelic": "迷幻",
-        "sketch": "草圖",
-        "street_art": "街頭藝術",
-        "texture": "質地",
-        "ukiyo_e": "浮世繪",
-        "watercolor": "水彩",
-        "wood_carving": "木雕",
-        "yarn_doll": "毛線娃娃"
-      }
-    },
-    "edit": {
-      "image_file": "編輯影像",
-      "image_required": "請先上傳需要編輯的圖片"
-    },
-    "generate": {
-      "height": "高度",
-      "magic_prompt_option_tip": "開啟後會自動調整提示詞，以提升效果",
-      "model_tip": "模型版本：V2 是最新 API 模型，V2A 是高速模型，V_1 是初代模型，_TURBO 是高速處理版",
-      "negative_prompt_tip": "描述不想在影像中出現的內容",
-      "number_images_tip": "一次產生的圖片數量",
-      "person_generation": "產生人物",
-      "person_generation_tip": "允許模型產生人物影像",
-      "rendering_speed_tip": "控制渲染速度與品質之間的平衡，僅適用於 V_3 版本",
-      "safety_tolerance": "安全耐性",
-      "safety_tolerance_tip": "控制影像產生的安全耐性，僅適用於 FLUX.1-Kontext-pro 版本",
-      "seed_tip": "控制影像產生的隨機性，以重現相同結果",
-      "style_type_tip": "產生圖片的風格，僅適用於 V_2 及以上版本",
-      "width": "寬度"
-    },
-    "generate_failed": "無法生成圖片",
-    "generated_image": "產生的圖片",
-    "go_to_settings": "前往設定",
-    "guidance_scale": "引導比例",
-    "guidance_scale_tip": "無分類器指導。控制模型在尋找相關影像時對提示詞的遵循程度",
-    "image": {
-      "size": "影像尺寸"
-    },
-    "image_file_required": "請先上傳圖片",
-    "image_file_retry": "請重新上傳圖片",
-    "image_handle_required": "請先上傳圖片。",
-    "image_mix_failed": "無法混合圖片",
-    "image_placeholder": "無圖片",
-    "image_retry": "重試",
-    "image_size_options": {
-      "auto": "自動"
-    },
-    "inference_steps": "推理步數",
-    "inference_steps_tip": "要執行的推理步數。步數越多，品質越高但耗時越長",
-    "input_image": "輸入圖片",
-    "input_parameters": "輸入參數",
-    "invalid_image_url": "圖片網址格式無效",
-    "learn_more": "了解更多",
-    "magic_prompt_option": "提示詞增強",
-    "mode": {
-      "edit": "編輯",
-      "generate": "繪圖",
-      "merge": "合併",
-      "remix": "混合",
-      "upscale": "放大"
-    },
-    "model": "模型",
-    "model_and_pricing": "模型與定價",
-    "moderation": "敏感度",
-    "moderation_options": {
-      "auto": "自動",
-      "low": "低"
-    },
-    "negative_prompt": "反向提示詞",
-    "negative_prompt_tip": "描述你不想在圖片中出現的內容",
-    "no_image_generation_model": "暫無可用的圖片產生模型，請先新增模型並設定端點類型為 {{endpoint_type}}",
-    "number_images": "張數",
-    "number_images_tip": "一次產生的圖片數量 (1-4)",
-    "operation_failed": "操作失敗，請稍後再試",
-    "paint_course": "教學",
-    "per_image": "每張圖片",
-    "per_images": "每張圖片",
-    "person_generation_options": {
-      "allow_adult": "允許成人",
-      "allow_all": "允許所有",
-      "allow_none": "不允許"
-    },
-    "ppio": {
-      "edit_prompt_tip": "用於指定要從圖像中移除的對象或區域，例如：'dog' 或 'hat'",
-      "mask_image": "遮罩圖像",
-      "mask_image_tip": "用於指示要擦除的區域。要擦除的區域應為白色，要保留的區域應為黑色",
-      "output_format": "輸出格式",
-      "resolution": "目標解析度",
-      "seed_tip": "隨機種子，相同的種子和參數可以生成相似的圖片，-1 表示隨機",
-      "use_pre_llm_tip": "開啟文字擴寫，會針對輸入提示詞進行擴寫優化。提示詞較短建議開啟，較長建議關閉",
-      "watermark_tip": "是否在生成的圖片上添加浮水印，預設不添加"
-    },
-    "pricing": "定價",
-    "prompt_enhancement": "提示詞增強",
-    "prompt_enhancement_tip": "開啟後將提示重寫為詳細的、適合模型的版本",
-    "prompt_placeholder": "描述你想建立的圖片，例如：一個寧靜的湖泊，夕陽西下，遠處是群山",
-    "prompt_placeholder_edit": "輸入你的圖片描述，文字繪製用 ' 雙引號 ' 包裹",
-    "prompt_placeholder_en": "輸入英文圖片描述，目前僅支援英文提示詞",
-    "proxy_required": "請開啟代理並啟用「TUN 模式」，即可查看產生的圖片；也可以複製到瀏覽器開啟。日後將支援免代理直接連線。",
-    "quality": "品質",
-    "quality_options": {
-      "auto": "自動",
-      "high": "高",
-      "low": "低",
-      "medium": "中"
-    },
-    "regenerate": {
-      "confirm": "這將覆蓋已產生的圖片，是否繼續？"
-    },
-    "remix": {
-      "image_file": "參考圖",
-      "image_weight": "參考圖權重",
-      "image_weight_tip": "調整參考影像的影響程度",
-      "magic_prompt_option_tip": "開啟後會自動調整重混提示詞，以提升效果",
-      "model_tip": "選擇重混使用的 AI 模型版本",
-      "negative_prompt_tip": "描述不想在重混結果中出現的元素",
-      "number_images_tip": "要產生的重混結果數量",
-      "rendering_speed_tip": "控制渲染速度與品質之間的平衡，僅適用於 V_3 版本",
-      "seed_tip": "控制重混結果的隨機性",
-      "style_type_tip": "重混後的影像風格，僅適用於 V_2 及以上版本"
-    },
-    "rendering_speed": "渲染速度",
-    "rendering_speeds": {
-      "default": "預設",
-      "quality": "高品質",
-      "turbo": "快速"
-    },
-    "req_error_model": "取得模型失敗",
-    "req_error_no_balance": "請檢查權杖的有效性",
-    "req_error_text": "伺服器繁忙或提示詞中出現「版權詞」或「敏感詞」，請重試。",
-    "req_error_token": "請檢查權杖的有效性",
-    "required_field": "必填欄位",
-    "seed": "隨機種子",
-    "seed_desc_tip": "相同的種子和提示詞可以產生相似的圖片，設定為 -1 時，每次結果都會不同",
-    "seed_random": "隨機",
-    "seed_tip": "相同的種子和提示詞可以產生相似的圖片",
-    "select_model": "選擇模型",
-    "style_type": "風格",
-    "style_types": {
-      "3d": "3D",
-      "anime": "動漫",
-      "auto": "自動",
-      "design": "設計",
-      "general": "通用",
-      "realistic": "寫實"
-    },
-    "text_desc_required": "請先輸入圖片描述",
-    "title": "繪圖",
-    "top_up": "儲值",
-    "translating": "翻譯中...",
-    "uploaded_input": "已上傳輸入",
-    "upscale": {
-      "detail": "細節",
-      "detail_tip": "控制放大影像的細節增強程度",
-      "image_file": "需要放大的圖片",
-      "magic_prompt_option_tip": "開啟後會自動調整放大提示詞，以提升效果",
-      "number_images_tip": "要產生的放大結果數量",
-      "resemblance": "相似度",
-      "resemblance_tip": "控制放大結果與原圖的相似程度",
-      "seed_tip": "控制放大結果的隨機性"
-    },
-    "watermark": "添加浮水印",
-    "zhipu": {
-      "custom_size_divisible": "自訂尺寸必須能被 16 整除",
-      "custom_size_hint": "寬度和高度必須介於 512px 到 2048px 之間，可被 16 整除，且總像素數不得超過 2^21px。",
-      "custom_size_pixels": "自訂尺寸的總像素數不可超過 2,097,152",
-      "custom_size_range": "自訂尺寸必須介於 512 像素至 2048 像素之間",
-      "custom_size_required": "請設定自訂寬度和高度",
-      "image_sizes": {
-        "1024x1024_default": "1024x1024（預設）",
-        "1152x864": "1152x864",
-        "1344x768": "1344x768",
-        "1440x720": "1440x720",
-        "720x1440": "720x1440",
-        "768x1344": "768x1344",
-        "864x1152": "864x1152"
-      },
-      "quality_options": {
-        "hd": "HD",
-        "standard_default": "標準（預設）"
-      }
-    }
   },
   "plugins": {
     "actions": "操作",
@@ -3349,7 +2965,6 @@
     "ocoolai": "ocoolAI",
     "ollama": "Ollama",
     "openai": "OpenAI",
-    "openclaw": "[to be translated]:OpenClaw",
     "openrouter": "OpenRouter",
     "ovms": "Intel OVMS",
     "perplexity": "Perplexity",
@@ -3603,6 +3218,222 @@
       "undo": "復原"
     }
   },
+  "rpa_roles": {
+    "actions": {
+      "back": "返回角色庫",
+      "create": "建立",
+      "delete_confirm": "確定刪除該角色嗎？",
+      "disable": "停用",
+      "duplicate": "複製",
+      "edit": "編輯角色",
+      "enable": "啟用",
+      "export": "匯出",
+      "import": "匯入",
+      "new_role": "新增角色",
+      "save": "儲存",
+      "start_session": "新增 RPA 對話"
+    },
+    "alerts": {
+      "active_runs": "該角色存在執行中的任務，禁止進行破壞性修改",
+      "broken_bindings": "存在 {{count}} 個未解析的資產綁定"
+    },
+    "assets": {
+      "artifact": "檔案與證據",
+      "knowledge": "知識庫",
+      "prompt": "提示詞",
+      "provider": "模型服務",
+      "skill": "技能"
+    },
+    "binding": {
+      "add": "新增綁定",
+      "artifact_imported": "[to be translated]:Imported {{count}} file asset(s)",
+      "asset": "資產",
+      "asset_source_hint": "[to be translated]:Create or import an asset here, then select it below.",
+      "bind_asset": "綁定資產",
+      "bind_title": "綁定{{asset}}",
+      "empty": "暫無{{asset}}綁定",
+      "enabled": "已啟用",
+      "import_files": "[to be translated]:Import files",
+      "import_skill": "[to be translated]:Import Skill JSON",
+      "manage_knowledge": "[to be translated]:Create or import knowledge",
+      "missing": "缺少：{{id}}",
+      "ownership": "歸屬關係",
+      "priority": "優先順序",
+      "reference_hint": "角色只儲存資產參照，資產內容仍保留在原始資源庫中。",
+      "remove_confirm": "確定移除該綁定嗎？",
+      "requirement": "相依層級",
+      "skill_imported": "[to be translated]:Imported {{count}} Skill asset(s)"
+    },
+    "columns": {
+      "actions": "操作",
+      "assets": "資產",
+      "health": "健康狀態",
+      "role": "角色",
+      "updated": "更新時間"
+    },
+    "create": {
+      "name_placeholder": "美團自動化",
+      "title": "建立 RPA 角色"
+    },
+    "form": {
+      "active_runs": "執行中任務",
+      "app_packages": "應用程式套件名稱",
+      "description": "描述",
+      "lifecycle": "生命週期",
+      "migration": "遷移狀態",
+      "name": "名稱",
+      "primary_app_package": "主要應用程式套件名稱",
+      "provider_health": "已設定 {{configured}} 個 / 缺少 {{missing}} 個",
+      "providers": "模型服務",
+      "readiness": "就緒狀態",
+      "recent_runs": "最近執行",
+      "role_name": "角色名稱",
+      "supported_app_versions": "支援的應用程式版本",
+      "supporting_roles": "協作角色",
+      "system_capabilities": "系統能力",
+      "version": "版本"
+    },
+    "library": {
+      "active_runs": "{{count}} 個執行中任務",
+      "broken_bindings": "{{count}} 個異常綁定",
+      "compatibility": "相容模式",
+      "copy_name": "{{name}} 副本",
+      "description": "統一管理應用程式範圍、提示詞、模型和經過驗證的 RPA 資產。",
+      "empty": "暫無 RPA 角色",
+      "heading": "應用程式自動化角色",
+      "no_app_package": "未設定應用程式套件名稱",
+      "no_assets": "暫無資產",
+      "search_placeholder": "搜尋角色或應用程式套件名稱"
+    },
+    "messages": {
+      "active_role_delete_blocked": "該角色正被執行中的任務使用，無法刪除",
+      "already_exists": "角色已存在：{{id}}",
+      "import_failed": "匯入角色失敗",
+      "imported": "角色匯入成功",
+      "invalid_json": "無效的角色 JSON",
+      "load_failed": "載入 RPA 角色失敗",
+      "not_found": "找不到 RPA 角色",
+      "saved": "角色已儲存",
+      "workspace_load_failed": "載入 RPA 角色工作區失敗"
+    },
+    "migration": {
+      "compatibility_description": "該角色由助手 {{assistantId}} 的設定版本 {{version}} 產生。在遷移和回復驗收完成前，將繼續使用相容讀取邏輯。",
+      "compatibility_title": "相容角色",
+      "native_description": "遷移狀態：{{state}}",
+      "native_title": "原生角色"
+    },
+    "model_kinds": {
+      "planner": "任務規劃",
+      "recovery": "失敗復原",
+      "verification": "結果驗證",
+      "vision": "視覺辨識"
+    },
+    "none": "無",
+    "ownership": {
+      "linked": "參照",
+      "owned": "自有",
+      "shared": "共用"
+    },
+    "prompt_kinds": {
+      "capability": "能力",
+      "planner": "規劃",
+      "recovery": "復原",
+      "system": "系統",
+      "verification": "驗證"
+    },
+    "prompts": {
+      "add": "新增提示詞",
+      "add_title": "新增版本化角色提示詞",
+      "capability": "能力",
+      "content": "提示詞內容",
+      "delete_confirm": "確定刪除該提示詞版本嗎？",
+      "empty": "暫無角色提示詞",
+      "id": "提示詞 ID",
+      "kind": "提示詞類型",
+      "model_id": "模型 ID",
+      "provider": "模型服務",
+      "save": "儲存提示詞",
+      "versioned": "版本化提示詞"
+    },
+    "provider_status": {
+      "degraded": "[to be translated]:Degraded",
+      "disabled": "[to be translated]:Disabled",
+      "healthy": "[to be translated]:Healthy",
+      "needs_configuration": "[to be translated]:Unavailable"
+    },
+    "readiness": {
+      "blocked": "已阻擋",
+      "degraded": "能力降級",
+      "draft": "草稿",
+      "loading": "載入中",
+      "ready": "已就緒"
+    },
+    "requirement": {
+      "optional": "選用",
+      "required": "必要"
+    },
+    "role": "RPA 角色",
+    "settings": {
+      "assets": "角色資產",
+      "bound_description": "目前對話使用建立時記錄的角色版本；儲存設定會產生新版本，不會改寫歷史執行內容。",
+      "bound_title": "設定已綁定至目前角色",
+      "enabled_prompt_versions": "{{count}} 個啟用版本",
+      "load_failed": "載入 RPA 角色設定失敗",
+      "manage": "管理",
+      "model_defaults": "模型預設值",
+      "save_failed": "儲存 RPA 角色設定失敗",
+      "save_role": "儲存角色",
+      "saved": "RPA 角色設定已儲存",
+      "unbound_description": "請從 RPA 角色庫中選擇角色並新增任務對話。一般聊天設定不會建立自動化資產綁定。",
+      "unbound_title": "目前話題未綁定 RPA 角色",
+      "use_chat_model": "使用聊天模型"
+    },
+    "sidebar_title": "RPA 角色",
+    "status": {
+      "disabled": "已停用",
+      "draft": "草稿",
+      "enabled": "已啟用"
+    },
+    "tabs": {
+      "migration": "遷移",
+      "overview": "概覽",
+      "prompts": "提示詞",
+      "providers": "模型服務",
+      "versions": "版本"
+    },
+    "title": "RPA 角色庫",
+    "versions": {
+      "last_updated": "最後更新時間",
+      "prompt_versions": "提示詞版本",
+      "role_version": "角色版本"
+    }
+  },
+  "rpa_supplements": {
+    "add_files": "新增檔案",
+    "empty": "目前工作階段尚無補充內容",
+    "manual_retention": "保留至手動移除",
+    "next_request": "下一次請求",
+    "no_authorized_provider": "目前工作區沒有健康且已信任的檢索或 MCP Provider。",
+    "no_pending_files": "尚未為下一次任務請求選擇檔案。",
+    "no_role_sources": "目前角色未綁定可重用來源。",
+    "optional": "選用",
+    "pending_files": "待處理檔案",
+    "remote_sources": "已核准的 URL 與 MCP 來源",
+    "request_retention": "僅本次請求",
+    "required": "必要",
+    "role_sources": "角色來源",
+    "select_knowledge": "選擇僅用於目前任務的知識庫",
+    "select_mcp_resource": "[to be translated]:Select an MCP Resource",
+    "select_provider": "[to be translated]:Select Provider",
+    "session_knowledge": "暫時知識庫",
+    "session_retention": "保留至工作階段結束",
+    "session_scope": "目前工作階段",
+    "session_sources": "工作階段來源",
+    "title": "補充內容"
+  },
+  "rpa_templates": {
+    "title": "RPA 範本"
+  },
   "selection": {
     "action": {
       "builtin": {
@@ -3611,16 +3442,12 @@
         "quote": "引用",
         "refine": "潤飾",
         "search": "搜尋",
-        "summary": "總結",
-        "translate": "翻譯"
+        "summary": "總結"
       },
       "prompt": {
         "explain": "請說明以下內容。要求：以{{language}}回覆；不要包含任何對此提示的說明，直接給出回應：",
         "refine": "請優化或潤飾以 XML 標籤 <INPUT> 包覆的使用者輸入內容，同時保留原意與完整性。要求：輸出須與使用者輸入使用相同語言；不需包含本提示的任何說明，直接給出回應；勿輸出 XML 標籤，直接輸出優化後的內容：\n\n{{text}}",
         "summary": "請直接以{{language}}回覆，無須任何說明。"
-      },
-      "translate": {
-        "smart_translate_tips": "智慧翻譯：內容將優先翻譯為目標語言；內容已是目標語言時，將翻譯為備用語言"
       },
       "window": {
         "c_copy": "C 複製",
@@ -3924,7 +3751,6 @@
         "joplin": "匯出到 Joplin",
         "markdown": "匯出為 Markdown",
         "markdown_reason": "匯出為 Markdown（包含思考）",
-        "notes": "匯出到筆記",
         "notion": "匯出到 Notion",
         "obsidian": "匯出到 Obsidian",
         "plain_text": "複製為純文字",
@@ -4512,16 +4338,10 @@
         "knowledge": {
           "icon": "顯示知識圖示"
         },
-        "minapp": {
-          "icon": "顯示小工具圖示"
-        },
         "painting": {
           "icon": "顯示繪圖圖示"
         },
         "title": "側邊欄設定",
-        "translate": {
-          "icon": "顯示翻譯圖示"
-        },
         "visible": "顯示的圖示"
       },
       "title": "顯示設定",
@@ -4592,13 +4412,11 @@
       "title": "停用硬體加速"
     },
     "input": {
-      "auto_translate_with_space": "快速敲擊 3 次空格翻譯",
       "clear": {
         "all": "清除",
         "knowledge_base": "清除選中的知識庫",
         "models": "清除@的所有模型"
       },
-      "show_translate_confirm": "顯示翻譯確認對話框",
       "target_language": {
         "chinese": "簡體中文",
         "chinese-traditional": "繁體中文",
@@ -5069,10 +4887,6 @@
         "label": "話題命名",
         "prompt": "話題命名提示詞"
       },
-      "translate_model": "翻譯模型",
-      "translate_model_description": "翻譯服務使用的模型",
-      "translate_model_prompt_message": "請輸入翻譯模型提示詞",
-      "translate_model_prompt_title": "翻譯模型提示詞",
       "use_assistant": "使用助手",
       "use_model": "預設模型"
     },
@@ -5352,7 +5166,6 @@
       "openai": {
         "alert": "OpenAI Provider 不再支援舊的呼叫方法。如果使用第三方 API，請建立新的服務供應商"
       },
-      "openclaw": "[to be translated]:OpenClaw",
       "remove_duplicate_keys": "移除重複金鑰",
       "remove_invalid_keys": "刪除無效金鑰",
       "search": "搜尋模型平臺...",
@@ -5622,51 +5435,6 @@
         "time": "顯示話題時間"
       }
     },
-    "translate": {
-      "custom": {
-        "delete": {
-          "description": "確定要刪除嗎？",
-          "title": "刪除自訂語言"
-        },
-        "error": {
-          "add": "新增失敗",
-          "delete": "刪除失敗",
-          "langCode": {
-            "builtin": "該語言已內建支援",
-            "empty": "語言代號為空",
-            "exists": "該語言已存在",
-            "invalid": "無效的語言代號"
-          },
-          "update": "更新失敗",
-          "value": {
-            "empty": "語言名稱不能留空",
-            "too_long": "語言名稱過長"
-          }
-        },
-        "langCode": {
-          "help": "[語言 + 區域] 的格式，[2~3 位小寫字母]-[2~3 位小寫字母]",
-          "label": "語言代號",
-          "placeholder": "zh-tw"
-        },
-        "success": {
-          "add": "新增成功",
-          "delete": "刪除成功",
-          "update": "更新成功"
-        },
-        "table": {
-          "action": {
-            "title": "操作"
-          }
-        },
-        "value": {
-          "help": "1~32 個字元",
-          "label": "語言名稱",
-          "placeholder": "繁體中文"
-        }
-      },
-      "prompt": "翻譯提示詞",
-      "title": "翻譯設定"
-    },
     "tray": {
       "onclose": "關閉時最小化到系統匣",
       "show": "顯示系統匣圖示",
@@ -5684,135 +5452,6 @@
       "title": "縮放"
     }
   },
-  "taskflow": {
-    "description": "安卓微信訊息監聽與自動回覆任務流",
-    "deviceQueue": {
-      "actions": {
-        "cancel": "[to be translated]:Cancel",
-        "pause": "[to be translated]:Pause",
-        "resume": "[to be translated]:Resume"
-      },
-      "columns": {
-        "actions": "[to be translated]:Actions",
-        "device": "[to be translated]:Device",
-        "goal": "[to be translated]:Goal",
-        "progress": "[to be translated]:Progress",
-        "status": "[to be translated]:Status",
-        "updated": "[to be translated]:Updated"
-      },
-      "enqueue": "[to be translated]:Enqueue",
-      "enqueueSuccess": "[to be translated]:Device task enqueued",
-      "goalPlaceholder": "[to be translated]:Example: open the target app and tap the visible reward button",
-      "localVlm": "[to be translated]:Local VLM",
-      "onlineDevice": "[to be translated]:Online device",
-      "refresh": "[to be translated]:Refresh",
-      "selectTaskLogs": "[to be translated]:Select a task to view logs.",
-      "selectedLogs": "[to be translated]:Selected task logs",
-      "title": "[to be translated]:Device task queue",
-      "tryDeerFlow": "[to be translated]:Try DeerFlow",
-      "validation": {
-        "device": "[to be translated]:Select a device",
-        "goal": "[to be translated]:Input task goal"
-      }
-    },
-    "editor": {
-      "back": "返回列表",
-      "create": "建立任務",
-      "createSuccess": "任務建立成功",
-      "edit": "編輯任務",
-      "editSuccess": "任務更新成功",
-      "nodePalette": "節點面板",
-      "nodeTypes": "節點類型",
-      "run": "執行任務",
-      "runError": "任務執行失敗",
-      "runSuccess": "任務執行成功",
-      "save": "儲存任務",
-      "saveFirst": "請先儲存任務",
-      "startingTask": "正在啟動任務...",
-      "taskDescription": "任務描述",
-      "taskDescriptionPlaceholder": "請輸入任務描述",
-      "taskInfo": "任務資訊",
-      "taskName": "任務名稱",
-      "taskNamePlaceholder": "請輸入任務名稱",
-      "taskNameRequired": "請輸入任務名稱",
-      "title": "任務編輯器",
-      "updateSuccess": "任務更新成功"
-    },
-    "executionType": {
-      "manual": "手動",
-      "scheduled": "定時"
-    },
-    "list": {
-      "actions": "操作",
-      "create": "建立任務",
-      "createdAt": "建立時間",
-      "delete": "刪除任務",
-      "deleteConfirm": "確定要刪除此任務嗎？此操作不可撤銷。",
-      "edit": "編輯任務",
-      "executionType": "執行方式",
-      "lastRunAt": "最後執行",
-      "name": "任務名稱",
-      "neverRun": "從未執行",
-      "run": "執行任務",
-      "runSuccess": "任務執行成功",
-      "search": "搜尋任務",
-      "status": "狀態",
-      "title": "任務列表",
-      "viewLogs": "查看日誌"
-    },
-    "logs": {
-      "back": "返回任務列表",
-      "endTime": "結束時間",
-      "error": "錯誤",
-      "info": "資訊",
-      "level": "級別",
-      "message": "訊息",
-      "refresh": "重新整理",
-      "search": "搜尋日誌",
-      "startTime": "開始時間",
-      "time": "時間",
-      "title": "任務日誌",
-      "warn": "警告"
-    },
-    "nodeConfig": {
-      "contactName": "聯絡人名稱",
-      "field": "欄位",
-      "groupName": "群組名稱",
-      "keywords": "關鍵字",
-      "message": "訊息內容",
-      "model": "模型",
-      "operator": "操作符",
-      "prompt": "提示詞",
-      "script": "腳本內容",
-      "temperature": "溫度",
-      "timeout": "超時時間",
-      "useTemplate": "使用模板",
-      "value": "值"
-    },
-    "nodes": {
-      "condition": "條件判斷",
-      "end": "結束",
-      "execute": "執行操作",
-      "listenMessage": "監聽訊息",
-      "llm": "LLM處理",
-      "sendMessage": "發送訊息",
-      "start": "開始"
-    },
-    "operators": {
-      "contains": "包含",
-      "equals": "等於",
-      "greater": "大於",
-      "less": "小於"
-    },
-    "status": {
-      "completed": "已完成",
-      "created": "已建立",
-      "error": "執行失敗",
-      "running": "執行中",
-      "stopped": "已停止"
-    },
-    "title": "任務流"
-  },
   "title": {
     "apps": "小程式",
     "code": "程式碼",
@@ -5822,12 +5461,8 @@
     "launchpad": "啟動台",
     "mcp-servers": "MCP 伺服器",
     "memories": "記憶",
-    "notes": "筆記",
-    "openclaw": "OpenClaw",
-    "paintings": "繪畫",
     "settings": "設定",
-    "store": "助手庫",
-    "translate": "翻譯"
+    "store": "助手庫"
   },
   "trace": {
     "backList": "回到清單",
@@ -5845,137 +5480,6 @@
     "tag": "標籤",
     "tokenUsage": "Token 使用量",
     "traceWindow": "呼叫鏈視窗"
-  },
-  "translate": {
-    "alter_language": "備用語言",
-    "any": {
-      "language": "任意語言"
-    },
-    "button": {
-      "translate": "翻譯"
-    },
-    "close": "關閉",
-    "closed": "翻譯已關閉",
-    "complete": "翻譯完成",
-    "confirm": {
-      "content": "翻譯後將覆蓋原文，是否繼續？",
-      "title": "翻譯確認"
-    },
-    "copied": "翻譯內容已複製",
-    "custom": {
-      "label": "自定義語言"
-    },
-    "detect": {
-      "method": {
-        "algo": {
-          "label": "演算法",
-          "tip": "使用 franc 進行語言偵測"
-        },
-        "auto": {
-          "label": "自動",
-          "tip": "自動選擇合適的偵測方法"
-        },
-        "label": "自動偵測方法",
-        "llm": {
-          "tip": "使用快速模型進行語言偵測，消耗少量 token。"
-        },
-        "placeholder": "選擇自動偵測方法",
-        "tip": "自動偵測輸入語言時使用的方法"
-      }
-    },
-    "detected": {
-      "language": "自動偵測"
-    },
-    "detected_source": "偵測到",
-    "detecting": "偵測中...",
-    "empty": "翻譯內容為空",
-    "error": {
-      "chat_qwen_mt": "Qwen MT 模型無法在對話中使用，請前往翻譯頁面",
-      "detect": {
-        "qwen_mt": "QwenMT 模型不能用於語言偵測",
-        "unknown": "偵測到未知語言",
-        "update_setting": "設定失敗"
-      },
-      "empty": "翻譯結果為空",
-      "failed": "翻譯失敗",
-      "invalid_source": "無效的來源語言",
-      "not_configured": "翻譯模型未設定",
-      "not_supported": "不支援的語言 {{language}}",
-      "unknown": "翻譯過程中遇到未知錯誤"
-    },
-    "exchange": {
-      "label": "交換來源語言與目標語言"
-    },
-    "files": {
-      "drag_text": "拖曳到此處",
-      "error": {
-        "check_type": "檢查檔案類型時發生錯誤",
-        "multiple": "不允許上傳多個檔案",
-        "too_large": "檔案過大",
-        "unknown": "讀取檔案內容失敗"
-      },
-      "reading": "讀取檔案內容中..."
-    },
-    "history": {
-      "clear": "清空歷史",
-      "clear_description": "清空歷史將刪除所有翻譯歷史記錄，是否繼續？",
-      "delete": "刪除翻譯歷史",
-      "empty": "翻譯歷史為空",
-      "error": {
-        "delete": "刪除失敗",
-        "save": "儲存翻譯歷史失敗"
-      },
-      "search": {
-        "placeholder": "搜尋翻譯歷史"
-      },
-      "title": "翻譯歷史"
-    },
-    "info": {
-      "aborted": "翻譯中止"
-    },
-    "input": {
-      "placeholder": "可貼上或拖曳文字、文字檔案、圖片（支援 OCR）"
-    },
-    "language": {
-      "not_pair": "來源語言與設定的語言不同",
-      "same": "來源語言和目標語言相同"
-    },
-    "language_settings": "語言設定",
-    "menu": {
-      "description": "對目前輸入框內容進行翻譯"
-    },
-    "not": {
-      "found": "未找到翻譯內容"
-    },
-    "output": {
-      "placeholder": "翻譯"
-    },
-    "preferred_target": "首選目標",
-    "processing": "翻譯中...",
-    "settings": {
-      "autoCopy": "翻譯完成後自動複製",
-      "bidirectional": "雙向翻譯設定",
-      "bidirectional_tip": "開啟後，僅支援在來源語言和目標語言之間進行雙向翻譯",
-      "model": "模型設定",
-      "model_desc": "翻譯服務使用的模型",
-      "model_placeholder": "選擇翻譯模型",
-      "no_model_warning": "未選擇翻譯模型",
-      "preview": "Markdown 預覽",
-      "scroll_sync": "滾動同步設定",
-      "title": "翻譯設定"
-    },
-    "stop": "停止翻譯",
-    "success": {
-      "custom": {
-        "delete": "刪除成功",
-        "update": "更新成功"
-      }
-    },
-    "target_language": "目標語言",
-    "title": "翻譯",
-    "tooltip": {
-      "newline": "換行"
-    }
   },
   "tray": {
     "quit": "結束",

@@ -25,10 +25,12 @@ import BatchControlPanel from './BatchControlPanel'
 import BatchInstallPanel from './BatchInstallPanel'
 import DeviceControlPanel from './DeviceControlPanel'
 import {
+  DEVICE_GROUPS_CONFIG_KEY,
+  DEVICE_INFO_CONFIG_KEY,
   type DeviceGroup,
   type DeviceMetadata,
-  isDeviceGroup,
   removeGroupAssignments,
+  sanitizeDeviceGroups,
   sanitizeDeviceMetadataMap
 } from './deviceMetadata'
 
@@ -46,8 +48,6 @@ interface DevicePageProps {
   refreshIntervalMs?: number
 }
 
-const DEVICE_GROUPS_CONFIG_KEY = 'device.groups'
-const DEVICE_INFO_CONFIG_KEY = 'device.info'
 const NO_GROUP_VALUE = '__none__'
 const DEFAULT_REFRESH_INTERVAL_MS = 5000
 
@@ -104,13 +104,7 @@ const DevicePage: React.FC<DevicePageProps> = ({
   const loadGroups = useCallback(async () => {
     try {
       const stored = await window.api.config.get(DEVICE_GROUPS_CONFIG_KEY)
-      const validGroups = Array.isArray(stored)
-        ? stored
-            .filter(isDeviceGroup)
-            .map((item) => ({ id: item.id, name: item.name.trim() }))
-            .filter((item, index, list) => list.findIndex((other) => other.id === item.id) === index)
-        : []
-      setGroups(validGroups)
+      setGroups(sanitizeDeviceGroups(stored))
     } catch (loadError) {
       logger.error('Failed to load device groups', { error: loadError })
       setGroups([])

@@ -144,10 +144,6 @@ vi.mock('@renderer/store/knowledge', () => ({
   default: (state = { knowledge: [] }) => state
 }))
 
-vi.mock('@renderer/store/paintings', () => ({
-  default: (state = { paintings: [] }) => state
-}))
-
 vi.mock('@renderer/store/runtime', () => ({
   default: (state = { runtime: {} }) => state
 }))
@@ -158,10 +154,6 @@ vi.mock('@renderer/store/settings', () => ({
 
 vi.mock('@renderer/store/topics', () => ({
   default: (state = { topics: [] }) => state
-}))
-
-vi.mock('@renderer/store/translate', () => ({
-  default: (state = { translate: {} }) => state
 }))
 
 vi.mock('@renderer/store/websearch', () => ({
@@ -210,13 +202,6 @@ vi.mock('@renderer/store/llm.ts', () => {
       group: ''
     },
     quickModel: {
-      id: 'gemini-2.5-pro',
-      name: 'Gemini 2.5 Pro',
-      provider: 'gemini',
-      supported_text_delta: true,
-      group: ''
-    },
-    translateModel: {
       id: 'gemini-2.5-pro',
       name: 'Gemini 2.5 Pro',
       provider: 'gemini',

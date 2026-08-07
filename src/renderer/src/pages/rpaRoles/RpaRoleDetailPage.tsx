@@ -2,7 +2,6 @@ import { loggerService } from '@logger'
 import { Navbar, NavbarCenter } from '@renderer/components/app/Navbar'
 import FileManager from '@renderer/services/FileManager'
 import {
-  RPA_APP_ROLE_ASSET_TYPES,
   type RpaAppRole,
   type RpaAppRoleAssetBinding,
   type RpaAppRoleAssetOwnership,
@@ -10,7 +9,6 @@ import {
   type RpaAppRoleAssetType,
   rpaAppRoleRepository
 } from '@renderer/services/rpa/RpaAppRole'
-import { artifactInputFromFile, type RpaArtifact, rpaArtifactStore } from '@renderer/services/rpa/RpaArtifactStore'
 import { rpaBatchRunner } from '@renderer/services/rpa/RpaBatchRunner'
 import {
   RPA_ROLE_PROMPT_KINDS,
@@ -73,6 +71,7 @@ interface CatalogItem {
 }
 
 type RoleCatalog = Record<RpaAppRoleAssetType, CatalogItem[]>
+const EDITABLE_ROLE_ASSET_TYPES = ['knowledge', 'skill'] as const satisfies readonly RpaAppRoleAssetType[]
 
 const RpaRoleDetailPage: FC = () => {
   const { id = '' } = useParams()
@@ -103,10 +102,9 @@ const RpaRoleDetailPage: FC = () => {
     setLoading(true)
     try {
       await rpaBatchRunner.initialize()
-      const [allRoles, skills, artifacts, allPrompts] = await Promise.all([
+      const [allRoles, skills, allPrompts] = await Promise.all([
         rpaAppRoleRepository.getAll(),
         rpaSkillRepository.getAll(),
-        rpaArtifactStore.getAll(),
         rpaRolePromptRepository.getAll()
       ])
       const current = allRoles.find((candidate) => candidate.id === id)
@@ -118,7 +116,7 @@ const RpaRoleDetailPage: FC = () => {
       const nextCatalog: RoleCatalog = {
         knowledge: knowledgeBases.map((item) => ({ id: item.id, label: item.name })),
         skill: skills.map((item) => ({ id: item.id, label: item.name, version: item.version })),
-        artifact: artifacts.map((item) => ({ id: item.id, label: item.title, version: String(item.version) })),
+        artifact: [],
         prompt: allPrompts
           .filter((item) => item.roleId === id)
           .map((item) => ({ id: item.id, label: `${item.kind}: ${item.id}`, version: item.version })),
@@ -127,7 +125,7 @@ const RpaRoleDetailPage: FC = () => {
       const catalogs: RpaRoleWorkspaceCatalogs = {
         knowledgeIds: nextCatalog.knowledge.map((item) => item.id),
         skillIds: nextCatalog.skill.map((item) => item.id),
-        artifactIds: nextCatalog.artifact.map((item) => item.id),
+        artifactIds: [],
         promptIds: nextCatalog.prompt.map((item) => item.id)
       }
       setRole(current)
@@ -231,32 +229,6 @@ const RpaRoleDetailPage: FC = () => {
     }
   }
 
-  const importArtifacts = async () => {
-    try {
-      const selected = await FileManager.selectFiles({ properties: ['openFile', 'multiSelections'] })
-      if (!selected?.length) return
-      const files = await FileManager.addFiles(selected)
-      const imported: RpaArtifact[] = []
-      for (const file of files) {
-        imported.push(
-          (
-            await rpaArtifactStore.register(
-              artifactInputFromFile(file, {
-                source: 'uploaded'
-              })
-            )
-          ).artifact
-        )
-      }
-      await reload()
-      if (imported[0]) bindingForm.setFieldValue(['ref', 'assetId'], imported[0].id)
-      message.success(t('rpa_roles.binding.artifact_imported', { count: imported.length }))
-    } catch (error) {
-      logger.warn('Failed to import RPA file assets', { error, roleId: role?.id })
-      message.error(error instanceof Error ? error.message : String(error))
-    }
-  }
-
   const updateBinding = async (binding: RpaAppRoleAssetBinding, patch: Partial<RpaAppRoleAssetBinding>) => {
     if (!role) return
     await rpaAppRoleRepository.save({
@@ -321,7 +293,7 @@ const RpaRoleDetailPage: FC = () => {
         />
       )
     },
-    ...RPA_APP_ROLE_ASSET_TYPES.filter((type) => !['prompt', 'provider'].includes(type)).map((type) => ({
+    ...EDITABLE_ROLE_ASSET_TYPES.map((type) => ({
       key: type,
       label: assetTabLabel(t, type),
       children: (
@@ -390,11 +362,6 @@ const RpaRoleDetailPage: FC = () => {
           {bindingType === 'skill' && (
             <Button icon={<FileUp size={15} />} onClick={() => void importSkills()}>
               {t('rpa_roles.binding.import_skill')}
-            </Button>
-          )}
-          {bindingType === 'artifact' && (
-            <Button icon={<FileUp size={15} />} onClick={() => void importArtifacts()}>
-              {t('rpa_roles.binding.import_files')}
             </Button>
           )}
         </AssetImportActions>

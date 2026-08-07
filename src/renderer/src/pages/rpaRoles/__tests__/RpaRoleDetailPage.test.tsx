@@ -23,10 +23,8 @@ const role = vi.hoisted(() => ({
 const pageState = vi.hoisted(() => ({
   navigate: vi.fn(),
   selectFiles: vi.fn(),
-  addFiles: vi.fn(),
   readText: vi.fn(),
-  saveSkill: vi.fn(),
-  registerArtifact: vi.fn()
+  saveSkill: vi.fn()
 }))
 
 vi.mock('@logger', () => ({
@@ -38,7 +36,7 @@ vi.mock('@renderer/components/app/Navbar', () => ({
 }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => pageState.navigate, useParams: () => ({ id: 'role-1' }) }))
 vi.mock('@renderer/services/FileManager', () => ({
-  default: { selectFiles: pageState.selectFiles, addFiles: pageState.addFiles }
+  default: { selectFiles: pageState.selectFiles }
 }))
 vi.mock('react-i18next', async (importOriginal) => ({
   ...(await importOriginal<typeof ReactI18next>()),
@@ -52,10 +50,6 @@ vi.mock('@renderer/services/rpa/RpaAppRole', async (importOriginal) => {
     rpaAppRoleRepository: { getAll: vi.fn().mockResolvedValue([role]), save: vi.fn() }
   }
 })
-vi.mock('@renderer/services/rpa/RpaArtifactStore', () => ({
-  artifactInputFromFile: (file: unknown, input: unknown) => ({ file, input }),
-  rpaArtifactStore: { getAll: vi.fn().mockResolvedValue([]), register: pageState.registerArtifact }
-}))
 vi.mock('@renderer/services/rpa/RpaBatchRunner', () => ({
   rpaBatchRunner: { initialize: vi.fn().mockResolvedValue(undefined), getRuns: () => [] }
 }))
@@ -104,16 +98,9 @@ describe('RpaRoleDetailPage', () => {
       created_at: new Date(0).toISOString(),
       count: 1
     }
-    const evidenceFile = { ...skillFile, id: 'evidence-file', name: 'evidence.txt', path: 'D:\\fixtures\\evidence.txt' }
-    pageState.selectFiles.mockResolvedValueOnce([skillFile]).mockResolvedValueOnce([evidenceFile])
-    pageState.addFiles.mockResolvedValue([evidenceFile])
+    pageState.selectFiles.mockResolvedValue([skillFile])
     pageState.readText.mockResolvedValue('{"id":"skill-1"}')
     pageState.saveSkill.mockResolvedValue({ id: 'skill-1', name: 'Imported skill', version: '1.0.0' })
-    pageState.registerArtifact.mockResolvedValue({
-      artifact: { id: 'artifact-1', title: 'Evidence', version: 1 },
-      deduplicated: false,
-      policyWarnings: []
-    })
   })
 
   it('places back and save inside the editor without a session action', async () => {
@@ -125,9 +112,10 @@ describe('RpaRoleDetailPage', () => {
     expect(screen.getByRole('button', { name: 'rpa_roles.actions.save' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'rpa_roles.actions.start_session' })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'rpa_roles.assets.provider' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'rpa_roles.assets.artifact' })).not.toBeInTheDocument()
   })
 
-  it('provides working creation and import entry points for role assets', async () => {
+  it('keeps knowledge and Skill asset entry points without exposing file evidence bindings', async () => {
     render(<RpaRoleDetailPage />)
     expect(await screen.findByDisplayValue('Test Role')).toBeInTheDocument()
 
@@ -142,11 +130,7 @@ describe('RpaRoleDetailPage', () => {
     await waitFor(() => expect(pageState.readText).toHaveBeenCalledWith('D:\\fixtures\\skill.json'))
     expect(pageState.saveSkill).toHaveBeenCalledWith({ definition: { id: 'skill-1' } })
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-
-    fireEvent.click(screen.getByRole('tab', { name: 'rpa_roles.assets.artifact' }))
-    fireEvent.click(screen.getByRole('button', { name: 'rpa_roles.binding.bind_asset' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'rpa_roles.binding.import_files' }))
-    await waitFor(() => expect(pageState.registerArtifact).toHaveBeenCalledTimes(1))
-    expect(pageState.addFiles).toHaveBeenCalled()
+    expect(screen.queryByRole('tab', { name: 'rpa_roles.assets.artifact' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'rpa_roles.binding.import_files' })).not.toBeInTheDocument()
   })
 })

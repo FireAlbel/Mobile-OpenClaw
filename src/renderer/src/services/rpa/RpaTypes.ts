@@ -208,6 +208,10 @@ export type RpaRunEventPhase =
   | 'deterministic_recovery_action'
   | 'deterministic_recovery_verification'
   | 'deterministic_recovery_terminal'
+  | 'app_normalization_initial'
+  | 'app_normalization_action'
+  | 'app_normalization_verification'
+  | 'app_normalization_terminal'
   | 'correction_observation'
   | 'state_recognition'
   | 'correction_decision'
@@ -251,6 +255,18 @@ export const RpaVerificationSchema = z.discriminatedUnion('type', [
     settleMs: z.number().int().min(0).max(10_000).optional(),
     timeoutMs: z.number().int().min(100).max(60_000).optional(),
     pollIntervalMs: z.number().int().min(50).max(5_000).optional()
+  }),
+  z.object({
+    type: z.literal('app_state'),
+    packageName: z
+      .string()
+      .min(1)
+      .regex(/^[a-zA-Z0-9_.]+$/, 'Invalid Android package name'),
+    stateId: z.string().trim().min(1).max(160),
+    activityIncludes: z.array(z.string().trim().min(1).max(240)).max(20).default([]),
+    requiredTexts: z.array(z.string().trim().min(1).max(240)).max(20).default([]),
+    anyTexts: z.array(z.string().trim().min(1).max(240)).max(20).default([]),
+    minConfidence: z.number().min(0.5).max(1).default(0.7)
   }),
   z.object({
     type: z.literal('module_result_success')
@@ -299,6 +315,22 @@ export const RpaStepSchema = z.object({
     .optional(),
   retry: RpaRetryPolicySchema.optional(),
   verify: RpaVerificationSchema.optional(),
+  recoveryPolicyRef: z
+    .object({
+      appPackage: z
+        .string()
+        .trim()
+        .regex(/^[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+$/),
+      expectedStateId: z.string().trim().min(1).max(160).optional(),
+      skillId: z.string().trim().min(1).max(160).optional(),
+      skillVersion: z.string().trim().min(1).max(80).optional(),
+      fallback: z
+        .array(z.enum(['deterministic', 'vlm', 'human']))
+        .min(1)
+        .max(3)
+        .default(['deterministic', 'vlm', 'human'])
+    })
+    .optional(),
   continueOnFailure: z.boolean().default(false)
 })
 
@@ -358,6 +390,15 @@ export interface RpaModuleExecutionContext {
   attempt: number
   runtime: RpaDeviceRuntime
   signal?: AbortSignal
+  reportProgress?: (event: RpaModuleProgressEvent) => void
+}
+
+export interface RpaModuleProgressEvent {
+  phase: RpaRunEventPhase
+  status: RpaStepStatus
+  message: string
+  data?: unknown
+  verification?: RpaVerificationResult
 }
 
 export interface RpaModuleResult {
@@ -394,6 +435,10 @@ export type RpaAppStateBlockingCondition =
   | 'none'
   | 'permission_dialog'
   | 'popup'
+  | 'update_prompt'
+  | 'promotional_overlay'
+  | 'network_error'
+  | 'loading_failure'
   | 'authentication'
   | 'captcha'
   | 'payment'
@@ -444,6 +489,67 @@ export interface RpaAppStateProfile {
   appPackage?: string
   appVersion?: string
   states: RpaAppStateRule[]
+}
+
+export type RpaAppTargetState = 'foreground' | 'home' | string
+
+export type RpaAppNormalizationStage =
+  | 'dismiss_transient'
+  | 'dismiss_keyboard'
+  | 'bounded_back'
+  | 'known_home_action'
+  | 'soft_relaunch'
+  | 'hard_restart'
+
+export type RpaAppRestartMode = 'soft' | 'hard' | 'soft_then_hard'
+
+export type RpaAppNormalizationOutcome =
+  | 'goal_achieved'
+  | 'execute_actions'
+  | 'replan'
+  | 'human_required'
+  | 'timeout'
+  | 'failed'
+
+export interface RpaAppNormalizationPolicy {
+  stages: RpaAppNormalizationStage[]
+  maxBackCount: number
+  restartMode: RpaAppRestartMode
+  deadlineMs: number
+  stabilityWindowMs: number
+  noProgressLimit: number
+}
+
+export interface RpaAppNormalizationActionGroup {
+  stage: RpaAppNormalizationStage
+  attempt: number
+  actions: Array<{
+    type: 'permission_action' | 'key' | 'start_app' | 'stop_app' | 'wait' | 'playbook_steps'
+    detail: string
+  }>
+  startedAt: number
+  finishedAt: number
+  success: boolean
+  message: string
+  beforeStateId?: string
+  afterStateId?: string
+  verification?: RpaVerificationResult
+}
+
+export interface RpaAppNormalizationResult {
+  success: boolean
+  status: RpaStepStatus
+  outcome: RpaAppNormalizationOutcome
+  packageName: string
+  targetState: RpaAppTargetState
+  initialState?: RpaRecognizedAppState
+  finalState?: RpaRecognizedAppState
+  actionGroups: RpaAppNormalizationActionGroup[]
+  attempts: number
+  elapsedMs: number
+  message: string
+  playbookId?: string
+  playbookVersion?: number
 }
 
 export interface RpaDeviceObservation {
@@ -509,6 +615,11 @@ export interface RpaDeviceRuntime {
   ): Promise<RpaDeviceRuntimeResult<RpaHumanizedSwipeTrace | unknown>>
   key(deviceId: string, keyCode: number): Promise<RpaDeviceRuntimeResult>
   startApp(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult>
+  stopApp?(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult>
+  resolveLauncherActivity?(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult<string | null>>
+  bringAppToForeground?(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult>
+  softRelaunchApp?(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult>
+  hardRestartApp?(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult>
   restartApp?(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult>
   getForegroundApp(deviceId: string): Promise<RpaDeviceRuntimeResult>
   getScreenSize(deviceId: string): Promise<RpaDeviceRuntimeResult<{ width: number; height: number }>>

@@ -288,6 +288,18 @@ export class DeviceIpcHandler {
       }
     })
 
+    ipcMain.handle(
+      'device:resolveLauncherActivity',
+      async (_event, deviceId: string, packageName: string): Promise<string | null> => {
+        try {
+          return await deviceService.resolveLauncherActivity(deviceId, packageName)
+        } catch (error) {
+          logger.error('Failed to resolve launcher activity via IPC:', { error, deviceId, packageName })
+          throw error
+        }
+      }
+    )
+
     ipcMain.handle('device:stopApp', async (_event, deviceId: string, packageName: string): Promise<void> => {
       try {
         logger.info('Stopping app via IPC:', { deviceId, packageName })

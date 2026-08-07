@@ -1,3 +1,4 @@
+import { RpaAppPlaybookLearningService } from './RpaAppPlaybookLearningService'
 import { type RpaArtifactStore, rpaArtifactStore } from './RpaArtifactStore'
 import { createDefaultRpaModuleRegistry } from './RpaDefaultRegistry'
 import {
@@ -15,6 +16,7 @@ export interface RpaTraceLearningServiceOptions {
   fingerprints?: RpaFailureFingerprintRepository
   artifacts?: RpaArtifactStore
   templates?: Pick<RpaTemplateRepository, 'getAll' | 'save'>
+  appPlaybookLearning?: RpaAppPlaybookLearningService
   now?: () => number
 }
 
@@ -23,6 +25,7 @@ export class RpaTraceLearningService {
   private readonly artifacts: RpaArtifactStore
   private readonly templates: Pick<RpaTemplateRepository, 'getAll' | 'save'>
   private readonly validator = new RpaTaskValidator(createDefaultRpaModuleRegistry(), { requireDeviceIds: false })
+  private readonly appPlaybookLearning: RpaAppPlaybookLearningService
   private readonly now: () => number
   private readonly consolidationByRun = new Map<string, Promise<RpaTaskFlowLearningResult | undefined>>()
 
@@ -30,6 +33,7 @@ export class RpaTraceLearningService {
     this.fingerprints = options.fingerprints ?? rpaFailureFingerprintRepository
     this.artifacts = options.artifacts ?? rpaArtifactStore
     this.templates = options.templates ?? rpaTemplateRepository
+    this.appPlaybookLearning = options.appPlaybookLearning ?? new RpaAppPlaybookLearningService()
     this.now = options.now ?? Date.now
   }
 
@@ -54,6 +58,7 @@ export class RpaTraceLearningService {
     const assertionHints = extractAssertionHints(events)
     let failureFingerprintId: string | undefined
     let taskFlowLearning: RpaTaskFlowLearningResult | undefined
+    let appPlaybookLearning: Awaited<ReturnType<RpaAppPlaybookLearningService['learn']>> | undefined
 
     if (failureClass) {
       const fingerprint = await this.fingerprints.upsert({
@@ -71,6 +76,7 @@ export class RpaTraceLearningService {
       failureFingerprintId = fingerprint.id
     } else if (run.deviceRuns.every((candidate) => candidate.status === 'completed')) {
       taskFlowLearning = await this.consolidateSuccessfulRun(run)
+      appPlaybookLearning = await this.appPlaybookLearning.learn(run)
     }
 
     return {
@@ -86,6 +92,7 @@ export class RpaTraceLearningService {
       evidenceArtifactIds,
       failureFingerprintId,
       taskFlowLearning,
+      appPlaybookLearning,
       improvementProposalIds: [],
       redactions: summaryResult.redactions,
       analyzedAt: this.now()
@@ -237,7 +244,11 @@ function buildDeterministicTask(run: RpaBatchRunRecord): DeterministicTaskResult
       }
     }
 
-    if (step.moduleId === 'tap_by_vlm_target' || step.moduleId === 'swipe_until_vlm_target') {
+    if (
+      step.moduleId === 'tap_by_vlm_target' ||
+      step.moduleId === 'swipe_until_vlm_target' ||
+      step.moduleId === 'list.scan_target'
+    ) {
       changes.push(`${step.id}: VLM disabled for the normal path; failure recovery remains available`)
       return [{ ...step, params: { ...step.params, fallbackToVlm: false } }]
     }

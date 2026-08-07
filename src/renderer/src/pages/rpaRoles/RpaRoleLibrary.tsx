@@ -5,7 +5,6 @@ import {
   rpaAppRoleRepository,
   sanitizeRpaAppRole
 } from '@renderer/services/rpa/RpaAppRole'
-import { rpaArtifactStore } from '@renderer/services/rpa/RpaArtifactStore'
 import { rpaBatchRunner } from '@renderer/services/rpa/RpaBatchRunner'
 import { rpaRolePromptRepository } from '@renderer/services/rpa/RpaRolePrompt'
 import { createRpaRoleSessionPath } from '@renderer/services/rpa/RpaRoleSessionNavigation'
@@ -61,17 +60,16 @@ const RpaRoleLibrary: FC = () => {
     setLoading(true)
     try {
       await rpaBatchRunner.initialize()
-      const [nextRoles, skills, artifacts, prompts] = await Promise.all([
+      const [nextRoles, skills, prompts] = await Promise.all([
         rpaAppRoleRepository.getAll(),
         rpaSkillRepository.getAll(),
-        rpaArtifactStore.getAll(),
         rpaRolePromptRepository.getAll()
       ])
       const runs = rpaBatchRunner.getRuns()
       const catalogs = {
         knowledgeIds: knowledgeBases.map((base) => base.id),
         skillIds: skills.map((skill) => skill.id),
-        artifactIds: artifacts.map((artifact) => artifact.id),
+        artifactIds: [],
         promptIds: prompts.map((prompt) => prompt.id)
       }
       setRoles(nextRoles)

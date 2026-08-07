@@ -63,6 +63,34 @@ describe('RpaVerificationEngine', () => {
     expect(result.confidence).toBe(1)
   })
 
+  it('verifies a semantic app state without invoking VLM', async () => {
+    const testRuntime = runtime({
+      getUiTree: vi.fn().mockResolvedValue({
+        success: true,
+        message: 'ui tree ok',
+        data: '<hierarchy><node text="Home" content-desc="" resource-id="home" class="android.widget.TextView" package="com.example.app" clickable="false" enabled="true" bounds="[0,0][500,100]" /></hierarchy>'
+      })
+    })
+    const engine = new RpaVerificationEngine({ runtime: testRuntime })
+
+    const result = await engine.verify(
+      {
+        type: 'app_state',
+        packageName: 'com.example.app',
+        stateId: 'HOME',
+        activityIncludes: [],
+        requiredTexts: ['Home'],
+        anyTexts: [],
+        minConfidence: 0.7
+      },
+      successResult,
+      'device-1'
+    )
+
+    expect(result.status).toBe('passed')
+    expect(result.evidence).toMatchObject({ recognized: { stateId: 'HOME' } })
+  })
+
   it('includes foreground observation warning when foreground app is unavailable', async () => {
     const engine = new RpaVerificationEngine({
       runtime: runtime({
@@ -252,6 +280,43 @@ describe('RpaVerificationEngine', () => {
     expect(messages).toContain('Check the final business state, not the previous action.')
     expect(messages).toContain('Recognize the launcher as a valid Home state.')
     expect(messages).not.toContain('Recovery-only guidance.')
+  })
+
+  it('includes bounded Role knowledge in VLM verification context', async () => {
+    const complete = vi
+      .fn()
+      .mockResolvedValue(JSON.stringify({ passed: true, confidence: 0.92, reason: 'Expected page is visible' }))
+    const engine = new RpaVerificationEngine({ runtime: runtime(), modelClient: { complete } as RpaModelClient })
+
+    const result = await engine.verify(
+      { type: 'vlm_assert', expectation: 'The expected page is visible', minConfidence: 0.7, settleMs: 0 },
+      successResult,
+      'device-1',
+      undefined,
+      undefined,
+      undefined,
+      {
+        summaries: [
+          {
+            id: 'knowledge-1',
+            category: 'page_state_explanation',
+            title: 'Expected page signals',
+            summary: 'The page is valid only when the device name and Android version are visible.',
+            confidence: 0.95,
+            knowledgeBaseId: 'kb-1',
+            templateIds: [],
+            skills: []
+          }
+        ],
+        conflicts: [],
+        warnings: []
+      }
+    )
+
+    expect(result.status).toBe('passed')
+    expect(JSON.stringify(complete.mock.calls[0][0].messages)).toContain(
+      'The page is valid only when the device name and Android version are visible.'
+    )
   })
 
   it('verifies text through the UI tree without invoking VLM', async () => {

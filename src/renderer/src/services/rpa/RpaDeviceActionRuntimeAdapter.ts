@@ -115,6 +115,41 @@ export class RpaDeviceActionRuntimeAdapter implements RpaDeviceRuntime {
     return this.runAction(deviceId, { type: 'start_app', params: { packageName } })
   }
 
+  stopApp(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult> {
+    return this.runAction(deviceId, { type: 'stop_app', params: { packageName } })
+  }
+
+  resolveLauncherActivity(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult<string | null>> {
+    return this.withDeviceLock(deviceId, async () => {
+      const startedAt = Date.now()
+      try {
+        const data = await deviceServiceProxy.resolveLauncherActivity(deviceId, packageName)
+        return {
+          success: Boolean(data),
+          message: data ? 'Launcher activity resolved' : `No launcher activity found for ${packageName}`,
+          data,
+          startedAt,
+          finishedAt: Date.now()
+        }
+      } catch (error) {
+        logger.error('Failed to resolve launcher activity', { error, deviceId, packageName })
+        return this.toFailureResult<string | null>(error, startedAt)
+      }
+    })
+  }
+
+  bringAppToForeground(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult> {
+    return this.startApp(deviceId, packageName)
+  }
+
+  softRelaunchApp(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult> {
+    return this.startApp(deviceId, packageName)
+  }
+
+  hardRestartApp(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult> {
+    return this.restartApp(deviceId, packageName)
+  }
+
   restartApp(deviceId: string, packageName: string): Promise<RpaDeviceRuntimeResult> {
     return this.runAction(deviceId, { type: 'restart_app', params: { packageName } })
   }

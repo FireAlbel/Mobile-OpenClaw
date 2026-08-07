@@ -114,6 +114,34 @@ describe('EffectiveRpaRoleContextResolver', () => {
     expect(optional.roleIssues).toContainEqual(expect.objectContaining({ code: 'optional_asset_missing' }))
   })
 
+  it('reports a bound Knowledge Base that has no usable reviewed RPA entries', () => {
+    const optionalContext = resolveEffectiveRpaRoleContext({
+      topicId: 'topic-1',
+      primaryRole: role('primary', [binding('primary', 'knowledge', 'kb-1')]),
+      catalogs,
+      assetAvailability: [{ assetType: 'knowledge', assetId: 'kb-1', status: 'error' }],
+      defaultModel,
+      availableModels: [defaultModel]
+    })
+    const requiredContext = resolveEffectiveRpaRoleContext({
+      topicId: 'topic-1',
+      primaryRole: role('primary', [binding('primary', 'knowledge', 'kb-1', { requirement: 'required' })]),
+      catalogs,
+      assetAvailability: [{ assetType: 'knowledge', assetId: 'kb-1', status: 'error' }],
+      defaultModel,
+      availableModels: [defaultModel]
+    })
+
+    expect(optionalContext.executable).toBe(true)
+    expect(optionalContext.roleIssues).toContainEqual(
+      expect.objectContaining({ code: 'optional_asset_unavailable', severity: 'warning' })
+    )
+    expect(requiredContext.executable).toBe(false)
+    expect(requiredContext.roleIssues).toContainEqual(
+      expect.objectContaining({ code: 'required_asset_unavailable', severity: 'error' })
+    )
+  })
+
   it('treats legacy Role status as compatibility metadata instead of an execution gate', () => {
     const primary = {
       ...role('primary'),
@@ -233,6 +261,26 @@ describe('EffectiveRpaRoleContextResolver', () => {
     )
   })
 
+  it('ignores legacy file evidence bindings in the effective Role context', () => {
+    const context = resolveEffectiveRpaRoleContext({
+      topicId: 'topic-1',
+      primaryRole: role('primary', [
+        binding('primary', 'artifact', 'legacy-evidence', {
+          requirement: 'required'
+        })
+      ]),
+      catalogs,
+      defaultModel,
+      availableModels: [defaultModel]
+    })
+
+    expect(context.executable).toBe(true)
+    expect(context.roleAssets.artifact).toEqual([])
+    expect(context.roleIssues).not.toContainEqual(
+      expect.objectContaining({ asset: expect.objectContaining({ assetType: 'artifact' }) })
+    )
+  })
+
   it('ignores supporting Roles that the primary Role did not declare', () => {
     const undeclared = {
       ...role('undeclared', [binding('undeclared', 'knowledge', 'kb-1')]),
@@ -296,5 +344,45 @@ describe('EffectiveRpaRoleContextResolver', () => {
 
     expect(context.rolePrompts.map((prompt) => prompt.id)).toEqual(['planner-prompt', 'support-prompt'])
     expect(context.rolePrompts[0]).toMatchObject({ sourceRoleId: 'primary', version: '2' })
+  })
+
+  it('automatically resolves the latest enabled prompt owned by the selected Role', () => {
+    const context = resolveEffectiveRpaRoleContext({
+      topicId: 'topic-1',
+      primaryRole: role('primary'),
+      promptCatalog: [
+        {
+          schemaVersion: 1,
+          id: 'system-guidance',
+          roleId: 'primary',
+          version: '1',
+          kind: 'system',
+          content: 'Old guidance',
+          priority: 10,
+          status: 'enabled',
+          createdAt: 1,
+          updatedAt: 1
+        },
+        {
+          schemaVersion: 1,
+          id: 'system-guidance',
+          roleId: 'primary',
+          version: '2',
+          kind: 'system',
+          content: 'Current guidance',
+          priority: 10,
+          status: 'enabled',
+          createdAt: 1,
+          updatedAt: 2
+        }
+      ],
+      catalogs,
+      defaultModel,
+      availableModels: [defaultModel]
+    })
+
+    expect(context.rolePrompts).toMatchObject([
+      { id: 'system-guidance', version: '2', content: 'Current guidance', sourceRoleId: 'primary' }
+    ])
   })
 })

@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
+import { androidSettingsAboutDeviceSkill } from '../RpaBuiltInSkills'
 import { createDefaultRpaModuleRegistry } from '../RpaDefaultRegistry'
-import { type RpaSkillRecord, RpaSkillRepository, type RpaSkillStorage } from '../RpaSkillRepository'
+import {
+  RpaSkillDefinitionSchema,
+  type RpaSkillRecord,
+  RpaSkillRepository,
+  type RpaSkillStorage,
+  validateSkillDefinition
+} from '../RpaSkillRepository'
 import { validSkill } from './RpaSkillTestFixtures'
 
 class MemorySkillStorage implements RpaSkillStorage {
@@ -68,5 +75,32 @@ describe('RpaSkillRepository', () => {
     })
     await repository.setEnabled('open-example-detail', false)
     await expect(repository.match({ goal: '打开详情页面', appPackage: 'com.example.app' })).resolves.toEqual([])
+  })
+
+  it('publishes the built-in Settings Skill as a valid selectable asset', async () => {
+    const registry = createDefaultRpaModuleRegistry()
+    const parsed = RpaSkillDefinitionSchema.safeParse(androidSettingsAboutDeviceSkill)
+    expect(parsed.success).toBe(true)
+    expect(parsed.success ? validateSkillDefinition(parsed.data, registry) : parsed.error.issues).toEqual([])
+
+    const repository = new RpaSkillRepository(new MemorySkillStorage(), registry, () => 1, [
+      androidSettingsAboutDeviceSkill
+    ])
+    await expect(repository.toCatalog()).resolves.toMatchObject([
+      { id: 'android-settings-about-device', version: '1.0.0', status: 'ready' }
+    ])
+    await expect(
+      repository.match({
+        goal: '请打开关于本机',
+        appPackage: 'com.android.settings',
+        allowedSkillIds: ['android-settings-about-device']
+      })
+    ).resolves.toMatchObject([{ skill: { id: 'android-settings-about-device' }, confidence: 0.85 }])
+    const semanticMatches = await repository.match({
+      goal: '\u8fdb\u5165\u5173\u4e8e\u672c\u673a',
+      appPackage: 'com.android.settings',
+      allowedSkillIds: ['android-settings-about-device']
+    })
+    expect(semanticMatches[0]?.confidence).toBeGreaterThanOrEqual(0.5)
   })
 })

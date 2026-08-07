@@ -104,4 +104,21 @@ describe('RpaKnowledgeRetrievalService', () => {
       summaries: []
     })
   })
+
+  it('distinguishes a bound Knowledge Base from one with usable reviewed RPA entries', async () => {
+    const service = new RpaKnowledgeRetrievalService(
+      new RpaKnowledgeRepository(
+        new MemoryKnowledgeStorage([
+          entry('draft-only', { knowledgeBaseId: 'kb-draft', reviewStatus: 'draft' }),
+          entry('reviewed', { knowledgeBaseId: 'kb-ready' })
+        ])
+      )
+    )
+
+    await expect(service.getAvailability(['kb-empty', 'kb-draft', 'kb-ready'])).resolves.toEqual([
+      expect.objectContaining({ knowledgeBaseId: 'kb-empty', status: 'error', usableEntryCount: 0 }),
+      expect.objectContaining({ knowledgeBaseId: 'kb-draft', status: 'error', usableEntryCount: 0 }),
+      expect.objectContaining({ knowledgeBaseId: 'kb-ready', status: 'ready', usableEntryCount: 1 })
+    ])
+  })
 })

@@ -2,7 +2,9 @@ import type { Model } from '@renderer/types'
 import type { ModelMessage } from 'ai'
 import * as z from 'zod'
 
+import { RpaAppStateRecognizer } from './RpaAppStateRecognizer'
 import { parseJsonFromText } from './RpaJsonUtils'
+import type { RpaKnowledgeRetrievalResult } from './RpaKnowledgeRetrievalService'
 import { DefaultRpaModelClient, type RpaModelClient } from './RpaModelClient'
 import {
   buildRpaModelContext,
@@ -15,6 +17,7 @@ import type { RpaDeviceRuntime, RpaModuleResult, RpaVerification, RpaVerificatio
 export interface RpaVerificationEngineOptions {
   runtime: RpaDeviceRuntime
   observationService?: RpaObservationService
+  appStateRecognizer?: RpaAppStateRecognizer
   modelClient?: RpaModelClient
 }
 
@@ -27,6 +30,7 @@ export interface RpaCorrectionVerificationInput {
   settleMs?: number
   signal?: AbortSignal
   modelContext?: RpaEmbeddedModelContext
+  knowledgeContext?: RpaKnowledgeRetrievalResult
 }
 
 const VlmAssertionResponseSchema = z.object({
@@ -37,10 +41,12 @@ const VlmAssertionResponseSchema = z.object({
 
 export class RpaVerificationEngine {
   private readonly observationService: RpaObservationService
+  private readonly appStateRecognizer: RpaAppStateRecognizer
   private readonly modelClient: RpaModelClient
 
   constructor(private readonly options: RpaVerificationEngineOptions) {
     this.observationService = options.observationService ?? new RpaObservationService(options.runtime)
+    this.appStateRecognizer = options.appStateRecognizer ?? new RpaAppStateRecognizer()
     this.modelClient = options.modelClient ?? new DefaultRpaModelClient()
   }
 
@@ -65,7 +71,8 @@ export class RpaVerificationEngine {
       input.deviceId,
       input.model,
       input.signal,
-      input.modelContext
+      input.modelContext,
+      input.knowledgeContext
     )
     return {
       ...verification,
@@ -82,7 +89,8 @@ export class RpaVerificationEngine {
     deviceId: string,
     model?: Model,
     signal?: AbortSignal,
-    embeddedContext?: RpaEmbeddedModelContext
+    embeddedContext?: RpaEmbeddedModelContext,
+    knowledgeContext?: RpaKnowledgeRetrievalResult
   ): Promise<RpaVerificationResult> {
     if (!verification || verification.type === 'module_result_success') {
       return result.success
@@ -114,6 +122,50 @@ export class RpaVerificationEngine {
 
     if (verification.type === 'foreground_app') {
       return await this.verifyForegroundApp(verification, deviceId, signal)
+    }
+
+    if (verification.type === 'app_state') {
+      signal?.throwIfAborted()
+      const observation = await this.observationService.capture(deviceId, {
+        includeScreenshot: true,
+        includeForegroundApp: true,
+        includeScreenSize: true,
+        includeUiTree: true,
+        includeOcr: false,
+        targetTexts: [...verification.requiredTexts, ...verification.anyTexts]
+      })
+      const recognized = await this.appStateRecognizer.recognize({
+        observation,
+        expectedStateId: verification.stateId,
+        minConfidence: verification.minConfidence,
+        profile: {
+          appPackage: verification.packageName,
+          states: [
+            {
+              stateId: verification.stateId,
+              packageNames: [verification.packageName],
+              activityIncludes: verification.activityIncludes,
+              requiredTexts: verification.requiredTexts,
+              anyTexts: verification.anyTexts,
+              requireScreenshot: true
+            }
+          ]
+        }
+      })
+      const foreground = observation.foregroundApp as { packageName?: unknown } | undefined
+      const passed =
+        foreground?.packageName === verification.packageName &&
+        recognized.stateId === verification.stateId &&
+        recognized.confidence >= verification.minConfidence &&
+        !recognized.blocking
+      return {
+        status: passed ? 'passed' : recognized.stateId === 'UNKNOWN' ? 'uncertain' : 'failed',
+        confidence: recognized.confidence,
+        message: passed
+          ? `App state matched ${verification.stateId}`
+          : `App state mismatch, expected ${verification.stateId}, observed ${recognized.stateId}`,
+        evidence: { observation, recognized }
+      }
     }
 
     if (verification.type === 'text_present') {
@@ -202,6 +254,7 @@ export class RpaVerificationEngine {
         callType: 'verification',
         rolePrompts: embeddedContext?.rolePrompts,
         systemCapabilities: embeddedContext?.systemCapabilities,
+        knowledgeContext,
         observations: [observation],
         model: model ? { providerId: model.provider, modelId: model.id } : embeddedContext?.provenance.model
       })

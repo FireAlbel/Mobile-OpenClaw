@@ -45,6 +45,42 @@ function failureContext(): RpaFailureContext {
 }
 
 describe('RpaVisualCorrectionService', () => {
+  it('includes bounded normalization attempts in VLM recovery context', async () => {
+    const client = modelClient(
+      JSON.stringify({ decision: 'human_required', reason: 'No safe action remains', confidence: 0.95 })
+    )
+    const context = failureContext()
+    context.result.data = {
+      outcome: 'replan',
+      packageName: 'com.example.app',
+      targetState: 'HOME',
+      playbookId: 'com.example.app',
+      playbookVersion: 2,
+      actionGroups: [
+        {
+          stage: 'bounded_back',
+          attempt: 1,
+          actions: [{ type: 'key', detail: 'back' }],
+          success: true,
+          message: 'Back completed',
+          verification: { status: 'failed', confidence: 0.9, message: 'Still on detail' }
+        }
+      ]
+    }
+    const service = new RpaVisualCorrectionService({ modelClient: client })
+
+    await service.decideRecovery({
+      failureContext: context,
+      observation: observation(),
+      correctionRound: 1
+    })
+
+    const prompt = JSON.stringify(vi.mocked(client.complete).mock.calls)
+    expect(prompt).toContain('attemptedStages')
+    expect(prompt).toContain('bounded_back')
+    expect(prompt).toContain('com.example.app')
+  })
+
   it('returns bbox center for confident visual target', async () => {
     const service = new RpaVisualCorrectionService({
       modelClient: modelClient(

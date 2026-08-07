@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { createDefaultRpaModuleRegistry } from '../RpaDefaultRegistry'
 import type { RpaModelClient } from '../RpaModelClient'
+import { buildRpaModelContext, createEmbeddedRpaModelContext } from '../RpaModelContextBuilder'
 import { RpaReplanService } from '../RpaReplanService'
 import type { RpaCorrectionDecision, RpaFailureContext, RpaTask } from '../RpaTypes'
 
@@ -103,6 +104,85 @@ describe('RpaReplanService', () => {
     expect(result.status).toBe('steps')
     expect(result.steps[0].moduleId).toBe('press_back')
     expect(result.expectedOutcome).toBe('The popup is gone')
+  })
+
+  it('uses recovery prompts and bounded knowledge when generating temporary steps', async () => {
+    const client = modelClient(
+      JSON.stringify({
+        expectedOutcome: 'Recovered',
+        steps: [{ id: 'back', name: 'Back', moduleId: 'press_back', params: {}, continueOnFailure: false }]
+      })
+    )
+    const service = new RpaReplanService({ registry: createDefaultRpaModuleRegistry(), modelClient: client })
+    const result = await service.replan({
+      failureContext: failureContext(),
+      decision: {
+        decision: 'replan',
+        reason: 'recover',
+        confidence: 0.9,
+        objective: 'Recover the expected page'
+      },
+      correctionRound: 1,
+      modelContext: createEmbeddedRpaModelContext(
+        buildRpaModelContext({
+          callType: 'planner',
+          rolePrompts: [
+            {
+              schemaVersion: 1,
+              id: 'recovery',
+              roleId: 'role-1',
+              version: '1',
+              kind: 'recovery',
+              content: 'Use the deterministic recovery route first.',
+              priority: 1,
+              status: 'enabled',
+              createdAt: 1,
+              updatedAt: 1
+            },
+            {
+              schemaVersion: 1,
+              id: 'verification',
+              roleId: 'role-1',
+              version: '1',
+              kind: 'verification',
+              content: 'Verification-only instruction.',
+              priority: 1,
+              status: 'enabled',
+              createdAt: 1,
+              updatedAt: 1
+            }
+          ]
+        })
+      ),
+      knowledgeContext: {
+        summaries: [
+          {
+            id: 'knowledge-1',
+            category: 'recovery_guidance',
+            title: 'Popup recovery',
+            summary: 'Press Back once when the popup blocks navigation.',
+            confidence: 0.9,
+            knowledgeBaseId: 'kb-1',
+            templateIds: [],
+            skills: []
+          }
+        ],
+        conflicts: [],
+        warnings: []
+      }
+    })
+
+    const request = vi.mocked(client.complete).mock.calls[0][0]
+    const messages = JSON.stringify(request.messages)
+    expect(messages).toContain('Use the deterministic recovery route first.')
+    expect(messages).toContain('Press Back once when the popup blocks navigation.')
+    expect(messages).not.toContain('Verification-only instruction.')
+    expect(result.contextProvenance?.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ sourceType: 'role_prompt', sourceId: 'recovery', version: '1' }),
+        expect.objectContaining({ sourceType: 'local_knowledge', sourceId: 'knowledge-1' })
+      ])
+    )
   })
 
   it.each([

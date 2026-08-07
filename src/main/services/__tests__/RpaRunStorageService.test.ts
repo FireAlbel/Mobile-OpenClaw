@@ -44,4 +44,37 @@ describe('RpaRunStorageService', () => {
 
     await expect(service.loadRuns()).resolves.toEqual([])
   })
+
+  it('defensively removes large binary and UI tree payloads before writing', async () => {
+    const filePath = path.join(tempDir, 'runs.json')
+    const service = new RpaRunStorageService(filePath)
+
+    await service.saveRuns([
+      {
+        id: 'run-1',
+        status: 'failed',
+        evidenceArtifactId: 'artifact-1',
+        observation: {
+          screenshot: { imageBase64: 'b'.repeat(2_000_000), mime: 'image/png' },
+          uiTree: {
+            xml: '<node />'.repeat(100_000),
+            nodes: Array.from({ length: 1_000 }, (_, index) => ({ text: `Node ${index}` }))
+          },
+          ocr: { blocks: Array.from({ length: 1_000 }, (_, index) => ({ text: `OCR ${index}` })) },
+          textCandidates: Array.from({ length: 1_000 }, (_, index) => ({ text: `Candidate ${index}` }))
+        }
+      }
+    ])
+
+    const persisted = await fs.readFile(filePath, 'utf-8')
+    expect(persisted).not.toContain('b'.repeat(1_000))
+    expect(persisted).not.toContain('<node />'.repeat(100))
+    expect(persisted).toContain('[BINARY_OMITTED:2000000]')
+    expect(persisted).toContain('[TEXT_OMITTED:UI_TREE_XML:800000]')
+    expect(persisted).toContain('[UI_TREE_NODES_OMITTED:1000]')
+    expect(persisted).toContain('[OCR_BLOCKS_OMITTED:1000]')
+    expect(persisted).toContain('[TEXT_CANDIDATES_OMITTED:1000]')
+    expect(persisted).toContain('artifact-1')
+    expect(persisted.length).toBeLessThan(100_000)
+  })
 })

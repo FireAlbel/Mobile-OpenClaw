@@ -456,6 +456,9 @@ const InputbarInner: FC<InputbarInnerProps> = ({
           skills,
           templates: createRpaTemplateAssetCatalog(templates)
         }
+        const knowledgeAvailability = await rpaKnowledgeRetrievalService.getAvailability(
+          knowledgeBases.map((knowledge) => knowledge.id)
+        )
         let topicOverride = await rpaTopicContextOverrideRepository.getByTopicId(topic.id)
         if (topicOverride && topicOverride.assistantId !== assistant.id) {
           const decision = await promptTopicOverrideSwitchDecision(t)
@@ -676,6 +679,11 @@ const InputbarInner: FC<InputbarInnerProps> = ({
           catalogs,
           promptCatalog: rolePrompts,
           assetAvailability: [
+            ...knowledgeAvailability.map((availability) => ({
+              assetType: 'knowledge' as const,
+              assetId: availability.knowledgeBaseId,
+              status: availability.status
+            })),
             ...providers.map((provider) => ({
               assetType: 'provider' as const,
               assetId: provider.id,

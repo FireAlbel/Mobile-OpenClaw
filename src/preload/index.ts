@@ -675,6 +675,9 @@ const api = {
     },
     loadSkills: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadSkills),
     saveSkills: (skills: unknown[]): Promise<void> => ipcRenderer.invoke(IpcChannel.Rpa_SaveSkills, skills),
+    loadAppPlaybooks: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadAppPlaybooks),
+    saveAppPlaybooks: (playbooks: unknown[]): Promise<void> =>
+      ipcRenderer.invoke(IpcChannel.Rpa_SaveAppPlaybooks, playbooks),
     loadImprovementProposals: (): Promise<unknown[]> => ipcRenderer.invoke(IpcChannel.Rpa_LoadImprovementProposals),
     saveImprovementProposals: (proposals: unknown[]): Promise<void> =>
       ipcRenderer.invoke(IpcChannel.Rpa_SaveImprovementProposals, proposals),

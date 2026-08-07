@@ -25,6 +25,7 @@ export type RpaDslSessionStatus =
   | 'validated'
   | 'non_executable'
   | 'executing'
+  | 'paused'
   | 'completed'
   | 'failed'
   | 'ended'
@@ -332,10 +333,10 @@ export class RpaDslSessionRepository {
   async setExecutionStatus(
     id: string,
     expectedVersion: number,
-    status: Extract<RpaDslSessionStatus, 'executing' | 'completed' | 'failed'>
+    status: Extract<RpaDslSessionStatus, 'executing' | 'paused' | 'completed' | 'failed'>
   ): Promise<RpaDslSession> {
     return this.update(id, expectedVersion, (session) => {
-      if (status === 'executing' && session.status !== 'validated')
+      if (status === 'executing' && session.status !== 'validated' && session.status !== 'paused')
         throw new Error('Only a validated DSL revision can execute')
       return { ...session, status, interactionState: status }
     })
@@ -589,6 +590,7 @@ export function sanitizeSession(value: unknown): RpaDslSession | undefined {
     'validated',
     'non_executable',
     'executing',
+    'paused',
     'completed',
     'failed',
     'ended'

@@ -41,30 +41,67 @@ export class RpaSkillCompiler {
     const params = resolveParameters(input.skill, input.params ?? {}, issues)
     const currentStateId = resolveStateId(input.skill, input.currentStateId) ?? input.skill.entryStateIds[0]
     const fallback = input.skill.fallbackRules.find((rule) => rule.stateId === currentStateId)
-    const pathStartStateId = fallback?.resumeStateId ?? currentStateId
+    const pathStartStateId = input.skill.entryStateIds[0]
     const path = findTransitionPath(input.skill, pathStartStateId)
-    if (!path && !fallback) {
-      issues.push({ path: 'currentStateId', message: `No path from ${currentStateId} to a success state` })
+    if (!path) {
+      issues.push({
+        path: 'skill.entryStateIds',
+        message: `No business path from ${pathStartStateId} to a success state`
+      })
     }
     if (issues.length) return { success: false, issues, transitionIds: [] }
 
-    const templates = [...(fallback?.steps ?? []), ...(path?.flatMap((transition) => transition.steps) ?? [])]
+    const templates =
+      path?.flatMap((transition) =>
+        transition.steps.map((step) => ({
+          step,
+          expectedStateId: transition.fromStateIds[0] ?? pathStartStateId,
+          targetStateId: transition.toStateId
+        }))
+      ) ?? []
     const compileValues = {
       ...params,
       ...Object.fromEntries(input.skill.locators.flatMap((locator) => locatorValues(locator)))
     }
-    const steps = templates.map((step, index) => compileStep(step, compileValues, index, issues))
+    const steps: RpaStep[] = templates.map(({ step, expectedStateId, targetStateId }, index) => {
+      const compiled = compileStep(step, input.skill, compileValues, index, issues)
+      return {
+        ...compiled,
+        verify: normalizeSkillVerification(compiled, input.skill, targetStateId),
+        recoveryPolicyRef: {
+          appPackage: input.skill.appPackage,
+          expectedStateId,
+          skillId: input.skill.id,
+          skillVersion: input.skill.version,
+          fallback: ['deterministic', 'vlm', 'human']
+        }
+      }
+    })
     const deterministicRecoveryPolicies = input.skill.fallbackRules.map((rule, policyIndex) => ({
       id: `skill:${input.skill.id}:${rule.stateId}`,
       fromStateIds: [rule.stateId],
       targetStateIds: rule.resumeStateId ? [rule.resumeStateId] : [],
       priority: 100 - policyIndex,
       steps: rule.steps.map((step, stepIndex) =>
-        compileStep(step, compileValues, steps.length + policyIndex * 100 + stepIndex, issues)
+        compileStep(step, input.skill, compileValues, steps.length + policyIndex * 100 + stepIndex, issues)
       )
     }))
     if (steps.length && input.skill.successVerification && !steps.at(-1)?.verify) {
       steps[steps.length - 1] = { ...steps[steps.length - 1], verify: input.skill.successVerification }
+    }
+    if (steps.some((step) => ['tap_by_vlm_target', 'swipe_until_vlm_target'].includes(step.moduleId))) {
+      const finalStep = steps.at(-1)!
+      if (finalStep.verify?.type !== 'vlm_assert') {
+        steps[steps.length - 1] = {
+          ...finalStep,
+          verify: {
+            type: 'vlm_assert',
+            expectation: buildStateExpectation(input.skill, input.skill.successStateIds[0]),
+            minConfidence: 0.7,
+            settleMs: 500
+          }
+        }
+      }
     }
     for (const [index, step] of steps.entries()) {
       if (input.skill.prohibitedModuleIds.includes(step.moduleId)) {
@@ -90,7 +127,17 @@ export class RpaSkillCompiler {
           startStateId: currentStateId,
           successStateIds: input.skill.successStateIds,
           transitionIds: path?.map((item) => item.id) ?? [],
-          fallbackStateId: fallback?.stateId
+          fallbackStateId: fallback?.stateId,
+          navigationContext: input.skill.locators
+            .filter((locator) => locator.strategy !== 'coordinate')
+            .map((locator) => ({
+              locatorId: locator.id,
+              stateIds: locator.stateIds,
+              strategy: locator.strategy,
+              aliases: locator.aliases,
+              resourceIds: locator.resourceIds,
+              searchPolicy: locator.searchPolicy
+            }))
         },
         appStateProfile: toAppStateProfile(input.skill),
         deterministicRecoveryPolicies
@@ -105,6 +152,30 @@ export class RpaSkillCompiler {
       usedFallbackRule: fallback?.stateId
     }
   }
+}
+
+function normalizeSkillVerification(
+  step: RpaStep,
+  skill: RpaSkillDefinition,
+  targetStateId: string
+): RpaStep['verify'] {
+  if (!['tap_by_vlm_target', 'swipe_until_vlm_target'].includes(step.moduleId) || step.verify?.type === 'vlm_assert') {
+    return step.verify
+  }
+  return {
+    type: 'vlm_assert',
+    expectation: buildStateExpectation(skill, targetStateId),
+    minConfidence: 0.7,
+    settleMs: 800
+  }
+}
+
+function buildStateExpectation(skill: RpaSkillDefinition, stateId: string): string {
+  const state = skill.states.find((candidate) => candidate.stateId === stateId)
+  const visibleSignals = [...(state?.requiredTexts ?? []), ...(state?.anyTexts ?? [])].slice(0, 8)
+  return visibleSignals.length
+    ? `The Android screen visibly matches ${state?.label ?? stateId}; expected visible signals: ${visibleSignals.join(', ')}.`
+    : `The Android screen visibly matches ${state?.label ?? stateId}.`
 }
 
 function resolveParameters(
@@ -155,14 +226,48 @@ function findTransitionPath(skill: RpaSkillDefinition, startStateId: string) {
 
 function compileStep(
   template: RpaSkillStepTemplate,
+  skill: RpaSkillDefinition,
   params: Record<string, unknown>,
   index: number,
   issues: RpaValidationIssue[]
 ): RpaStep {
+  const resolvedParams = resolvePlaceholders(template.params, params, `steps.${index}.params`, issues) as Record<
+    string,
+    unknown
+  >
+  if (template.moduleId === 'list.scan_target' || template.moduleId === 'tap_by_vlm_target') {
+    const locatorId = typeof resolvedParams.locatorId === 'string' ? resolvedParams.locatorId : undefined
+    const locator = locatorId ? skill.locators.find((candidate) => candidate.id === locatorId) : undefined
+    if (!locator) {
+      issues.push({
+        path: `steps.${index}.params.locatorId`,
+        message: `Unknown Skill locator: ${String(locatorId ?? '')}`
+      })
+    } else if (typeof locator.value !== 'string') {
+      issues.push({ path: `steps.${index}.params.locatorId`, message: 'List scanning requires a text locator value' })
+    } else {
+      const rest = { ...resolvedParams }
+      delete rest.locatorId
+      const locatorParams = {
+        ...rest,
+        target: locator.value,
+        targetAliases: [...new Set([locator.value, ...locator.aliases])],
+        resourceIds: locator.resourceIds
+      }
+      return {
+        ...template,
+        id: `${template.id}-${index + 1}`,
+        params:
+          template.moduleId === 'list.scan_target'
+            ? { ...locatorParams, ...locator.searchPolicy }
+            : { ...locatorParams, includeOcr: locator.searchPolicy.includeOcr }
+      }
+    }
+  }
   return {
     ...template,
     id: `${template.id}-${index + 1}`,
-    params: resolvePlaceholders(template.params, params, `steps.${index}.params`, issues) as Record<string, unknown>
+    params: resolvedParams
   }
 }
 

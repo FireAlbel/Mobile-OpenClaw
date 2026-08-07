@@ -70,13 +70,14 @@ const RpaInlineWorkflow: FC<Props> = ({ block, message }) => {
   const storedProvenance = block.metadata?.rpaProvenance as RpaDslProvenance | undefined
   const storedTemplateLink = block.metadata?.rpaTemplateLink as RpaChatTemplateLink | undefined
   const storedSessionId = typeof block.metadata?.rpaSessionId === 'string' ? block.metadata.rpaSessionId : undefined
+  const storedExecutionRunId = typeof block.metadata?.rpaRunId === 'string' ? block.metadata.rpaRunId : undefined
   const [task, setTask] = useState<RpaTask>(() => toDeviceAgnosticTask(storedTask))
   const [issues, setIssues] = useState<RpaValidationIssue[]>(() => draftValidator.validate(storedTask).issues)
   const [jsonText, setJsonText] = useState(() => JSON.stringify(toDeviceAgnosticTask(storedTask), null, 2))
   const [savedJsonText, setSavedJsonText] = useState(() => JSON.stringify(toDeviceAgnosticTask(storedTask), null, 2))
   const [jsonError, setJsonError] = useState<string>()
   const [paramsJsonValid, setParamsJsonValid] = useState(true)
-  const [executionRunId, setExecutionRunId] = useState<string>()
+  const [executionRunId, setExecutionRunId] = useState<string | undefined>(storedExecutionRunId)
   const [executionOpen, setExecutionOpen] = useState(false)
   const [confirmationOpen, setConfirmationOpen] = useState(false)
   const [saveToTemplateOpen, setSaveToTemplateOpen] = useState(false)
@@ -115,20 +116,36 @@ const RpaInlineWorkflow: FC<Props> = ({ block, message }) => {
 
   useEffect(() => {
     if (!executionRunId || !storedSessionId) return
-    const syncTerminalStatus = () => {
+    const syncExecutionStatus = async () => {
+      await rpaBatchRunner.initialize()
+      const session = await rpaDslSessionRepository.getById(storedSessionId)
+      if (!session || (session.status !== 'executing' && session.status !== 'paused')) return
       const run = rpaBatchRunner.getRuns().find((candidate) => candidate.id === executionRunId)
-      if (!run || (run.status !== 'completed' && run.status !== 'failed' && run.status !== 'cancelled')) return
-      void rpaDslSessionRepository.getById(storedSessionId).then(async (session) => {
-        if (!session || session.status !== 'executing') return
-        await rpaDslSessionRepository.setExecutionStatus(
-          session.id,
-          session.version,
-          run.status === 'completed' ? 'completed' : 'failed'
-        )
+      const nextStatus = !run
+        ? 'paused'
+        : run.status === 'pending' || run.status === 'running'
+          ? 'executing'
+          : run.status === 'paused'
+            ? 'paused'
+            : run.status === 'completed'
+              ? 'completed'
+              : run.status === 'failed' || run.status === 'cancelled'
+                ? 'failed'
+                : undefined
+      if (!nextStatus || nextStatus === session.status) return
+      await rpaDslSessionRepository.setExecutionStatus(session.id, session.version, nextStatus)
+    }
+    const synchronize = () => {
+      void syncExecutionStatus().catch((error) => {
+        logger.warn('Failed to synchronize the RPA DSL session execution status', {
+          error,
+          runId: executionRunId,
+          sessionId: storedSessionId
+        })
       })
     }
-    syncTerminalStatus()
-    return rpaBatchRunner.subscribe(syncTerminalStatus)
+    synchronize()
+    return rpaBatchRunner.subscribe(synchronize)
   }, [executionRunId, storedSessionId])
 
   const updateTask = (nextTask: RpaTask) => {
@@ -319,6 +336,9 @@ const RpaInlineWorkflow: FC<Props> = ({ block, message }) => {
       rpaSkillRepository.toCatalog()
     ])
     const templateCatalog = createRpaTemplateAssetCatalog(templateRecords)
+    const knowledgeAvailability = await rpaKnowledgeRetrievalService.getAvailability(
+      knowledgeBases.map((knowledge) => knowledge.id)
+    )
     const compatibilityRole = adaptAssistantProfileToRpaAppRole({
       profile,
       assistantName: assistant.name,
@@ -353,6 +373,11 @@ const RpaInlineWorkflow: FC<Props> = ({ block, message }) => {
       },
       promptCatalog: rolePrompts,
       assetAvailability: [
+        ...knowledgeAvailability.map((availability) => ({
+          assetType: 'knowledge' as const,
+          assetId: availability.knowledgeBaseId,
+          status: availability.status
+        })),
         ...providers.map((provider) => ({
           assetType: 'provider' as const,
           assetId: provider.id,

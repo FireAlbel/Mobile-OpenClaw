@@ -1,7 +1,13 @@
 import * as z from 'zod'
 
 import { RpaObservationService } from './RpaObservationService'
-import type { RpaActionModule, RpaModuleExecutionContext, RpaModuleResult, RpaRetryPolicy } from './RpaTypes'
+import type {
+  RpaActionModule,
+  RpaDeviceObservation,
+  RpaModuleExecutionContext,
+  RpaModuleResult,
+  RpaRetryPolicy
+} from './RpaTypes'
 
 const defaultRetry: RpaRetryPolicy = {
   maxAttempts: 1,
@@ -84,6 +90,9 @@ export const tapByVlmTargetModule: RpaActionModule<{
   target: string
   instruction?: string
   fallbackToVlm?: boolean
+  targetAliases?: string[]
+  resourceIds?: string[]
+  includeOcr?: boolean
 }> = {
   metadata: metadata(
     'tap_by_vlm_target',
@@ -94,11 +103,18 @@ export const tapByVlmTargetModule: RpaActionModule<{
   paramsSchema: z.object({
     target: z.string().min(1),
     instruction: z.string().min(1).optional(),
-    fallbackToVlm: z.boolean().default(true)
+    fallbackToVlm: z.boolean().default(true),
+    targetAliases: z.array(z.string().min(1)).default([]),
+    resourceIds: z.array(z.string().min(1)).default([]),
+    includeOcr: z.boolean().default(false)
   }),
   async execute(context, params) {
     const startedAt = now()
-    const candidate = await findDeterministicTextCandidate(context, params.target)
+    const candidate = await findDeterministicTextCandidate(context, params.target, {
+      targetAliases: params.targetAliases,
+      resourceIds: params.resourceIds,
+      includeOcr: params.includeOcr
+    })
     if (candidate) {
       const radius = Math.max(
         0,
@@ -166,20 +182,79 @@ function normalizeTargetText(value: string): string {
   return value.trim().toLocaleLowerCase()
 }
 
-async function findDeterministicTextCandidate(context: RpaModuleExecutionContext, target: string) {
-  if (typeof context.runtime.getUiTree !== 'function') return undefined
-  const targetAliases = extractTargetAliases(target)
+interface DeterministicTargetOptions {
+  targetAliases?: string[]
+  resourceIds?: string[]
+  includeOcr?: boolean
+}
+
+type DeterministicTextCandidate = NonNullable<RpaDeviceObservation['textCandidates']>[number]
+
+async function captureDeterministicViewport(
+  context: RpaModuleExecutionContext,
+  target: string,
+  options: DeterministicTargetOptions = {}
+): Promise<{
+  candidate?: DeterministicTextCandidate
+  fingerprint?: string
+  warnings: RpaDeviceObservation['warnings']
+}> {
+  const targetAliases = [...new Set([...extractTargetAliases(target), ...(options.targetAliases ?? [])])]
+    .map(normalizeTargetText)
+    .filter(Boolean)
   const observation = await new RpaObservationService(context.runtime).capture(context.deviceId, {
-    includeScreenshot: false,
+    includeScreenshot: options.includeOcr === true,
     includeForegroundApp: false,
     includeScreenSize: true,
     includeUiTree: true,
-    includeOcr: false,
+    includeOcr: options.includeOcr === true,
     targetTexts: targetAliases
   })
-  return observation.textCandidates
-    ?.filter((item) => !item.approximate)
-    .sort((left, right) => compareTextCandidates(left, right, targetAliases))[0]
+  const normalizedResourceIds = (options.resourceIds ?? []).map(normalizeTargetText).filter(Boolean)
+  const resourceCandidate = observation.uiTree?.nodes.find((node) =>
+    normalizedResourceIds.some((resourceId) => normalizeTargetText(node.resourceId) === resourceId)
+  )
+  const candidate = resourceCandidate
+    ? {
+        source: 'ui_tree' as const,
+        text: resourceCandidate.text || resourceCandidate.contentDescription || resourceCandidate.resourceId,
+        confidence: 1,
+        bounds: resourceCandidate.bounds,
+        nodeId: resourceCandidate.id
+      }
+    : observation.textCandidates
+        ?.filter((item) => !item.approximate)
+        .sort((left, right) => compareTextCandidates(left, right, targetAliases))[0]
+  return {
+    candidate,
+    fingerprint: createViewportFingerprint(observation),
+    warnings: observation.warnings
+  }
+}
+
+async function findDeterministicTextCandidate(
+  context: RpaModuleExecutionContext,
+  target: string,
+  options: DeterministicTargetOptions = {}
+) {
+  return (await captureDeterministicViewport(context, target, options)).candidate
+}
+
+function createViewportFingerprint(observation: RpaDeviceObservation): string | undefined {
+  const nodes = observation.uiTree?.nodes
+  if (!nodes?.length) return undefined
+  const normalized = nodes.map((node) =>
+    [node.text, node.contentDescription, node.resourceId, node.bounds.physical.top, node.bounds.physical.bottom].join(
+      '|'
+    )
+  )
+  let hash = 2166136261
+  const value = normalized.join('\n')
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return (hash >>> 0).toString(16)
 }
 
 export const swipeUntilVlmTargetModule: RpaActionModule<{
@@ -278,4 +353,183 @@ function createSearchSwipe(
   return { x1: horizontalEnd, y1: centerY, x2: horizontalStart, y2: centerY }
 }
 
-export const p1RpaModules = [handlePopupModule, tapByVlmTargetModule, swipeUntilVlmTargetModule]
+interface ListScanTargetParams {
+  target: string
+  targetAliases?: string[]
+  resourceIds?: string[]
+  searchMode?: 'current_then_exhaustive'
+  resetToBoundary?: boolean
+  resetDirection?: 'up' | 'down'
+  scanDirection?: 'up' | 'down'
+  maxResetSwipes?: number
+  maxScanSwipes?: number
+  noProgressLimit?: number
+  includeOcr?: boolean
+  fallbackToVlm?: boolean
+}
+
+interface ListScanAudit {
+  target: string
+  viewportsScanned: number
+  uniqueViewports: number
+  resetSwipes: number
+  scanSwipes: number
+  resetBoundaryReached: boolean
+  scanBoundaryReached: boolean
+  locatorSource?: 'ui_tree' | 'ocr'
+  matchedText?: string
+  vlmInvoked: boolean
+  warnings: string[]
+}
+
+export const listScanTargetModule: RpaActionModule<ListScanTargetParams> = {
+  metadata: metadata(
+    'list.scan_target',
+    'Scan list for target',
+    'Search the current viewport, reset to a list boundary, scan boundary-to-boundary, then use one compact VLM fallback.',
+    120_000
+  ),
+  paramsSchema: z.object({
+    target: z.string().min(1),
+    targetAliases: z.array(z.string().min(1)).default([]),
+    resourceIds: z.array(z.string().min(1)).default([]),
+    searchMode: z.literal('current_then_exhaustive').default('current_then_exhaustive'),
+    resetToBoundary: z.boolean().default(true),
+    resetDirection: z.enum(['up', 'down']).default('down'),
+    scanDirection: z.enum(['up', 'down']).default('up'),
+    maxResetSwipes: z.number().int().min(0).max(30).default(8),
+    maxScanSwipes: z.number().int().min(1).max(50).default(20),
+    noProgressLimit: z.number().int().min(1).max(5).default(2),
+    includeOcr: z.boolean().default(false),
+    fallbackToVlm: z.boolean().default(true)
+  }),
+  async execute(context, params) {
+    const startedAt = now()
+    const options: DeterministicTargetOptions = {
+      targetAliases: params.targetAliases,
+      resourceIds: params.resourceIds,
+      includeOcr: params.includeOcr
+    }
+    const audit: ListScanAudit = {
+      target: params.target,
+      viewportsScanned: 0,
+      uniqueViewports: 0,
+      resetSwipes: 0,
+      scanSwipes: 0,
+      resetBoundaryReached: params.resetToBoundary === false,
+      scanBoundaryReached: false,
+      vlmInvoked: false,
+      warnings: []
+    }
+    const fingerprints = new Set<string>()
+    let viewport = await captureDeterministicViewport(context, params.target, options)
+
+    const inspectViewport = (): RpaModuleResult | undefined => {
+      audit.viewportsScanned += 1
+      if (viewport.fingerprint) fingerprints.add(viewport.fingerprint)
+      audit.uniqueViewports = fingerprints.size
+      audit.warnings.push(...viewport.warnings.map((warning) => `${warning.source}: ${warning.message}`))
+      if (!viewport.candidate) return undefined
+      audit.locatorSource = viewport.candidate.source
+      audit.matchedText = viewport.candidate.text
+      return {
+        success: true,
+        status: 'passed',
+        message: `Deterministic list target found: ${viewport.candidate.text}`,
+        data: audit,
+        startedAt,
+        finishedAt: now()
+      }
+    }
+    const initialMatch = inspectViewport()
+    if (initialMatch) return initialMatch
+
+    const swipeAndCapture = async (direction: 'up' | 'down') => {
+      if (context.signal?.aborted) throw context.signal.reason ?? new Error('List scan aborted')
+      const screenSize = await context.runtime.getScreenSize(context.deviceId)
+      if (!screenSize.success || !screenSize.data) return { failure: moduleResult(startedAt, screenSize) }
+      const swipe = createSearchSwipe(screenSize.data, direction)
+      const swipeResult = await context.runtime.swipe(context.deviceId, swipe.x1, swipe.y1, swipe.x2, swipe.y2, 500, {
+        enabled: true,
+        pathSamples: 12,
+        curveStrength: 0.16
+      })
+      if (!swipeResult.success) return { failure: moduleResult(startedAt, swipeResult) }
+      const previousFingerprint = viewport.fingerprint
+      viewport = await captureDeterministicViewport(context, params.target, options)
+      return { unchanged: Boolean(previousFingerprint && viewport.fingerprint === previousFingerprint) }
+    }
+
+    if (params.resetToBoundary !== false) {
+      let noProgress = 0
+      for (let swipeIndex = 0; swipeIndex < (params.maxResetSwipes ?? 8); swipeIndex += 1) {
+        const moved = await swipeAndCapture(params.resetDirection ?? 'down')
+        if (moved.failure) return moved.failure
+        audit.resetSwipes += 1
+        const match = inspectViewport()
+        if (match) return match
+        noProgress = moved.unchanged ? noProgress + 1 : 0
+        if (noProgress >= (params.noProgressLimit ?? 2)) {
+          audit.resetBoundaryReached = true
+          break
+        }
+      }
+    }
+
+    let noProgress = 0
+    for (let swipeIndex = 0; swipeIndex < (params.maxScanSwipes ?? 20); swipeIndex += 1) {
+      const moved = await swipeAndCapture(params.scanDirection ?? 'up')
+      if (moved.failure) return moved.failure
+      audit.scanSwipes += 1
+      const match = inspectViewport()
+      if (match) return match
+      noProgress = moved.unchanged ? noProgress + 1 : 0
+      if (noProgress >= (params.noProgressLimit ?? 2)) {
+        audit.scanBoundaryReached = true
+        break
+      }
+    }
+
+    if (params.fallbackToVlm !== false) {
+      audit.vlmInvoked = true
+      const aliases = [...new Set([params.target, ...(params.targetAliases ?? [])])].join(' | ')
+      const compactContext = [
+        `Target aliases: ${aliases}`,
+        `Deterministic coverage: resetBoundary=${audit.resetBoundaryReached}, scanBoundary=${audit.scanBoundaryReached}`,
+        `Viewports=${audit.viewportsScanned}, unique=${audit.uniqueViewports}`,
+        'Allowed decision: report whether the target is visible in the current viewport; do not infer unseen list content.'
+      ].join('\n')
+      const located = await context.runtime.locateVisualTarget(
+        context.deviceId,
+        compactContext,
+        context.task.visionModel,
+        context.signal
+      )
+      if (!located.success) return moduleResult(startedAt, located)
+      if (located.data?.found) {
+        return {
+          success: true,
+          status: 'passed',
+          message: `VLM found list target after deterministic scan: ${params.target}`,
+          data: { ...audit, vlm: located.data },
+          startedAt,
+          finishedAt: now()
+        }
+      }
+    }
+
+    const exhaustive = audit.resetBoundaryReached && audit.scanBoundaryReached
+    return {
+      success: false,
+      status: 'failed',
+      message: exhaustive
+        ? `List target not found after boundary-to-boundary scan: ${params.target}`
+        : `List target not found and exhaustive coverage could not be proven: ${params.target}`,
+      data: audit,
+      startedAt,
+      finishedAt: now()
+    }
+  }
+}
+
+export const p1RpaModules = [handlePopupModule, tapByVlmTargetModule, swipeUntilVlmTargetModule, listScanTargetModule]

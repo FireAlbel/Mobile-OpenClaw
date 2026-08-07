@@ -606,12 +606,7 @@ class DeviceService {
 
   async startApp(deviceId: string, packageName: string): Promise<void> {
     try {
-      assertSafePackageName(packageName)
-      const resolvedActivityOutput = await this.executeAdbCommand(
-        deviceId,
-        `shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER ${packageName}`
-      )
-      const componentName = parseResolvedActivity(resolvedActivityOutput)
+      const componentName = await this.resolveLauncherActivity(deviceId, packageName)
 
       if (componentName) {
         assertSafeComponentName(componentName)
@@ -628,6 +623,18 @@ class DeviceService {
       logger.error('Failed to start app', { error, deviceId, packageName })
       throw error
     }
+  }
+
+  async resolveLauncherActivity(deviceId: string, packageName: string): Promise<string | null> {
+    assertSafePackageName(packageName)
+    const output = await this.executeAdbCommand(
+      deviceId,
+      `shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER ${packageName}`
+    )
+    const componentName = parseResolvedActivity(output)
+    if (componentName) assertSafeComponentName(componentName)
+    logger.info('Resolved app launcher activity', { deviceId, packageName, componentName })
+    return componentName
   }
 
   async stopApp(deviceId: string, packageName: string): Promise<void> {

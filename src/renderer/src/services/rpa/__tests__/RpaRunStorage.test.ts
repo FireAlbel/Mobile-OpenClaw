@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { RpaBatchRunRecord, RpaRunStorage } from '../RpaRunStorage'
-import { IpcRpaRunStorage } from '../RpaRunStorage'
+import { IpcRpaRunStorage, sanitizeRpaBatchRunsForStorage } from '../RpaRunStorage'
 
 function run(status: RpaBatchRunRecord['status'] = 'completed'): RpaBatchRunRecord {
   return {
@@ -84,5 +84,49 @@ describe('IpcRpaRunStorage', () => {
     await storage.saveBatchRuns([run('completed')])
 
     expect(backup.saveBatchRuns).toHaveBeenCalled()
+  })
+
+  it('omits raw observation payloads while preserving evidence references', () => {
+    const record = run('failed')
+    record.deviceRuns[0].events.push({
+      taskId: 'task-1',
+      deviceId: 'device-1',
+      stepId: 'step-1',
+      stepName: 'Observe',
+      status: 'failed',
+      attempt: 1,
+      message: 'Verification failed',
+      timestamp: 2,
+      data: {
+        observation: {
+          screenshot: { imageBase64: 'a'.repeat(2_000_000), mime: 'image/png', width: 1080, height: 2400 },
+          uiTree: {
+            xml: '<node />'.repeat(100_000),
+            nodes: Array.from({ length: 1_000 }, (_, index) => ({ text: `Node ${index}` })),
+            texts: Array.from({ length: 1_000 }, (_, index) => `Text ${index}`)
+          },
+          ocr: { blocks: Array.from({ length: 1_000 }, (_, index) => ({ text: `OCR ${index}` })) },
+          textCandidates: Array.from({ length: 1_000 }, (_, index) => ({ text: `Candidate ${index}` })),
+          artifacts: { screenshotArtifactId: 'artifact-shot-1', uiTreeArtifactId: 'artifact-tree-1' }
+        },
+        recognizedState: { stateId: 'UNKNOWN', artifactId: 'artifact-state-1' }
+      }
+    })
+
+    const sanitized = sanitizeRpaBatchRunsForStorage([record])
+    const json = JSON.stringify(sanitized)
+
+    expect(json).not.toContain('a'.repeat(1_000))
+    expect(json).not.toContain('<node />'.repeat(100))
+    expect(json).toContain('[BINARY_OMITTED:2000000]')
+    expect(json).toContain('[TEXT_OMITTED:UI_TREE_XML:800000]')
+    expect(json).toContain('[UI_TREE_NODES_OMITTED:1000]')
+    expect(json).toContain('[UI_TREE_TEXTS_OMITTED:1000]')
+    expect(json).toContain('[OCR_BLOCKS_OMITTED:1000]')
+    expect(json).toContain('[TEXT_CANDIDATES_OMITTED:1000]')
+    expect(json).toContain('artifact-shot-1')
+    expect(json).toContain('artifact-tree-1')
+    expect(json).toContain('artifact-state-1')
+    expect(json.length).toBeLessThan(100_000)
   })
 })

@@ -179,20 +179,34 @@ describe('RpaAppStateRecognizer', () => {
 
   it('does not treat a generic settings close label as a popup blocker', async () => {
     const recognizer = new RpaAppStateRecognizer()
-    const closeLabel = '\u934f\u62bd\u68f4'
     const result = await recognizer.recognize({
       observation: observation({
         foregroundApp: { packageName: 'com.android.settings', activity: '.Settings' },
         uiTree: {
           ...observation().uiTree!,
-          texts: [closeLabel],
-          nodes: [{ ...observation().uiTree!.nodes[0], text: closeLabel }]
+          texts: ['关闭'],
+          nodes: [{ ...observation().uiTree!.nodes[0], text: '关闭' }]
         }
       })
     })
 
     expect(result.stateId).not.toBe('BLOCKED_BY_POPUP')
     expect(result.blockingCondition).not.toBe('popup')
+  })
+
+  it.each(['取消', 'cancel', 'close'])('does not treat a standalone %s action as a popup blocker', async (label) => {
+    const recognizer = new RpaAppStateRecognizer()
+    const result = await recognizer.recognize({
+      observation: observation({
+        uiTree: {
+          ...observation().uiTree!,
+          texts: [label],
+          nodes: [{ ...observation().uiTree!.nodes[0], text: label }]
+        }
+      })
+    })
+
+    expect(result.stateId).not.toBe('BLOCKED_BY_POPUP')
   })
 
   it('returns UNKNOWN for low confidence and conflicting evidence', async () => {

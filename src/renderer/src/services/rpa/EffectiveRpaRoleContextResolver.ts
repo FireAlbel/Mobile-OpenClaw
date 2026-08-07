@@ -24,6 +24,7 @@ export type RpaRoleContextIssueCode =
   | 'cross_role_reference_not_permitted'
   | 'required_asset_missing'
   | 'required_asset_unavailable'
+  | 'optional_asset_unavailable'
   | 'required_asset_version_conflict'
   | 'optional_asset_missing'
   | 'optional_asset_version_conflict'
@@ -157,7 +158,7 @@ function resolveBindings(
   const selectedRoleIds = new Set(roles.map((role) => role.id))
   const candidates = roles.flatMap((role) =>
     role.assetBindings
-      .filter((binding) => binding.enabled && binding.ref.assetType !== 'provider')
+      .filter((binding) => binding.enabled && !['artifact', 'provider'].includes(binding.ref.assetType))
       .map((binding) => ({ ...binding, sourceRoleId: role.id }))
   )
   const groups = new Map<string, RpaResolvedRoleAssetBinding[]>()
@@ -197,6 +198,14 @@ function resolveBindings(
           roleId: winner.sourceRoleId,
           asset: winner.ref,
           message: `Required ${winner.ref.assetType} "${winner.ref.assetId}" is ${catalogAsset.status}`
+        })
+      } else if (winner.requirement === 'optional' && ['disabled', 'missing', 'error'].includes(catalogAsset.status)) {
+        issues.push({
+          severity: 'warning',
+          code: 'optional_asset_unavailable',
+          roleId: winner.sourceRoleId,
+          asset: winner.ref,
+          message: `Optional ${winner.ref.assetType} "${winner.ref.assetId}" is ${catalogAsset.status}`
         })
       }
       if (winner.ref.version && catalogAsset.version && !versionMatches(winner.ref, catalogAsset.version)) {
@@ -306,7 +315,15 @@ function findCatalogAsset(
   promptCatalog: RpaRolePrompt[],
   availability: RpaRoleAssetAvailability[]
 ): { version?: string; status: string } | undefined {
-  if (ref.assetType === 'knowledge') return catalogs.knowledge.find((asset) => asset.id === ref.assetId)
+  if (ref.assetType === 'knowledge') {
+    const catalogAsset = catalogs.knowledge.find((asset) => asset.id === ref.assetId)
+    const currentAvailability = availability.find(
+      (asset) => asset.assetType === 'knowledge' && asset.assetId === ref.assetId
+    )
+    return catalogAsset
+      ? { ...catalogAsset, status: currentAvailability?.status ?? catalogAsset.status }
+      : currentAvailability
+  }
   if (ref.assetType === 'skill') return catalogs.skills.find((asset) => asset.id === ref.assetId)
   if (ref.assetType === 'prompt') {
     const prompt = promptCatalog.find(
@@ -326,7 +343,7 @@ function resolveRolePrompts(
   roles: RpaAppRole[]
 ): RpaResolvedRolePrompt[] {
   const roleRank = new Map(roles.map((role, index) => [role.id, roles.length - index]))
-  return bindings
+  const explicitlyBound = bindings
     .filter((binding) => binding.ref.assetType === 'prompt')
     .flatMap((binding) => {
       const prompt = promptCatalog
@@ -349,7 +366,31 @@ function resolveRolePrompts(
         }
       ]
     })
-    .sort((left, right) => right.priority - left.priority || left.id.localeCompare(right.id))
+  const boundPromptKeys = new Set(explicitlyBound.map((prompt) => `${prompt.roleId}:${prompt.id}`))
+  const selectedRoleIds = new Set(roles.map((role) => role.id))
+  const roleOwned = [...promptCatalog]
+    .filter(
+      (prompt) =>
+        prompt.status === 'enabled' &&
+        selectedRoleIds.has(prompt.roleId) &&
+        !boundPromptKeys.has(`${prompt.roleId}:${prompt.id}`)
+    )
+    .sort((left, right) => right.updatedAt - left.updatedAt || right.version.localeCompare(left.version))
+    .filter(
+      (prompt, index, prompts) =>
+        prompts.findIndex((candidate) => candidate.roleId === prompt.roleId && candidate.id === prompt.id) === index
+    )
+    .map((prompt) => ({
+      ...prompt,
+      sourceRoleId: prompt.roleId,
+      ownership: 'owned' as const,
+      requirement: 'optional' as const,
+      priority: (roleRank.get(prompt.roleId) ?? 0) * 10_000 + prompt.priority
+    }))
+
+  return [...explicitlyBound, ...roleOwned].sort(
+    (left, right) => right.priority - left.priority || left.id.localeCompare(right.id)
+  )
 }
 
 function versionMatches(ref: RpaQualifiedRoleAssetReference, version: string): boolean {

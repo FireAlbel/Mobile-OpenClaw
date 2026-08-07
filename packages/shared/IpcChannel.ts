@@ -421,6 +421,8 @@ export enum IpcChannel {
   Rpa_TaskFlowScheduleDue = 'rpa:task-flow-schedule-due',
   Rpa_LoadSkills = 'rpa:load-skills',
   Rpa_SaveSkills = 'rpa:save-skills',
+  Rpa_LoadAppPlaybooks = 'rpa:load-app-playbooks',
+  Rpa_SaveAppPlaybooks = 'rpa:save-app-playbooks',
   Rpa_LoadImprovementProposals = 'rpa:load-improvement-proposals',
   Rpa_SaveImprovementProposals = 'rpa:save-improvement-proposals',
   Rpa_LoadFailureFingerprints = 'rpa:load-failure-fingerprints',

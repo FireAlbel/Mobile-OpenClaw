@@ -3,8 +3,10 @@ import semver from 'semver'
 import * as z from 'zod'
 
 import type { RpaSkillAssetCatalogItem } from './RpaAssistantAssetCatalog'
+import { builtInRpaSkills } from './RpaBuiltInSkills'
 import { createDefaultRpaModuleRegistry } from './RpaDefaultRegistry'
 import type { RpaModuleRegistry } from './RpaModuleRegistry'
+import { RpaSkillCompiler } from './RpaSkillCompiler'
 import { RpaRetryPolicySchema, type RpaValidationIssue, RpaVerificationSchema } from './RpaTypes'
 
 const logger = loggerService.withContext('RpaSkillRepository')
@@ -34,6 +36,10 @@ const stateSchema = z.object({
       'none',
       'permission_dialog',
       'popup',
+      'update_prompt',
+      'promotional_overlay',
+      'network_error',
+      'loading_failure',
       'authentication',
       'captcha',
       'payment',
@@ -77,6 +83,31 @@ const locatorSchema = z.object({
   stateIds: z.array(identifierSchema).default([]),
   strategy: z.enum(['ui_text', 'ui_resource_id', 'ocr_text', 'visual_target', 'coordinate']),
   value: z.union([z.string().min(1), z.object({ x: z.number().min(0), y: z.number().min(0) })]),
+  aliases: stringListSchema,
+  resourceIds: stringListSchema,
+  searchPolicy: z
+    .object({
+      searchMode: z.enum(['current_then_exhaustive']).default('current_then_exhaustive'),
+      resetToBoundary: z.boolean().default(true),
+      resetDirection: z.enum(['up', 'down']).default('down'),
+      scanDirection: z.enum(['up', 'down']).default('up'),
+      maxResetSwipes: z.number().int().min(0).max(30).default(8),
+      maxScanSwipes: z.number().int().min(1).max(50).default(20),
+      noProgressLimit: z.number().int().min(1).max(5).default(2),
+      includeOcr: z.boolean().default(false),
+      fallbackToVlm: z.boolean().default(true)
+    })
+    .default({
+      searchMode: 'current_then_exhaustive',
+      resetToBoundary: true,
+      resetDirection: 'down',
+      scanDirection: 'up',
+      maxResetSwipes: 8,
+      maxScanSwipes: 20,
+      noProgressLimit: 2,
+      includeOcr: false,
+      fallbackToVlm: true
+    }),
   fallbackLocatorIds: stringListSchema,
   minConfidence: z.number().min(0).max(1).default(0.7)
 })
@@ -204,12 +235,17 @@ export class RpaSkillRepository {
   constructor(
     private readonly storage: RpaSkillStorage = new IpcRpaSkillStorage(),
     private readonly registry?: RpaModuleRegistry,
-    private readonly now: () => number = Date.now
+    private readonly now: () => number = Date.now,
+    private readonly bundledSkills: RpaSkillRecord[] = []
   ) {}
 
   async getAll(): Promise<RpaSkillRecord[]> {
     await this.writeQueue
-    return sanitizeSkillRecords(await this.storage.loadSkills())
+    const persisted = sanitizeSkillRecords(await this.storage.loadSkills())
+    const persistedIds = new Set(persisted.map((skill) => skill.id))
+    return [...persisted, ...this.bundledSkills.filter((skill) => !persistedIds.has(skill.id))]
+      .map((skill) => this.revalidate(skill))
+      .sort((left, right) => right.updatedAt - left.updatedAt)
   }
 
   async getById(id: string): Promise<RpaSkillRecord | undefined> {
@@ -313,7 +349,11 @@ export class RpaSkillRepository {
       const reasons = input.appPackage === skill.appPackage ? ['app_package'] : []
       const goalHits = skill.goals.filter((goal) => {
         const normalizedSkillGoal = normalizeForMatch(goal)
-        return normalizedGoal.includes(normalizedSkillGoal) || normalizedSkillGoal.includes(normalizedGoal)
+        return (
+          normalizedGoal.includes(normalizedSkillGoal) ||
+          normalizedSkillGoal.includes(normalizedGoal) ||
+          hasMeaningfulGoalOverlap(normalizedGoal, normalizedSkillGoal)
+        )
       }).length
       if (goalHits) {
         score += Math.min(50, goalHits * 50)
@@ -351,6 +391,15 @@ export class RpaSkillRepository {
       () => undefined
     )
     return result
+  }
+
+  private revalidate(skill: RpaSkillRecord): RpaSkillRecord {
+    const validationIssues = validateSkillDefinition(skill, this.registry)
+    if (skill.status === 'ready' && this.registry && validationIssues.length === 0) {
+      const compilation = new RpaSkillCompiler(this.registry).compile({ skill, deviceIds: [] })
+      validationIssues.push(...compilation.issues)
+    }
+    return { ...skill, validationIssues: deduplicateIssues(validationIssues) }
   }
 }
 
@@ -441,6 +490,15 @@ function validateSteps(
     }
     if (registry && !registry.has(step.moduleId)) {
       issues.push({ path: `${path}.${index}.moduleId`, message: `Unknown module: ${step.moduleId}` })
+    }
+    if (step.moduleId === 'list.scan_target' || step.moduleId === 'tap_by_vlm_target') {
+      const locatorId = typeof step.params.locatorId === 'string' ? step.params.locatorId : undefined
+      if (!locatorId || !definition.locators.some((locator) => locator.id === locatorId)) {
+        issues.push({
+          path: `${path}.${index}.params.locatorId`,
+          message: `Unknown navigation locator: ${String(locatorId ?? '')}`
+        })
+      }
     }
   })
 }
@@ -541,6 +599,16 @@ function normalizeForMatch(value: string): string {
   return value.trim().toLocaleLowerCase().replace(/\s+/g, '')
 }
 
+function hasMeaningfulGoalOverlap(left: string, right: string): boolean {
+  if (left.length < 4 || right.length < 4) return false
+  for (let size = Math.min(left.length, right.length); size >= 4; size -= 1) {
+    for (let index = 0; index <= left.length - size; index += 1) {
+      if (right.includes(left.slice(index, index + size))) return true
+    }
+  }
+  return false
+}
+
 function normalizeText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
@@ -553,4 +621,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
-export const rpaSkillRepository = new RpaSkillRepository(undefined, createDefaultRpaModuleRegistry())
+export const rpaSkillRepository = new RpaSkillRepository(
+  undefined,
+  createDefaultRpaModuleRegistry(),
+  Date.now,
+  builtInRpaSkills
+)

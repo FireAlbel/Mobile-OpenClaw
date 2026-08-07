@@ -5,6 +5,7 @@ import { RpaDeviceActionRuntimeAdapter } from '../RpaDeviceActionRuntimeAdapter'
 const mocks = vi.hoisted(() => ({
   execute: vi.fn(),
   handlePermissionDialog: vi.fn(),
+  resolveLauncherActivity: vi.fn(),
   executeAdbCommand: vi.fn()
 }))
 
@@ -15,6 +16,7 @@ vi.mock('../../DeviceActionRuntime', () => ({
 vi.mock('../../DeviceServiceProxy', () => ({
   deviceServiceProxy: {
     handlePermissionDialog: mocks.handlePermissionDialog,
+    resolveLauncherActivity: mocks.resolveLauncherActivity,
     executeAdbCommand: mocks.executeAdbCommand
   }
 }))
@@ -23,6 +25,7 @@ describe('RpaDeviceActionRuntimeAdapter', () => {
   beforeEach(() => {
     mocks.execute.mockReset()
     mocks.handlePermissionDialog.mockReset()
+    mocks.resolveLauncherActivity.mockReset()
     mocks.executeAdbCommand.mockReset()
   })
 
@@ -64,6 +67,32 @@ describe('RpaDeviceActionRuntimeAdapter', () => {
 
     await adapter.restartApp('device-1', 'com.example.app')
 
+    expect(mocks.execute).toHaveBeenCalledWith('device-1', {
+      type: 'restart_app',
+      params: { packageName: 'com.example.app' }
+    })
+  })
+
+  it('exposes typed lifecycle operations scoped to the selected device', async () => {
+    mocks.execute.mockResolvedValue({ success: true, message: 'completed', startedAt: 1, finishedAt: 2 })
+    mocks.resolveLauncherActivity.mockResolvedValue('com.example.app/.MainActivity')
+    const adapter = new RpaDeviceActionRuntimeAdapter()
+
+    const launcher = await adapter.resolveLauncherActivity('device-1', 'com.example.app')
+    await adapter.stopApp('device-1', 'com.example.app')
+    await adapter.softRelaunchApp('device-1', 'com.example.app')
+    await adapter.hardRestartApp('device-1', 'com.example.app')
+
+    expect(launcher.data).toBe('com.example.app/.MainActivity')
+    expect(mocks.resolveLauncherActivity).toHaveBeenCalledWith('device-1', 'com.example.app')
+    expect(mocks.execute).toHaveBeenCalledWith('device-1', {
+      type: 'stop_app',
+      params: { packageName: 'com.example.app' }
+    })
+    expect(mocks.execute).toHaveBeenCalledWith('device-1', {
+      type: 'start_app',
+      params: { packageName: 'com.example.app' }
+    })
     expect(mocks.execute).toHaveBeenCalledWith('device-1', {
       type: 'restart_app',
       params: { packageName: 'com.example.app' }

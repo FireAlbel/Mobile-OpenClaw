@@ -269,6 +269,15 @@ export class DeviceServiceProxy {
     }
   }
 
+  async resolveLauncherActivity(deviceId: string, packageName: string): Promise<string | null> {
+    try {
+      return await window.electron.ipcRenderer.invoke('device:resolveLauncherActivity', deviceId, packageName)
+    } catch (error) {
+      logger.error('Failed to resolve launcher activity', { error, deviceId, packageName })
+      throw error
+    }
+  }
+
   async stopApp(deviceId: string, packageName: string): Promise<void> {
     try {
       await window.electron.ipcRenderer.invoke('device:stopApp', deviceId, packageName)

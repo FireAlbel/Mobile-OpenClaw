@@ -36,7 +36,7 @@ export function buildRpaRoleWorkspaceSummary(input: {
   const brokenBindings: RpaRoleBrokenBinding[] = []
   const available = catalogSets(input.catalogs)
   for (const binding of input.role.assetBindings.filter(
-    (candidate) => candidate.enabled && candidate.ref.assetType !== 'provider'
+    (candidate) => candidate.enabled && !['artifact', 'provider'].includes(candidate.ref.assetType)
   )) {
     counts[binding.ref.assetType] += 1
     if (!available[binding.ref.assetType].has(binding.ref.assetId)) {

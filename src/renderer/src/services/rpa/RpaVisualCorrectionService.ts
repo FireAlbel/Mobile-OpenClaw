@@ -361,6 +361,7 @@ export class RpaVisualCorrectionService {
                 failedStep: compactStep(input.failureContext.failedStep),
                 failureReason: compactText(input.failureContext.reason, 600),
                 verification: compactValue(input.failureContext.verification, 800),
+                normalization: compactNormalizationContext(input.failureContext.result.data),
                 correctionRound: input.correctionRound,
                 previousDecisions: compactPreviousDecisions(input.previousDecisions),
                 knowledgeWarnings: compactStringList(input.knowledgeContext?.warnings, 10, 300),
@@ -412,6 +413,7 @@ export class RpaVisualCorrectionService {
             failedStep: compactStep(input.failureContext.failedStep),
             failureReason: compactText(input.failureContext.reason, 600),
             verification: compactValue(input.failureContext.verification, 800),
+            normalization: compactNormalizationContext(input.failureContext.result.data),
             correctionRound: input.correctionRound,
             invalidResponse: invalidResponse.slice(0, 8_000),
             validationIssues: issues,
@@ -532,6 +534,33 @@ function compactStep(step: RpaFailureContext['failedStep']): Record<string, unkn
     retry: compactValue(step.retry, 500),
     verify: compactValue(step.verify, 800),
     continueOnFailure: step.continueOnFailure
+  }
+}
+
+function compactNormalizationContext(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const source = value as Record<string, unknown>
+  if (typeof source.outcome !== 'string' || !Array.isArray(source.actionGroups)) return undefined
+  return {
+    outcome: source.outcome,
+    packageName: source.packageName,
+    targetState: source.targetState,
+    playbookId: source.playbookId,
+    playbookVersion: source.playbookVersion,
+    initialState: compactValue(source.initialState, 1_200),
+    finalState: compactValue(source.finalState, 1_200),
+    attemptedStages: source.actionGroups.slice(0, 12).map((candidate) => {
+      if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return candidate
+      const group = candidate as Record<string, unknown>
+      return {
+        stage: group.stage,
+        attempt: group.attempt,
+        actions: compactValue(group.actions, 800),
+        success: group.success,
+        message: compactText(String(group.message ?? ''), 300),
+        verification: compactValue(group.verification, 600)
+      }
+    })
   }
 }
 

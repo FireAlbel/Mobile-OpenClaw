@@ -1,11 +1,18 @@
 import { loggerService } from '@logger'
 
+import type { RpaAppPlaybookLearningResult } from './RpaAppPlaybookLearningService'
 import type { RpaExecutionTargetSelection } from './RpaExecutionTarget'
 import type { RpaRunContextSnapshot } from './RpaRunContextSnapshot'
 import { trySanitizeRpaRunContextSnapshot } from './RpaRunContextSnapshot'
 import type { RpaRunStepEvent, RpaTask } from './RpaTypes'
 
 const logger = loggerService.withContext('RpaRunStorage')
+const MAX_PERSISTED_DEPTH = 12
+const MAX_PERSISTED_OBJECT_KEYS = 256
+const MAX_PERSISTED_ARRAY_ITEMS = 2_000
+const MAX_PERSISTED_STRING_LENGTH = 16_384
+const OMITTED_BINARY_PREFIX = '[BINARY_OMITTED'
+const OMITTED_TEXT_PREFIX = '[TEXT_OMITTED'
 
 export type RpaDeviceRunStatus = 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled' | 'needs_human'
 
@@ -33,6 +40,7 @@ export interface RpaTraceAnalysisRecord {
   evidenceArtifactIds: string[]
   failureFingerprintId?: string
   taskFlowLearning?: RpaTaskFlowLearningResult
+  appPlaybookLearning?: RpaAppPlaybookLearningResult
   /** Historical proposal references are retained for replay compatibility. */
   improvementProposalIds: string[]
   redactions: string[]
@@ -76,6 +84,10 @@ export interface RpaRunStorage {
 
 const RPA_RUN_STORAGE_KEY = 'rpa_batch_runs'
 
+export function sanitizeRpaBatchRunsForStorage(runs: RpaBatchRunRecord[]): RpaBatchRunRecord[] {
+  return sanitizePersistedValue(Array.isArray(runs) ? runs : [], 0, []) as RpaBatchRunRecord[]
+}
+
 export class LocalStorageRpaRunStorage implements RpaRunStorage {
   async loadBatchRuns(): Promise<RpaBatchRunRecord[]> {
     if (typeof localStorage === 'undefined') return []
@@ -95,7 +107,7 @@ export class LocalStorageRpaRunStorage implements RpaRunStorage {
     if (typeof localStorage === 'undefined') return
 
     try {
-      localStorage.setItem(RPA_RUN_STORAGE_KEY, JSON.stringify(runs))
+      localStorage.setItem(RPA_RUN_STORAGE_KEY, JSON.stringify(sanitizeRpaBatchRunsForStorage(runs)))
     } catch (error) {
       logger.warn('Failed to save RPA runs to storage', { error })
     }
@@ -150,7 +162,7 @@ export class IpcRpaRunStorage implements RpaRunStorage {
     }
 
     try {
-      await window.api.rpa.saveRuns(runs)
+      await window.api.rpa.saveRuns(sanitizeRpaBatchRunsForStorage(runs))
     } catch (error) {
       logger.warn('Failed to save RPA runs through IPC', { error })
       await this.fallback.saveBatchRuns(runs)
@@ -160,3 +172,59 @@ export class IpcRpaRunStorage implements RpaRunStorage {
 
 export const localStorageRpaRunStorage = new LocalStorageRpaRunStorage()
 export const ipcRpaRunStorage = new IpcRpaRunStorage(localStorageRpaRunStorage)
+
+function sanitizePersistedValue(value: unknown, depth: number, path: string[]): unknown {
+  if (value === null || value === undefined || typeof value === 'boolean' || typeof value === 'number') return value
+
+  if (typeof value === 'string') {
+    const key = path.at(-1)?.toLocaleLowerCase() ?? ''
+    if (isBinaryPayloadKey(key)) return `${OMITTED_BINARY_PREFIX}:${value.length}]`
+    if (key === 'xml' && path.some((part) => part.toLocaleLowerCase() === 'uitree')) {
+      return `${OMITTED_TEXT_PREFIX}:UI_TREE_XML:${value.length}]`
+    }
+    if (value.length > MAX_PERSISTED_STRING_LENGTH) {
+      return `${value.slice(0, MAX_PERSISTED_STRING_LENGTH)}\n${OMITTED_TEXT_PREFIX}:${value.length - MAX_PERSISTED_STRING_LENGTH}]`
+    }
+    return value
+  }
+
+  if (depth >= MAX_PERSISTED_DEPTH) return '[DEPTH_LIMIT_REACHED]'
+
+  if (Array.isArray(value)) {
+    const omittedCollection = summarizeObservationCollection(path, value.length)
+    if (omittedCollection) return omittedCollection
+    const items = value
+      .slice(0, MAX_PERSISTED_ARRAY_ITEMS)
+      .map((item, index) => sanitizePersistedValue(item, depth + 1, [...path, String(index)]))
+    if (value.length > MAX_PERSISTED_ARRAY_ITEMS) {
+      items.push(`[ARRAY_ITEMS_OMITTED:${value.length - MAX_PERSISTED_ARRAY_ITEMS}]`)
+    }
+    return items
+  }
+
+  if (typeof value !== 'object') return String(value)
+
+  const entries = Object.entries(value as Record<string, unknown>)
+  const output: Record<string, unknown> = {}
+  for (const [key, nested] of entries.slice(0, MAX_PERSISTED_OBJECT_KEYS)) {
+    output[key] = sanitizePersistedValue(nested, depth + 1, [...path, key])
+  }
+  if (entries.length > MAX_PERSISTED_OBJECT_KEYS) {
+    output.__omittedObjectKeys = entries.length - MAX_PERSISTED_OBJECT_KEYS
+  }
+  return output
+}
+
+function isBinaryPayloadKey(key: string): boolean {
+  return key === 'imagebase64' || key === 'base64' || key === 'imagedata' || key === 'screenshotbase64'
+}
+
+function summarizeObservationCollection(path: string[], count: number): string | undefined {
+  const normalized = path.map((part) => part.toLocaleLowerCase())
+  const key = normalized.at(-1)
+  if (key === 'textcandidates') return `[TEXT_CANDIDATES_OMITTED:${count}]`
+  if (key === 'nodes' && normalized.includes('uitree')) return `[UI_TREE_NODES_OMITTED:${count}]`
+  if (key === 'texts' && normalized.includes('uitree')) return `[UI_TREE_TEXTS_OMITTED:${count}]`
+  if (key === 'blocks' && normalized.includes('ocr')) return `[OCR_BLOCKS_OMITTED:${count}]`
+  return undefined
+}

@@ -65,6 +65,18 @@ export class RpaTaskValidator {
           message: 'launch_app requires foreground_app or vlm_assert verification'
         })
       }
+      if (['app.ensure_foreground', 'app.ensure_state', 'app.ensure_home'].includes(step.moduleId)) {
+        issues.push({
+          path: `${stepPath}.moduleId`,
+          message: `${step.moduleId} is runtime-only recovery behavior and cannot appear in the primary business DSL`
+        })
+      }
+      if (step.moduleId === 'app.restart' && step.continueOnFailure) {
+        issues.push({
+          path: `${stepPath}.continueOnFailure`,
+          message: 'Explicit app restart cannot continue after failure'
+        })
+      }
       if (
         ['tap_by_vlm_target', 'swipe_until_vlm_target'].includes(step.moduleId) &&
         step.verify?.type !== 'vlm_assert'
@@ -92,6 +104,21 @@ export class RpaTaskValidator {
       }
     }
 
+    const finalStep = task.steps.at(-1)
+    if (finalStep?.verify?.type === 'vlm_assert' && containsHistoricalAssertion(finalStep.verify.expectation)) {
+      issues.push({
+        path: `steps.${task.steps.length - 1}.verify.expectation`,
+        message:
+          'Final screenshot verification may assert only the current visible state, not historical actions or side effects'
+      })
+    }
+
     return issues
   }
+}
+
+function containsHistoricalAssertion(expectation: string): boolean {
+  return /曾经|曾进入|之前|先前|已经返回|未修改|没有修改|without (?:changing|modifying)|previously|earlier screen|returned from/i.test(
+    expectation
+  )
 }

@@ -54,7 +54,7 @@ const transitions: Record<RpaTaskSessionState, ReadonlySet<RpaTaskSessionState>>
   validating: new Set(['draft', 'ready', 'failed', 'non_executable']),
   ready: new Set(['planning', 'draft', 'executing', 'failed', 'non_executable']),
   executing: new Set(['paused', 'completed', 'failed']),
-  paused: new Set(['executing', 'completed', 'failed']),
+  paused: new Set(['planning', 'executing', 'completed', 'failed']),
   completed: new Set(['planning']),
   failed: new Set(['planning', 'non_executable']),
   non_executable: new Set(['planning'])
@@ -74,6 +74,8 @@ export function taskStateFromLegacyStatus(status: string, hasRevision = false): 
       return 'non_executable'
     case 'executing':
       return 'executing'
+    case 'paused':
+      return 'paused'
     case 'completed':
     case 'ended':
       return 'completed'

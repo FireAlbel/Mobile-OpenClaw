@@ -17,6 +17,19 @@ export function validSkill(overrides: Partial<RpaSkillDefinition> = {}): RpaSkil
         stateIds: ['HOME'],
         strategy: 'ui_text',
         value: '详情',
+        aliases: [],
+        resourceIds: [],
+        searchPolicy: {
+          searchMode: 'current_then_exhaustive',
+          resetToBoundary: true,
+          resetDirection: 'down',
+          scanDirection: 'up',
+          maxResetSwipes: 8,
+          maxScanSwipes: 20,
+          noProgressLimit: 2,
+          includeOcr: false,
+          fallbackToVlm: true
+        },
         fallbackLocatorIds: [],
         minConfidence: 0.8
       }

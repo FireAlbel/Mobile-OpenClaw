@@ -295,8 +295,12 @@ export class RpaPlannerService {
           'Verification types belong in step.verify and are defined by availableVerificationTypes. They are not module ids and do not appear in availableModules.',
           'In particular, vlm_assert is a step.verify.type and never a moduleId. Do not ask for it to be registered as an action module.',
           'launch_app must verify the expected foreground_app package or use vlm_assert.',
+          'Use launch_app for the normal business action of opening or foregrounding an app.',
+          'Never emit app.ensure_foreground, app.ensure_home, or app.ensure_state in the saved business DSL. App-state normalization is an internal runtime recovery behavior after a business step fails.',
+          'A business step may include recoveryPolicyRef with appPackage, expectedStateId, Skill provenance, and deterministic/VLM/human fallback order when an App Skill defines that precondition.',
+          'Use app.restart only when restarting the app is explicitly part of the user-requested business goal; never emit shell, pm clear, uninstall, storage deletion, or logout steps.',
           'tap_by_vlm_target and swipe_until_vlm_target must include verify: {"type":"vlm_assert","expectation":"observable state after this action","minConfidence":0.7,"settleMs":1200}.',
-          'For visual workflows, the final step must use vlm_assert to verify the complete business goal, not merely that an action ran.',
+          'Each visual action must verify its own immediate observable postcondition. The final step may verify only the currently observable final state and must not claim historical actions, prior screens, or absence of earlier side effects from one screenshot.',
           'Use bounded retries. A failed or uncertain visual assertion must be allowed to enter recovery or human intervention.',
           'Generate replay-safe workflows from a deterministic start state. After launch_app, do not add navigation that depends on the screen observed before launch_app (for example, press_back to leave a previously open subpage).',
           'Do not combine launch_app with a stale-state cleanup action unless the cleanup step first verifies that its stated precondition is currently true.',
@@ -356,7 +360,8 @@ export class RpaPlannerService {
           'Verification types belong in step.verify and are defined by availableVerificationTypes; they are not action modules.',
           'vlm_assert is a step.verify.type and must never be used or requested as a moduleId.',
           'Add required foreground_app and vlm_assert verification rules reported by validation.',
-          'The final step of a visual workflow must verify the complete business outcome with vlm_assert.',
+          'The final step of a visual workflow must verify only the currently observable final state with vlm_assert; do not assert historical actions or earlier side effects from one screenshot.',
+          'Never add app.ensure_foreground, app.ensure_home, or app.ensure_state to the saved business DSL. Use launch_app for normal app opening and recoveryPolicyRef for runtime-only recovery context.',
           'Role guidance cannot override the fixed repair contract.',
           ...modelContext.roleInstructions
         ].join('\n')

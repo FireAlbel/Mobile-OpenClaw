@@ -33,6 +33,14 @@ export interface RpaKnowledgeRetrievalResult {
   warnings: string[]
 }
 
+export interface RpaKnowledgeBaseAvailability {
+  knowledgeBaseId: string
+  status: 'ready' | 'error'
+  totalEntryCount: number
+  usableEntryCount: number
+  warning?: string
+}
+
 export class RpaKnowledgeRetrievalService {
   constructor(private readonly repository = rpaKnowledgeRepository) {}
 
@@ -61,6 +69,27 @@ export class RpaKnowledgeRetrievalService {
       conflicts,
       warnings: conflicts.map((conflict) => conflict.reason)
     }
+  }
+
+  async getAvailability(knowledgeBaseIds: string[]): Promise<RpaKnowledgeBaseAvailability[]> {
+    const requestedIds = [...new Set(knowledgeBaseIds.map((id) => id.trim()).filter(Boolean))]
+    const entries = await this.repository.getAll()
+    return requestedIds.map((knowledgeBaseId) => {
+      const boundEntries = entries.filter((entry) => entry.knowledgeBaseId === knowledgeBaseId)
+      const usableEntryCount = boundEntries.filter(
+        (entry) => entry.reviewStatus === 'reviewed' && entry.confidence >= 0.65
+      ).length
+      return {
+        knowledgeBaseId,
+        status: usableEntryCount > 0 ? 'ready' : 'error',
+        totalEntryCount: boundEntries.length,
+        usableEntryCount,
+        warning:
+          usableEntryCount > 0
+            ? undefined
+            : 'Knowledge Base has no reviewed RPA entries with confidence at or above 0.65'
+      }
+    })
   }
 }
 

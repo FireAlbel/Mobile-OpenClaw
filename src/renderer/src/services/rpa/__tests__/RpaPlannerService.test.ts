@@ -243,6 +243,9 @@ describe('RpaPlannerService', () => {
     expect(prompt).toContain('minConfidence')
     expect(prompt).toContain('Generate replay-safe workflows from a deterministic start state')
     expect(prompt).toContain('do not add navigation that depends on the screen observed before launch_app')
+    expect(prompt).toContain('Never emit app.ensure_foreground')
+    expect(prompt).toContain('recoveryPolicyRef')
+    expect(prompt).toContain('must not claim historical actions')
   })
 
   it('includes Role context in planning and persists it in generated DSL metadata', async () => {

@@ -298,6 +298,38 @@ function globalBlockingRules(): RpaAppStateRule[] {
       anyTexts: ['稍后再说', '暂不', '关闭', '取消', '我知道了', 'not now', 'cancel', 'close'],
       blockingCondition: 'popup',
       recoveryScope: 'dismiss_overlay'
+    },
+    {
+      stateId: 'UPDATE_PROMPT',
+      label: 'Update prompt',
+      priority: 95,
+      anyTexts: ['update now', 'new version available', '发现新版本', '立即更新'],
+      blockingCondition: 'update_prompt',
+      recoveryScope: 'dismiss_overlay'
+    },
+    {
+      stateId: 'PROMOTIONAL_OVERLAY',
+      label: 'Promotional overlay',
+      priority: 95,
+      anyTexts: ['skip ad', 'close ad', '跳过广告', '关闭广告'],
+      blockingCondition: 'promotional_overlay',
+      recoveryScope: 'dismiss_overlay'
+    },
+    {
+      stateId: 'NETWORK_ERROR',
+      label: 'Network error',
+      priority: 90,
+      anyTexts: ['no internet connection', 'network unavailable', '网络不可用', '网络开小差'],
+      blockingCondition: 'network_error',
+      recoveryScope: 'navigate'
+    },
+    {
+      stateId: 'LOADING_FAILURE',
+      label: 'Loading failure',
+      priority: 90,
+      anyTexts: ['failed to load', 'load failed', '加载失败', '页面加载失败'],
+      blockingCondition: 'loading_failure',
+      recoveryScope: 'navigate'
     }
   ]
 }
@@ -331,7 +363,7 @@ function findTextMatch(
 
 const exactMatchTargets = new Set(['登录', 'sign in', 'log in'])
 
-const weakStandalonePopupTargets = new Set(['\u934f\u62bd\u68f4', '\u9359\u6828\u79f7', 'cancel', 'close'])
+const weakStandalonePopupTargets = new Set(['关闭', '取消', 'cancel', 'close'])
 
 function readForeground(value: unknown): { packageName: string; activity: string } {
   if (!value || typeof value !== 'object') return { packageName: '', activity: '' }

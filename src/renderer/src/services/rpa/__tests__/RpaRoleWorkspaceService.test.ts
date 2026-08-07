@@ -103,4 +103,26 @@ describe('RpaRoleWorkspaceService', () => {
     expect(summary.assetCounts.provider).toBe(0)
     expect(summary.brokenBindings).toEqual([])
   })
+
+  it('ignores legacy file evidence bindings when calculating readiness', () => {
+    const role = {
+      ...createDefaultRpaAppRole('role-1', 'Role 1', 1),
+      status: 'enabled' as const,
+      assetBindings: [
+        {
+          ref: { roleId: 'role-1', assetType: 'artifact' as const, assetId: 'legacy-evidence' },
+          ownership: 'linked' as const,
+          requirement: 'required' as const,
+          enabled: true,
+          priority: 0
+        }
+      ]
+    }
+
+    const summary = buildRpaRoleWorkspaceSummary({ role, roles: [role], catalogs: emptyCatalogs, runs: [] })
+
+    expect(summary.readiness).toBe('ready')
+    expect(summary.assetCounts.artifact).toBe(0)
+    expect(summary.brokenBindings).toEqual([])
+  })
 })

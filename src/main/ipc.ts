@@ -69,6 +69,7 @@ import powerMonitorService from './services/PowerMonitorService'
 import { proxyManager } from './services/ProxyManager'
 import { pythonService } from './services/PythonService'
 import { FileServiceManager } from './services/remotefile/FileServiceManager'
+import { rpaAppPlaybookStorageService } from './services/RpaAppPlaybookStorageService'
 import { rpaAppRoleStorageService } from './services/RpaAppRoleStorageService'
 import { rpaArtifactStorageService } from './services/RpaArtifactStorageService'
 import { rpaAssistantProfileStorageService } from './services/RpaAssistantProfileStorageService'
@@ -1170,6 +1171,10 @@ export async function registerIpc(mainWindow: BrowserWindow, app: Electron.App) 
   )
   ipcMain.handle(IpcChannel.Rpa_LoadSkills, () => rpaSkillStorageService.loadSkills())
   ipcMain.handle(IpcChannel.Rpa_SaveSkills, (_, skills: unknown[]) => rpaSkillStorageService.saveSkills(skills))
+  ipcMain.handle(IpcChannel.Rpa_LoadAppPlaybooks, () => rpaAppPlaybookStorageService.loadPlaybooks())
+  ipcMain.handle(IpcChannel.Rpa_SaveAppPlaybooks, (_, playbooks: unknown[]) =>
+    rpaAppPlaybookStorageService.savePlaybooks(playbooks)
+  )
   ipcMain.handle(IpcChannel.Rpa_LoadImprovementProposals, () => rpaImprovementProposalStorageService.loadProposals())
   ipcMain.handle(IpcChannel.Rpa_SaveImprovementProposals, (_, proposals: unknown[]) =>
     rpaImprovementProposalStorageService.saveProposals(proposals)

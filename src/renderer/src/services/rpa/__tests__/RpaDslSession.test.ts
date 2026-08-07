@@ -120,6 +120,29 @@ describe('RpaDslSessionRepository', () => {
     ).rejects.toThrow('Invalid RPA task-session transition')
   })
 
+  it('allows a paused manual-intervention run to return to planning', async () => {
+    const repository = new RpaDslSessionRepository(new MemoryStorage(), () => 30)
+    let session = await repository.create({ goal: 'Open settings', primaryRole: context.primaryRole })
+    session = await repository.appendRevision(session.id, {}, context, validator, {
+      expectedSessionVersion: session.version
+    })
+    session = await repository.setExecutionStatus(session.id, session.version, 'executing')
+    session = await repository.setExecutionStatus(session.id, session.version, 'paused')
+    session = await repository.setExecutionStatus(session.id, session.version, 'executing')
+    session = await repository.setExecutionStatus(session.id, session.version, 'paused')
+
+    session = await repository.recordInteraction(session.id, session.version, {
+      requestId: 'request-after-pause',
+      outcome: 'revise_dsl',
+      phase: 'received',
+      text: 'Revise the failed step',
+      stateAfter: 'planning'
+    })
+
+    expect(session.status).toBe('paused')
+    expect(session.interactionState).toBe('planning')
+  })
+
   it('duplicates only the active revision into an independent task', async () => {
     let now = 30
     const repository = new RpaDslSessionRepository(new MemoryStorage(), () => ++now)

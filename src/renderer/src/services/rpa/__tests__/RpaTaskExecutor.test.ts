@@ -186,6 +186,69 @@ describe('RpaTaskExecutor', () => {
     expect(result.events.some((event) => event.status === 'passed')).toBe(true)
   })
 
+  it('preserves a terminal module timeout without running secondary verification', async () => {
+    const registry = new RpaModuleRegistry()
+    registry.register(
+      moduleWithExecutor(async () => ({
+        success: false,
+        status: 'timeout',
+        message: 'Scrcpy frame is stale',
+        startedAt: 1,
+        finishedAt: 2
+      }))
+    )
+    const verify = vi.fn()
+    const result = await new RpaTaskExecutor({
+      registry,
+      runtime: runtime(),
+      verificationEngine: { verify, verifyCorrection: vi.fn() } as unknown as RpaVerificationEngine
+    }).run(task(), 'device-1')
+
+    expect(result.status).toBe('failed')
+    expect(result.error).toBe('Scrcpy frame is stale')
+    expect(verify).not.toHaveBeenCalled()
+    expect(result.events.some((event) => event.message === 'Scrcpy frame is stale')).toBe(true)
+    expect(result.events.some((event) => event.message.includes('Verification timed out'))).toBe(false)
+  })
+
+  it('expands app normalization action groups into ordered audit events', async () => {
+    const registry = new RpaModuleRegistry()
+    registry.register(
+      moduleWithExecutor(async () => ({
+        success: true,
+        status: 'passed',
+        message: 'App reached HOME',
+        data: {
+          outcome: 'goal_achieved',
+          initialState: { stateId: 'DETAIL' },
+          finalState: { stateId: 'HOME' },
+          actionGroups: [
+            {
+              stage: 'bounded_back',
+              success: true,
+              message: 'Back completed',
+              verification: { status: 'passed', confidence: 1, message: 'HOME reached' }
+            }
+          ]
+        },
+        startedAt: 1,
+        finishedAt: 2
+      }))
+    )
+
+    const result = await new RpaTaskExecutor({ registry, runtime: runtime() }).run(task(), 'device-1')
+
+    expect(result.events.map((event) => event.phase).filter(Boolean)).toEqual([
+      'safety_policy',
+      'original_step',
+      'app_normalization_initial',
+      'app_normalization_action',
+      'app_normalization_verification',
+      'app_normalization_terminal',
+      'original_step'
+    ])
+  })
+
   it('uses a separate timeout budget for visual verification', async () => {
     const registry = new RpaModuleRegistry()
     registry.register(
@@ -440,6 +503,9 @@ describe('RpaTaskExecutor', () => {
       ...recovery
     })
     const inputTask = task()
+    inputTask.goal = 'Open Settings, restart it, then capture a screenshot'
+    inputTask.steps[0].name = 'Ensure Settings home'
+    inputTask.steps[0].params = { packageName: 'com.android.settings', targetState: 'home' }
     const embeddedModelContext = createEmbeddedRpaModelContext(
       buildRpaModelContext({ callType: 'planner', now: () => 1 })
     )
@@ -461,7 +527,7 @@ describe('RpaTaskExecutor', () => {
       expect.objectContaining({
         knowledgeBaseIds: ['kb-1'],
         appPackage: 'com.example.app',
-        taskGoal: 'Run task',
+        taskGoal: 'Open Settings, restart it, then capture a screenshot',
         errorClass: 'failed'
       })
     )
@@ -475,8 +541,14 @@ describe('RpaTaskExecutor', () => {
       })
     )
     expect(verifier.verifyCorrection).toHaveBeenCalledWith(
-      expect.objectContaining({ modelContext: embeddedModelContext })
+      expect.objectContaining({
+        expectation: expect.stringContaining('Ensure Settings home'),
+        modelContext: embeddedModelContext
+      })
     )
+    const correctionExpectation = vi.mocked(verifier.verifyCorrection).mock.calls[0][0].expectation
+    expect(correctionExpectation).toContain('Ignore later task steps')
+    expect(correctionExpectation).not.toContain(inputTask.goal)
     expect(result.events.map((event) => event.phase)).toEqual(
       expect.arrayContaining([
         'original_failure',

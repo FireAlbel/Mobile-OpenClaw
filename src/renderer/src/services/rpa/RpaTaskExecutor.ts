@@ -186,6 +186,27 @@ export class RpaTaskExecutor {
             finishedAt: Date.now()
           }
         }
+        if (stepResult.status === 'timeout') {
+          return {
+            taskId: task.id,
+            deviceId,
+            success: false,
+            status: 'failed',
+            events,
+            error: stepResult.message,
+            failureContext: this.createFailureContext(
+              task,
+              deviceId,
+              step,
+              stepIndex,
+              stepExecution,
+              events,
+              stepResult.message
+            ),
+            startedAt,
+            finishedAt: Date.now()
+          }
+        }
         if (stepResult.status === 'needs_human' || isBlockedBySafety(stepResult)) {
           return {
             taskId: task.id,
@@ -331,21 +352,36 @@ export class RpaTaskExecutor {
               step,
               attempt,
               runtime: this.options.runtime,
-              signal
+              signal,
+              reportProgress: (progress) =>
+                emit(step, progress.status, attempt, progress.message, progress.data, {
+                  ...eventDetails,
+                  phase: progress.phase,
+                  verification: progress.verification
+                })
             },
             params
           ),
         timeoutMs
       )
       lastResult = result
+      this.emitAppNormalizationEvents(step, attempt, result, emit, eventDetails)
 
-      const verification = await this.verifyWithTimeout(
-        task,
-        step,
-        result,
-        deviceId,
-        Math.max(1, Math.min(this.resolveVerificationTimeoutMs(step), deadline - Date.now()))
-      )
+      const terminalWithoutVerification = ['timeout', 'cancelled', 'needs_human'].includes(result.status)
+      const verification = terminalWithoutVerification
+        ? {
+            status: result.status === 'needs_human' ? ('uncertain' as const) : ('failed' as const),
+            confidence: 1,
+            message: result.message,
+            evidence: result.data
+          }
+        : await this.verifyWithTimeout(
+            task,
+            step,
+            result,
+            deviceId,
+            Math.max(1, Math.min(this.resolveVerificationTimeoutMs(step), deadline - Date.now()))
+          )
       if (result.success && verification.status === 'passed') {
         emit(step, 'passed', attempt, result.message, { result, verification }, { ...eventDetails, verification })
         return { result, verification, actionSucceeded: true }
@@ -397,6 +433,58 @@ export class RpaTaskExecutor {
         evidence: result.data
       }
     }
+  }
+
+  private emitAppNormalizationEvents(
+    step: RpaStep,
+    attempt: number,
+    result: RpaModuleResult,
+    emit: (
+      step: RpaStep,
+      status: RpaStepStatus,
+      attempt: number,
+      message: string,
+      data?: unknown,
+      details?: RpaEventDetails
+    ) => void,
+    eventDetails: RpaEventDetails
+  ): void {
+    const normalization = readAppNormalizationResult(result.data)
+    if (!normalization) return
+    if (!normalization.liveProgressReported) {
+      emit(
+        step,
+        'running',
+        attempt,
+        `Initial app state: ${normalization.initialStateId ?? 'UNKNOWN'}`,
+        normalization.raw,
+        { ...eventDetails, phase: 'app_normalization_initial' }
+      )
+      for (const group of normalization.actionGroups) {
+        emit(step, group.success ? 'passed' : 'failed', attempt, `${group.stage}: ${group.message}`, group.raw, {
+          ...eventDetails,
+          phase: 'app_normalization_action'
+        })
+        if (group.verification) {
+          emit(
+            step,
+            group.verification.status === 'passed' ? 'passed' : 'failed',
+            attempt,
+            group.verification.message,
+            group.raw,
+            { ...eventDetails, phase: 'app_normalization_verification', verification: group.verification }
+          )
+        }
+      }
+    }
+    emit(
+      step,
+      result.status,
+      attempt,
+      `App normalization ${normalization.outcome}: ${normalization.finalStateId ?? 'UNKNOWN'}`,
+      normalization.raw,
+      { ...eventDetails, phase: 'app_normalization_terminal' }
+    )
   }
 
   private async recoverStep(
@@ -607,6 +695,8 @@ export class RpaTaskExecutor {
           decision,
           latestObservation,
           correctionRound,
+          modelContext: readEmbeddedRpaModelContext(task.metadata.rpaModelContext),
+          knowledgeContext: recoveryKnowledge,
           signal: this.operationSignal(Math.max(1, recoveryDeadline - Date.now()))
         })
       } catch (error) {
@@ -668,13 +758,18 @@ export class RpaTaskExecutor {
 
       if (temporaryFailure?.result.status === 'needs_human') return temporaryFailure
 
-      const expectation = plan.expectedOutcome ?? task.goal
+      const expectation = buildStepScopedCorrectionExpectation(
+        originalStep,
+        failedExecution.result.message,
+        plan.expectedOutcome
+      )
       const correctionVerification = await this.verifyCorrectionWithTimeout(
         task,
         deviceId,
         expectation,
         actionResults,
-        recoveryDeadline
+        recoveryDeadline,
+        recoveryKnowledge
       )
       emit(
         originalStep,
@@ -1054,7 +1149,8 @@ export class RpaTaskExecutor {
     deviceId: string,
     expectation: string,
     actionResults: RpaModuleResult[],
-    deadline: number
+    deadline: number,
+    knowledgeContext?: RpaKnowledgeRetrievalResult
   ): Promise<RpaVerificationResult> {
     const timeoutMs = Math.max(1, deadline - Date.now())
     const controller = new AbortController()
@@ -1069,6 +1165,7 @@ export class RpaTaskExecutor {
           actionResults,
           model: task.visionModel,
           modelContext: readEmbeddedRpaModelContext(task.metadata.rpaModelContext),
+          knowledgeContext,
           signal: controller.signal
         }),
         new Promise<RpaVerificationResult>((resolve) => {
@@ -1303,6 +1400,8 @@ export class RpaTaskExecutor {
     deviceId: string,
     timeoutMs: number
   ): Promise<RpaVerificationResult> {
+    const verificationKnowledge =
+      step.verify?.type === 'vlm_assert' ? await this.retrieveVerificationKnowledge(task) : undefined
     const controller = new AbortController()
     const unlinkAbort = linkAbortSignal(this.externalSignal, controller)
     const externalAbort = abortRejection(this.externalSignal)
@@ -1315,7 +1414,8 @@ export class RpaTaskExecutor {
           deviceId,
           task.visionModel,
           controller.signal,
-          readEmbeddedRpaModelContext(task.metadata.rpaModelContext)
+          readEmbeddedRpaModelContext(task.metadata.rpaModelContext),
+          verificationKnowledge
         ),
         new Promise<RpaVerificationResult>((resolve) => {
           timeoutHandle = setTimeout(() => {
@@ -1334,6 +1434,22 @@ export class RpaTaskExecutor {
       externalAbort.dispose()
       if (timeoutHandle) clearTimeout(timeoutHandle)
     }
+  }
+
+  private async retrieveVerificationKnowledge(task: RpaTask): Promise<RpaKnowledgeRetrievalResult | undefined> {
+    const references = Array.isArray(task.metadata.rpaKnowledgeReferences) ? task.metadata.rpaKnowledgeReferences : []
+    const knowledgeBaseIds = references.flatMap((reference) => {
+      if (!reference || typeof reference !== 'object' || !('knowledgeBaseId' in reference)) return []
+      const knowledgeBaseId = reference.knowledgeBaseId
+      return typeof knowledgeBaseId === 'string' && knowledgeBaseId.trim() ? [knowledgeBaseId] : []
+    })
+    if (!knowledgeBaseIds.length) return undefined
+    return this.knowledgeRetrievalService.retrieve({
+      knowledgeBaseIds: [...new Set(knowledgeBaseIds)],
+      taskGoal: task.goal,
+      categories: ['page_state_explanation', 'locator_guidance', 'failure_case', 'recovery_guidance'],
+      limit: 4
+    })
   }
 
   private async withTimeout(
@@ -1452,6 +1568,10 @@ function readAppStateProfile(task: RpaTask): RpaAppStateProfile | undefined {
       'none',
       'permission_dialog',
       'popup',
+      'update_prompt',
+      'promotional_overlay',
+      'network_error',
+      'loading_failure',
       'authentication',
       'captcha',
       'payment',
@@ -1492,7 +1612,11 @@ function readAppStateProfile(task: RpaTask): RpaAppStateProfile | undefined {
 }
 
 function readExpectedStateId(task: RpaTask, step: RpaStep): string | undefined {
-  for (const value of [step.params.expectedStateId, task.metadata.expectedStateId]) {
+  for (const value of [
+    step.recoveryPolicyRef?.expectedStateId,
+    step.params.expectedStateId,
+    task.metadata.expectedStateId
+  ]) {
     if (typeof value === 'string' && value.trim()) return value.trim()
   }
   return undefined
@@ -1521,6 +1645,27 @@ function readForegroundPackage(value: unknown): string | undefined {
   return undefined
 }
 
+function buildStepScopedCorrectionExpectation(step: RpaStep, failureReason: string, suggestedOutcome?: string): string {
+  const details = [
+    'Verify only the immediate postcondition of the current failed RPA step.',
+    `Current step: ${step.name} (${step.moduleId}).`,
+    `Step parameters: ${stringifyExpectationValue(step.params)}.`,
+    step.verify ? `Configured verification: ${stringifyExpectationValue(step.verify)}.` : undefined,
+    failureReason ? `Original failure: ${failureReason}.` : undefined,
+    suggestedOutcome ? `Suggested immediate outcome: ${suggestedOutcome}.` : undefined,
+    'Ignore later task steps and do not require proof that the overall task is complete.'
+  ]
+  return details.filter(Boolean).join(' ')
+}
+
+function stringifyExpectationValue(value: unknown): string {
+  try {
+    return JSON.stringify(value).slice(0, 2_000)
+  } catch {
+    return '[unserializable]'
+  }
+}
+
 function correctionDecisionSignature(decision: RpaCorrectionDecision): string {
   if (decision.decision === 'execute_actions') return JSON.stringify(decision.actions)
   if (decision.decision === 'replan') return `${decision.decision}:${decision.objective}`
@@ -1544,4 +1689,57 @@ function simpleHash(value: string): string {
     hash = Math.imul(hash, 16777619)
   }
   return (hash >>> 0).toString(16)
+}
+
+function readAppNormalizationResult(value: unknown):
+  | {
+      outcome: string
+      liveProgressReported: boolean
+      initialStateId?: string
+      finalStateId?: string
+      actionGroups: Array<{
+        stage: string
+        success: boolean
+        message: string
+        verification?: RpaVerificationResult
+        raw: unknown
+      }>
+      raw: unknown
+    }
+  | undefined {
+  if (!isObjectRecord(value) || typeof value.outcome !== 'string' || !Array.isArray(value.actionGroups))
+    return undefined
+  return {
+    outcome: value.outcome,
+    liveProgressReported: value.liveProgressReported === true,
+    initialStateId:
+      isObjectRecord(value.initialState) && typeof value.initialState.stateId === 'string'
+        ? value.initialState.stateId
+        : undefined,
+    finalStateId:
+      isObjectRecord(value.finalState) && typeof value.finalState.stateId === 'string'
+        ? value.finalState.stateId
+        : undefined,
+    actionGroups: value.actionGroups.flatMap((candidate) => {
+      if (!isObjectRecord(candidate) || typeof candidate.stage !== 'string' || typeof candidate.message !== 'string') {
+        return []
+      }
+      return [
+        {
+          stage: candidate.stage,
+          success: candidate.success === true,
+          message: candidate.message,
+          verification: isObjectRecord(candidate.verification)
+            ? (candidate.verification as unknown as RpaVerificationResult)
+            : undefined,
+          raw: candidate
+        }
+      ]
+    }),
+    raw: value
+  }
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value))
 }

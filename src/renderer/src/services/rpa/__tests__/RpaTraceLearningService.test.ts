@@ -290,6 +290,30 @@ describe('RpaTraceLearningService', () => {
     ).toMatchObject({ fallbackToVlm: false })
   })
 
+  it('stores a successful exhaustive list route with normal-path VLM disabled', async () => {
+    const { service, templateRecords } = await harness()
+    const completedRun = run('run-list-scan', 'completed', 'done')
+    completedRun.task.steps[0] = {
+      ...completedRun.task.steps[0],
+      moduleId: 'list.scan_target',
+      params: {
+        target: '关于本机',
+        targetAliases: ['关于手机'],
+        resetToBoundary: true,
+        fallbackToVlm: true
+      },
+      verify: { type: 'module_result_success' }
+    }
+
+    const analysis = await service.analyzeDeviceRun(completedRun, 'run-list-scan-device')
+
+    expect(analysis.taskFlowLearning).toMatchObject({ status: 'created', usedCorrection: false })
+    expect((templateRecords[0].dsl as RpaBatchRunRecord['task']).steps[0]).toMatchObject({
+      moduleId: 'list.scan_target',
+      params: { target: '关于本机', resetToBoundary: true, fallbackToVlm: false }
+    })
+  })
+
   it('automatically versions a corrected successful task flow exactly once', async () => {
     const { service, templates, templateRecords } = await harness()
     const completedRun = run('run-corrected', 'completed', 'done')

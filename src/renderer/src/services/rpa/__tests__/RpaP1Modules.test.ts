@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { handlePopupModule, swipeUntilVlmTargetModule, tapByVlmTargetModule } from '../RpaP1Modules'
+import {
+  handlePopupModule,
+  listScanTargetModule,
+  swipeUntilVlmTargetModule,
+  tapByVlmTargetModule
+} from '../RpaP1Modules'
 import type { RpaDeviceRuntime, RpaTask } from '../RpaTypes'
 
 const visionModel = {
@@ -240,5 +245,71 @@ describe('RpaP1Modules', () => {
     const result = await tapByVlmTargetModule.execute(context(testRuntime), { target: 'coin icon' })
 
     expect(result.status).toBe('needs_human')
+  })
+
+  it('resets to a boundary and scans deterministically before invoking the VLM', async () => {
+    const tree = (text: string) =>
+      `<hierarchy><node text="${text}" scrollable="true" bounds="[0,200][1080,2200]" /></hierarchy>`
+    const getUiTree = vi
+      .fn()
+      .mockResolvedValueOnce({ success: true, message: 'mid', data: tree('应用管理') })
+      .mockResolvedValueOnce({ success: true, message: 'top', data: tree('设置') })
+      .mockResolvedValueOnce({ success: true, message: 'top', data: tree('设置') })
+      .mockResolvedValueOnce({ success: true, message: 'top', data: tree('设置') })
+      .mockResolvedValueOnce({ success: true, message: 'lower', data: tree('系统与更新') })
+      .mockResolvedValueOnce({ success: true, message: 'target', data: tree('关于本机') })
+    const testRuntime = runtime({
+      getUiTree,
+      swipe: vi.fn().mockResolvedValue({ success: true, message: 'swiped' })
+    })
+
+    const result = await listScanTargetModule.execute(context(testRuntime), {
+      target: '关于本机',
+      targetAliases: ['关于手机'],
+      resetToBoundary: true,
+      resetDirection: 'down',
+      scanDirection: 'up',
+      maxResetSwipes: 3,
+      maxScanSwipes: 3,
+      noProgressLimit: 2,
+      fallbackToVlm: true
+    })
+
+    expect(result).toMatchObject({
+      success: true,
+      data: { resetBoundaryReached: true, matchedText: '关于本机', vlmInvoked: false }
+    })
+    expect(testRuntime.swipe).toHaveBeenCalledTimes(5)
+    expect(testRuntime.locateVisualTarget).not.toHaveBeenCalled()
+  })
+
+  it('uses one compact VLM fallback only after deterministic scan is exhausted', async () => {
+    const tree = '<hierarchy><node text="设置" scrollable="true" bounds="[0,200][1080,2200]" /></hierarchy>'
+    const testRuntime = runtime({
+      getUiTree: vi.fn().mockResolvedValue({ success: true, message: 'same', data: tree }),
+      swipe: vi.fn().mockResolvedValue({ success: true, message: 'swiped' }),
+      locateVisualTarget: vi.fn().mockResolvedValue({
+        success: true,
+        message: 'not visible',
+        data: { found: false, confidence: 0.95, reason: 'not visible' }
+      })
+    })
+
+    const result = await listScanTargetModule.execute(context(testRuntime), {
+      target: '关于本机',
+      maxResetSwipes: 1,
+      maxScanSwipes: 1,
+      noProgressLimit: 1,
+      fallbackToVlm: true
+    })
+
+    expect(result).toMatchObject({ success: false, data: { vlmInvoked: true } })
+    expect(testRuntime.locateVisualTarget).toHaveBeenCalledTimes(1)
+    expect(testRuntime.locateVisualTarget).toHaveBeenCalledWith(
+      'device-1',
+      expect.stringContaining('Deterministic coverage:'),
+      visionModel,
+      undefined
+    )
   })
 })
